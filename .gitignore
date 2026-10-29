@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.DS_Store
+node_modules/
+.next/
+# raw downloaded data (re-downloadable); precomputed JSON in backend/data/*.json is kept
+backend/data/*.parquet
