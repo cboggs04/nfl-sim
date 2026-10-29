@@ -18,27 +18,47 @@ def main():
     ap.add_argument("--season", type=int, default=2026)
     ap.add_argument("--sims", type=int, default=10_000)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--preseason", action="store_true",
+                    help="ignore games already played; simulate the full season from kickoff ratings")
     ap.add_argument("--refresh", action="store_true", help="re-download data")
     args = ap.parse_args()
 
     cfg = EloConfig()
     df = load_games(list(range(FIRST_SEASON, args.season + 1)), refresh=args.refresh)
-
-    history = df.filter((pl.col("season") < args.season) & pl.col("result").is_not_null())
-    ratings = regress_to_mean(compute_ratings(history.to_dicts(), cfg), cfg)
+    played = pl.col("result").is_not_null()
 
     schedule = df.filter((pl.col("season") == args.season) & (pl.col("game_type") == "REG")).to_dicts()
-    print(f"{args.season}: {len(schedule)} regular-season games, {args.sims:,} simulations")
-    print(f"Ratings from {len(history)} games ({FIRST_SEASON}-{args.season - 1}), "
-          f"regressed 1/3 to the mean for the new season.\n")
+    if args.preseason:
+        # Ratings as of kickoff, and every game re-simulated (ignores real results).
+        history = df.filter((pl.col("season") < args.season) & played)
+        ratings = regress_to_mean(compute_ratings(history.to_dicts(), cfg), cfg)
+        for g in schedule:
+            g["result"] = None
+    else:
+        # Ratings include this season's games so far; played games stay fixed.
+        history = df.filter(played)
+        ratings = compute_ratings(history.to_dicts(), cfg)
+
+    n_played = sum(g["result"] is not None for g in schedule)
+    record = {}
+    for g in schedule:
+        if g["result"] is not None and g["result"] != 0:
+            w, l = (g["home_team"], g["away_team"]) if g["result"] > 0 else (g["away_team"], g["home_team"])
+            record.setdefault(w, [0, 0])[0] += 1
+            record.setdefault(l, [0, 0])[1] += 1
+    print(f"{args.season}: {len(schedule)} regular-season games ({n_played} played and locked in, "
+          f"{len(schedule) - n_played} simulated), {args.sims:,} simulations")
+    print(f"Elo from {len(history)} games ({FIRST_SEASON}-"
+          f"{args.season if not args.preseason else args.season - 1}).\n")
 
     league = simulate_league(schedule, ratings, args.sims, cfg, args.seed)
 
-    print(f"{'Team':<5}{'Elo':>5}{'ExpW':>6}{'Div':>6}{'Playoff':>9}{'#1 Seed':>9}{'Conf':>6}{'SB':>6}  Likely wins")
+    print(f"{'Team':<5}{'Rec':>6}{'Elo':>5}{'ExpW':>6}{'Div':>6}{'Playoff':>9}{'#1 Seed':>9}{'Conf':>6}{'SB':>6}  Likely wins")
     for t, r in sorted(league.items(), key=lambda kv: -kv[1]["p_super_bowl"] - kv[1]["p_playoffs"] * 1e-3):
         top = sorted(sorted(range(18), key=lambda w: -r["win_dist"][w])[:3])
         likely = ", ".join(f"{w}W {r['win_dist'][w]:.0%}" for w in top)
-        print(f"{t:<5}{ratings[t]:>5.0f}{r['exp_wins']:>6.1f}{r['p_division']:>6.0%}{r['p_playoffs']:>9.0%}"
+        rec = "-".join(map(str, record.get(t, [0, 0])))
+        print(f"{t:<5}{rec:>6}{ratings[t]:>5.0f}{r['exp_wins']:>6.1f}{r['p_division']:>6.0%}{r['p_playoffs']:>9.0%}"
               f"{r['p_top_seed']:>9.0%}{r['p_conference']:>6.0%}{r['p_super_bowl']:>6.0%}  {likely}")
 
 

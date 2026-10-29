@@ -22,3 +22,12 @@ def test_distribution_sums_to_one():
     teams, wins = simulate_season(SCHEDULE, {"A": 1500, "B": 1500}, 1000, seed=1)
     for r in summarize(teams, wins, max_wins=2):
         assert np.isclose(r["dist"].sum(), 1.0)
+
+
+def test_played_games_are_locked_in():
+    # A is much stronger, but B already won the first game in real life.
+    sched = [dict(SCHEDULE[0], result=-7), dict(SCHEDULE[1])]  # game 1: B (away) won
+    teams, wins = simulate_season(sched, {"A": 1900, "B": 1100}, 2000, seed=1)
+    b = wins[:, teams.index("B")]
+    assert (b >= 1).all()  # B's win is in every simulated season
+    assert wins[:, teams.index("A")].max() <= 1  # A can win at most game 2
