@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import ColumnChart from "@/components/ColumnChart";
 import ProbCell, { pct } from "@/components/ProbCell";
+import SeasonRoller from "@/components/SeasonRoller";
 import TeamLogo from "@/components/TeamLogo";
 import { getTeam } from "@/lib/api";
 import { teamInfo } from "@/lib/teams";
@@ -17,22 +18,24 @@ function Tile({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** The model's pick for a game: the more likely outcome, flagged if it's nearly a coin flip. */
-function pickFor(g: GameView) {
-  const p = g.p_win ?? 0.5;
-  return { result: p >= 0.5 ? "W" : "L", confidence: Math.max(p, 1 - p), tossUp: Math.abs(p - 0.5) < 0.05 };
+/** Describe an unplayed game in words instead of a hard W/L: even a 70% favorite loses 3 times in 10. */
+function tier(p: number) {
+  if (p >= 0.7) return { label: "Likely win", style: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300" };
+  if (p >= 0.55) return { label: "Lean win", style: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400" };
+  if (p > 0.45) return { label: "Toss-up", style: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" };
+  if (p > 0.3) return { label: "Lean loss", style: "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400" };
+  return { label: "Likely loss", style: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300" };
 }
 
-function ResultPill({ g }: { g: GameView }) {
+function ResultCell({ g }: { g: GameView }) {
   if (g.played) {
-    const win = g.result === "W";
     return (
       <span className="inline-flex items-center gap-2">
         <span
           className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold text-white ${
-            win ? "bg-emerald-600" : g.result === "L" ? "bg-rose-600" : "bg-zinc-500"
+            g.result === "W" ? "bg-emerald-600" : g.result === "L" ? "bg-rose-600" : "bg-zinc-500"
           }`}
-          aria-label={win ? "Win" : g.result === "L" ? "Loss" : "Tie"}
+          aria-label={g.result === "W" ? "Win" : g.result === "L" ? "Loss" : "Tie"}
         >
           {g.result}
         </span>
@@ -42,23 +45,18 @@ function ResultPill({ g }: { g: GameView }) {
       </span>
     );
   }
-  const pick = pickFor(g);
-  const win = pick.result === "W";
-  return (
-    <span className="inline-flex items-center gap-2">
-      <span
-        className={`inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed text-sm font-bold ${
-          win
-            ? "border-emerald-600 text-emerald-700 dark:border-emerald-400 dark:text-emerald-400"
-            : "border-rose-600 text-rose-700 dark:border-rose-400 dark:text-rose-400"
-        }`}
-        aria-label={`Predicted ${win ? "win" : "loss"}`}
-      >
-        {pick.result}
-      </span>
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">{pick.tossUp ? "Toss-up" : `${pct(pick.confidence)} confident`}</span>
-    </span>
-  );
+  const t = tier(g.p_win ?? 0.5);
+  return <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${t.style}`}>{t.label}</span>;
+}
+
+/** Smallest win total at which the cumulative probability reaches q. */
+function quantile(dist: number[], q: number) {
+  let cum = 0;
+  for (let w = 0; w < dist.length; w++) {
+    cum += dist[w];
+    if (cum >= q - 1e-9) return w;
+  }
+  return dist.length - 1;
 }
 
 async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
@@ -70,9 +68,14 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
   const rec = (w: number, l: number, t = 0) => `${w}-${l}${t ? `-${t}` : ""}`;
   const remaining = games.filter((g) => !g.played);
 
-  // "Projected record" = current record + the favorite winning every remaining game.
-  const pickedWins = remaining.filter((g) => pickFor(g).result === "W").length;
-  const projected = rec(odds.record.wins + pickedWins, odds.record.losses + remaining.length - pickedWins, odds.record.ties);
+  // Most likely finish = the single most common win total across the simulations.
+  const modeWins = odds.win_dist.indexOf(Math.max(...odds.win_dist));
+  const modeProb = odds.win_dist[modeWins];
+  const lo = quantile(odds.win_dist, 0.1);
+  const hi = quantile(odds.win_dist, 0.9);
+  const gamesTotal = odds.record.wins + odds.record.losses + odds.record.ties + remaining.length;
+  const likelyRecord = rec(modeWins, gamesTotal - modeWins - odds.record.ties, odds.record.ties);
+  const expectedMore = remaining.reduce((sum, g) => sum + (g.p_win ?? 0), 0);
 
   const winData = odds.win_dist.map((p, w) => ({ label: String(w), value: p }));
   const seedData = [
@@ -106,10 +109,12 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
             </div>
           </div>
           <div className="rounded-lg bg-white/70 px-5 py-3 text-left shadow-sm ring-1 ring-zinc-200 backdrop-blur sm:text-right dark:bg-zinc-900/70 dark:ring-zinc-700">
-            <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Projected record</div>
-            <div className="text-3xl font-semibold tabular-nums">{projected}</div>
+            <div className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Most likely finish</div>
+            <div className="text-3xl font-semibold tabular-nums">{likelyRecord}</div>
             <div className="text-xs text-zinc-500 dark:text-zinc-400">
-              if the favorite wins every game · avg. {odds.exp_wins.toFixed(1)} wins
+              happens in {pct(modeProb)} of simulations
+              <br />
+              80% of seasons end with {lo}–{hi} wins
             </div>
           </div>
         </div>
@@ -124,11 +129,28 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
         <Tile label="Win Super Bowl" value={pct(odds.p_super_bowl)} />
       </div>
 
+      <SeasonRoller
+        games={remaining.map((g) => ({
+          game_id: g.game_id,
+          week: g.week,
+          opponent: g.opponent,
+          home: g.home,
+          neutral: g.neutral,
+          p_win: g.p_win ?? 0.5,
+        }))}
+        wins={odds.record.wins}
+        losses={odds.record.losses}
+        ties={odds.record.ties}
+        likelyWins={modeWins}
+      />
+
       <section className="mt-6">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-semibold">Schedule &amp; predictions</h2>
+          <h2 className="font-semibold">Schedule &amp; outlook</h2>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Solid = final · dashed = predicted (the more likely outcome)
+            {remaining.length > 0
+              ? `Expected ${expectedMore.toFixed(1)} more wins from ${remaining.length} remaining games`
+              : "Season complete"}
           </p>
         </div>
         <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
@@ -137,7 +159,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
               <tr>
                 <th className="px-3 py-2 text-left font-semibold">Week</th>
                 <th className="px-3 py-2 text-left font-semibold">Opponent</th>
-                <th className="px-3 py-2 text-left font-semibold">Result / prediction</th>
+                <th className="px-3 py-2 text-left font-semibold">Result / outlook</th>
                 <th className="px-3 py-2 text-right font-semibold">Win probability</th>
               </tr>
             </thead>
@@ -156,7 +178,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
                     </Link>
                   </td>
                   <td className="px-3 py-2">
-                    <ResultPill g={g} />
+                    <ResultCell g={g} />
                   </td>
                   {g.p_win != null ? <ProbCell p={g.p_win} /> : <td className="px-3 py-2 text-right text-zinc-400">—</td>}
                 </tr>
