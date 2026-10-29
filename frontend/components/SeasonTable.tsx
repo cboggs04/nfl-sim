@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import ProbCell from "@/components/ProbCell";
 import type { Conference, TeamOdds } from "@/lib/types";
 
 type SortKey =
@@ -32,23 +34,6 @@ function sortValue(t: TeamOdds, key: SortKey): number | string {
     return g ? (t.record.wins + t.record.ties / 2) / g : 0;
   }
   return t[key];
-}
-
-const pct = (p: number) => (p === 0 ? "0%" : p < 0.005 ? "<1%" : p > 0.995 ? ">99%" : `${Math.round(p * 100)}%`);
-
-/** A percentage with a thin bar behind it. The number is always shown, the bar is a visual aid. */
-function ProbCell({ p }: { p: number }) {
-  return (
-    <td className="px-3 py-2 text-right tabular-nums">
-      <div className="relative ml-auto h-6 w-24">
-        <div
-          className="absolute inset-y-1 left-0 rounded-sm bg-sky-500/25 dark:bg-sky-400/25"
-          style={{ width: `${Math.max(p * 100, p > 0 ? 2 : 0)}%` }}
-        />
-        <span className="relative flex h-full items-center justify-end pr-1">{pct(p)}</span>
-      </div>
-    </td>
-  );
 }
 
 export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
@@ -124,7 +109,9 @@ export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
               <tr key={t.team} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/60">
                 <td className="px-3 py-2 text-zinc-400 tabular-nums">{i + 1}</td>
                 <td className="px-3 py-2">
-                  <div className="font-medium">{t.name}</div>
+                  <Link href={`/teams/${t.team}`} className="font-medium hover:underline">
+                    {t.name}
+                  </Link>
                   <div className="text-xs text-zinc-500">{t.division}</div>
                 </td>
                 <td className="px-3 py-2 text-right tabular-nums">

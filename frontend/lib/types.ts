@@ -32,3 +32,25 @@ export interface SeasonResponse {
   games_total: number;
   teams: TeamOdds[];
 }
+
+export interface GameView {
+  game_id: string;
+  week: number;
+  opponent: string;
+  home: boolean;
+  neutral: boolean;
+  played: boolean;
+  p_win: number | null; // only for games not yet played
+  result: "W" | "L" | "T" | null;
+  team_score: number | null;
+  opp_score: number | null;
+}
+
+export interface TeamDetail {
+  season: number;
+  odds: TeamOdds;
+  seed_dist: number[]; // P(seed 1..7); the remainder is "missed playoffs"
+  p_divisional_round: number;
+  p_conference_round: number;
+  games: GameView[];
+}
