@@ -10,6 +10,12 @@ def _play(rng, ratings, home, away, cfg, neutral=False):
     return home if rng.random() < p else away
 
 
+def play_game(home, away, ratings, rng, cfg=EloConfig(), neutral=False):
+    """Play one playoff game. Returns (p_home, winner)."""
+    p = expected_home_win(ratings[home], ratings[away], 0.0 if neutral else cfg.home_field)
+    return p, (home if rng.random() < p else away)
+
+
 def simulate_conference_detailed(seeds, ratings, rng, cfg=EloConfig()):
     """Play a 7-team conference bracket and report who survived each round.
 

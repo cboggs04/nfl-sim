@@ -153,3 +153,62 @@ class BacktestResponse(BaseModel):
     test_seasons: list[int]
     models: dict[str, ModelBacktest]
     tuning_top10: list[TuningResult]
+
+
+# ---- Interactive simulation (live endpoints) ----
+
+class SimGameResult(BaseModel):
+    game_id: str
+    week: int
+    home: str
+    away: str
+    home_win: bool
+    played: bool                    # True = real result, False = decided by this simulation
+
+
+class SimStanding(BaseModel):
+    team: str
+    wins: int
+    losses: int
+    ties: int
+
+
+class SimulatedSeason(BaseModel):
+    """POST /api/sim/season: one randomly played-out season."""
+    games: list[SimGameResult]
+    standings: list[SimStanding]
+    seeds: dict[str, list[str]]     # "AFC"/"NFC" -> 7 teams in seed order
+    division_winners: list[str]
+
+
+class PlayoffGameRequest(BaseModel):
+    """POST /api/sim/game: roll one playoff game (or just ask for its odds with play=false)."""
+    home: str
+    away: str
+    neutral: bool = False
+    play: bool = True
+
+
+class PlayoffGameResponse(BaseModel):
+    home: str
+    away: str
+    p_home: float
+    winner: str | None              # None when play=false
+
+
+# ---- Saved simulation inputs (written by precompute, read by live endpoints) ----
+
+class StateGame(BaseModel):
+    game_id: str
+    week: int
+    home_team: str
+    away_team: str
+    neutral: bool
+    result: int | None              # home margin if played, else None
+
+
+class SimState(BaseModel):
+    season: int
+    config: dict[str, float]        # Elo settings: k, home_field, season_regression
+    ratings: dict[str, float]
+    games: list[StateGame]

@@ -101,3 +101,36 @@ def simulate_league(schedule, ratings, n_sims=10_000, cfg: EloConfig = EloConfig
                   "p_playoffs": sum(sd), "p_top_seed": sd[0],
                   **{f"p_{k}": tally[t][k] / n_sims for k in keys}}
     return out
+
+
+def simulate_one_season(schedule, ratings, cfg: EloConfig = EloConfig(), rng: random.Random | None = None):
+    """Play out ONE season (for the interactive demo) and return everything a UI needs.
+
+    Same rules as the big Monte Carlo: played games stay fixed, unplayed games are
+    decided by win probability, then real tiebreakers produce the 7 seeds per conference.
+    Returns {"games": [...], "standings": {team: (w, l, t)}, "seeds": {conf: [7 teams]},
+             "division_winners": [teams]}.
+    """
+    rng = rng or random.Random()
+    games, results = [], []
+    record = {}
+    for g in schedule:
+        played = g.get("result") is not None
+        if played and g["result"] != 0:
+            home_win = g["result"] > 0
+        else:
+            home_win = rng.random() < game_probability(g, ratings, cfg)
+        h, a = g["home_team"], g["away_team"]
+        tie = played and g["result"] == 0
+        results.append((h, a, 0.5 if tie else int(home_win)))
+        games.append({"game_id": g["game_id"], "week": g["week"], "home": h, "away": a,
+                      "home_win": home_win, "played": played})
+        for t, won in ((h, home_win), (a, not home_win)):
+            w, l, ties = record.get(t, (0, 0, 0))
+            record[t] = (w, l, ties + 1) if tie else (w + won, l + (not won), ties)
+    res = Results(results)
+    seeds, winners = {}, []
+    for conf in ("AFC", "NFC"):
+        seeds[conf], conf_winners = conference_seeds(res, conf, rng)
+        winners += sorted(conf_winners)
+    return {"games": games, "standings": record, "seeds": seeds, "division_winners": winners}

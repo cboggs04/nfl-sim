@@ -5,7 +5,8 @@ Re-run whenever new games have been played:
 
     cd backend && .venv/bin/python -m scripts.precompute [--sims 20000]
 
-Writes season.json, teams.json (one TeamDetail per team), bracket.json.
+Writes season.json, teams.json (one TeamDetail per team), bracket.json, and
+sim_state.json (ratings + schedule, so the live endpoints need no data download).
 (backtest.json comes from scripts.run_backtest.)
 """
 import argparse
@@ -15,8 +16,8 @@ from datetime import datetime, timezone
 import polars as pl
 
 from app.schemas import (BacktestResponse, BracketConference, BracketResponse, GameView,
-                         Record, SeasonResponse, SeedProb, SeedSlot, TeamAdvancement,
-                         TeamDetail, TeamOdds)
+                         Record, SeasonResponse, SeedProb, SeedSlot, SimState, StateGame,
+                         TeamAdvancement, TeamDetail, TeamOdds)
 from engine.data import DATA_DIR, load_games
 from engine.elo import EloConfig, compute_ratings, game_probability
 from engine.simulate import simulate_league
@@ -91,7 +92,14 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False):
         p_super_bowl_round=league[t]["p_conference"], p_champion=league[t]["p_super_bowl"])
         for t in sorted(TEAMS, key=lambda t: -league[t]["p_super_bowl"])]
     bracket = BracketResponse(season=season, n_sims=n_sims, conferences=conferences, advancement=advancement)
-    return {"season": season_resp, "teams": teams, "bracket": bracket}
+    state = SimState(
+        season=season,
+        config={"k": cfg.k, "home_field": cfg.home_field, "season_regression": cfg.season_regression},
+        ratings={t: round(r, 3) for t, r in ratings.items()},
+        games=[StateGame(game_id=g["game_id"], week=g["week"], home_team=g["home_team"],
+                         away_team=g["away_team"], neutral=g["neutral"],
+                         result=None if g["result"] is None else int(g["result"])) for g in schedule])
+    return {"season": season_resp, "teams": teams, "bracket": bracket, "state": state}
 
 
 def main():
@@ -106,12 +114,13 @@ def main():
     (DATA_DIR / "season.json").write_text(out["season"].model_dump_json(indent=1))
     (DATA_DIR / "teams.json").write_text(json.dumps({t: json.loads(d.model_dump_json()) for t, d in out["teams"].items()}))
     (DATA_DIR / "bracket.json").write_text(out["bracket"].model_dump_json(indent=1))
+    (DATA_DIR / "sim_state.json").write_text(out["state"].model_dump_json())
 
     bt = DATA_DIR / "backtest.json"
     if bt.exists():
         BacktestResponse.model_validate_json(bt.read_text())  # fail loudly if the shape drifts
     s = out["season"]
-    print(f"Wrote season.json, teams.json, bracket.json to {DATA_DIR}")
+    print(f"Wrote season.json, teams.json, bracket.json, sim_state.json to {DATA_DIR}")
     print(f"{s.season}: {s.games_played}/{s.games_total} games played, {s.n_sims:,} sims")
     for o in s.teams[:5]:
         print(f"  {o.team:<4}{o.name:<24}Super Bowl {o.p_super_bowl:.1%}")

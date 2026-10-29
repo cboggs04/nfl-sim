@@ -52,3 +52,17 @@ def test_league_probabilities_are_consistent():
     assert sum(r["p_divisional_round"] for r in out.values()) == pytest.approx(8)
     assert sum(r["p_conference_round"] for r in out.values()) == pytest.approx(4)
     assert sum(r["seed_dist"][0] for r in out.values()) == pytest.approx(2)
+
+
+def test_one_season_is_consistent_and_keeps_played_games():
+    import random
+
+    from engine.simulate import simulate_one_season
+    from engine.teams import TEAMS
+    sched = [dict(g, game_id=f"g{i}", week=1 + i % 18, result=None) for i, g in enumerate(_toy_schedule())]
+    sched[0]["result"] = -3                      # the first game's away team really won
+    out = simulate_one_season(sched, {t: 1500.0 for t in TEAMS}, rng=random.Random(5))
+    assert out["games"][0]["home_win"] is False and out["games"][0]["played"] is True
+    assert sum(w + l + t for w, l, t in out["standings"].values()) == 2 * len(sched)
+    assert all(len(set(s)) == 7 for s in out["seeds"].values())
+    assert len(out["division_winners"]) == 8

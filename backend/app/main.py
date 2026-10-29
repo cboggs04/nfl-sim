@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from engine.data import DATA_DIR
 
+from .sim import router as sim_router
 from .schemas import BacktestResponse, BracketResponse, SeasonResponse, TeamDetail
 
 app = FastAPI(title="NFL Season Simulator API")
@@ -21,6 +22,7 @@ app = FastAPI(title="NFL Season Simulator API")
 # Set CORS_ORIGINS="https://your-app.vercel.app,http://localhost:3000" in production.
 origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
+app.include_router(sim_router)
 
 
 @lru_cache
