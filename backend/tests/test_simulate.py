@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from engine.simulate import simulate_season, summarize
 
@@ -31,3 +32,23 @@ def test_played_games_are_locked_in():
     b = wins[:, teams.index("B")]
     assert (b >= 1).all()  # B's win is in every simulated season
     assert wins[:, teams.index("A")].max() <= 1  # A can win at most game 2
+
+
+def _toy_schedule():
+    from engine.teams import TEAMS
+    n = len(TEAMS)
+    return [dict(home_team=TEAMS[i], away_team=TEAMS[(i + d) % n], neutral=False)
+            for i in range(n) for d in (1, 2, 3, 5, 7, 11, 13, 17)]
+
+
+def test_league_probabilities_are_consistent():
+    from engine.simulate import simulate_league
+    from engine.teams import TEAMS
+    out = simulate_league(_toy_schedule(), {t: 1500.0 for t in TEAMS}, 300, seed=3)
+    assert sum(r["p_playoffs"] for r in out.values()) == pytest.approx(14)   # 7 per conference
+    assert sum(r["p_division"] for r in out.values()) == pytest.approx(8)
+    assert sum(r["p_super_bowl"] for r in out.values()) == pytest.approx(1)
+    assert sum(r["p_conference"] for r in out.values()) == pytest.approx(2)
+    assert sum(r["p_divisional_round"] for r in out.values()) == pytest.approx(8)
+    assert sum(r["p_conference_round"] for r in out.values()) == pytest.approx(4)
+    assert sum(r["seed_dist"][0] for r in out.values()) == pytest.approx(2)

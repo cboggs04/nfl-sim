@@ -3,8 +3,8 @@ import random
 
 import numpy as np
 
-from .elo import EloConfig, expected_home_win
-from .playoffs import simulate_playoffs
+from .elo import EloConfig, game_probability
+from .playoffs import simulate_playoffs_detailed
 from .tiebreakers import Results, conference_seeds
 
 
@@ -25,8 +25,7 @@ def _simulate_games(schedule, ratings, n_sims, cfg, seed):
         if result is not None and result != 0:
             p_home[i] = 1.0 if result > 0 else 0.0
         else:
-            p_home[i] = expected_home_win(ratings[g["home_team"]], ratings[g["away_team"]],
-                                          0.0 if g["neutral"] else cfg.home_field)
+            p_home[i] = game_probability(g, ratings, cfg)
     rng = np.random.default_rng(seed)
     return teams, rng.random((n_sims, len(schedule))) < p_home  # the whole Monte Carlo in one line
 
@@ -64,34 +63,41 @@ def summarize(teams, wins, max_wins=17):
 def simulate_league(schedule, ratings, n_sims=10_000, cfg: EloConfig = EloConfig(), seed=None):
     """Full-season Monte Carlo: regular season -> tiebreakers/seeding -> playoffs.
 
-    Returns {team: {exp_wins, win_dist, p_division, p_playoffs, p_top_seed,
-                    p_conference, p_super_bowl}}.
+    Returns {team: {exp_wins, win_dist, seed_dist (P of each seed 1-7),
+                    p_division, p_playoffs, p_top_seed, p_divisional_round,
+                    p_conference_round, p_conference, p_super_bowl}}.
     """
     teams, home_won = _simulate_games(schedule, ratings, n_sims, cfg, seed)
     wins = _win_totals(schedule, teams, home_won)
     matchups = [(g["home_team"], g["away_team"]) for g in schedule]
 
     rng = random.Random(seed)  # coin flips and playoff games
-    keys = ("division", "playoffs", "top_seed", "conference", "super_bowl")
+    keys = ("division", "divisional_round", "conference_round", "conference", "super_bowl")
     tally = {t: dict.fromkeys(keys, 0) for t in teams}
+    seed_counts = {t: [0] * 7 for t in teams}
     for i in range(n_sims):
         res = Results([(h, a, int(w)) for (h, a), w in zip(matchups, home_won[i])])
         seeds = {}
         for conf in ("AFC", "NFC"):
             seeds[conf], winners = conference_seeds(res, conf, rng)
-            for t in seeds[conf]:
-                tally[t]["playoffs"] += 1
+            for n, t in enumerate(seeds[conf]):
+                seed_counts[t][n] += 1
             for t in winners:
                 tally[t]["division"] += 1
-            tally[seeds[conf][0]]["top_seed"] += 1
-        afc, nfc, champ = simulate_playoffs(seeds["AFC"], seeds["NFC"], ratings, rng, cfg)
-        tally[afc]["conference"] += 1
-        tally[nfc]["conference"] += 1
-        tally[champ]["super_bowl"] += 1
+        r = simulate_playoffs_detailed(seeds["AFC"], seeds["NFC"], ratings, rng, cfg)
+        for conf in ("AFC", "NFC"):
+            for t in r[conf]["divisional"]:
+                tally[t]["divisional_round"] += 1
+            for t in r[conf]["conference"]:
+                tally[t]["conference_round"] += 1
+            tally[r[conf]["champion"]]["conference"] += 1
+        tally[r["champion"]]["super_bowl"] += 1
 
     out = {}
     for row in summarize(teams, wins):
         t = row["team"]
-        out[t] = {"exp_wins": row["exp_wins"], "win_dist": row["dist"],
+        sd = [c / n_sims for c in seed_counts[t]]
+        out[t] = {"exp_wins": row["exp_wins"], "win_dist": row["dist"], "seed_dist": sd,
+                  "p_playoffs": sum(sd), "p_top_seed": sd[0],
                   **{f"p_{k}": tally[t][k] / n_sims for k in keys}}
     return out

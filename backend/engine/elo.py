@@ -18,6 +18,12 @@ def expected_home_win(home_elo: float, away_elo: float, hfa: float) -> float:
     return 1.0 / (1.0 + 10 ** (-(home_elo - away_elo + hfa) / 400.0))
 
 
+def game_probability(game, ratings, cfg: "EloConfig") -> float:
+    """P(home team wins) for a schedule entry (dict with home_team, away_team, neutral)."""
+    return expected_home_win(ratings[game["home_team"]], ratings[game["away_team"]],
+                             0.0 if game["neutral"] else cfg.home_field)
+
+
 def mov_multiplier(margin: float, winner_elo_diff: float) -> float:
     """Bigger wins move ratings more, with diminishing returns (FiveThirtyEight's formula).
     The second term damps updates when a favourite beats a weak team by a lot."""
