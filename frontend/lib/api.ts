@@ -1,7 +1,5 @@
 // The ONLY place the frontend talks to the backend. Components import from here.
-import mockSeason from "./mock/season.json";
-import mockTeams from "./mock/teams.json";
-import type { SeasonResponse, TeamDetail } from "./types";
+import type { PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Set NEXT_PUBLIC_USE_MOCK=1 to build the UI without the API running.
@@ -13,15 +11,16 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export function getSeason(): Promise<SeasonResponse> {
-  if (USE_MOCK) return Promise.resolve(mockSeason as unknown as SeasonResponse);
+// Mock files are imported lazily so they never end up in the browser bundle.
+export async function getSeason(): Promise<SeasonResponse> {
+  if (USE_MOCK) return (await import("./mock/season.json")).default as unknown as SeasonResponse;
   return get<SeasonResponse>("/api/season");
 }
 
 /** Returns null if the team abbreviation doesn't exist. */
 export async function getTeam(abbr: string): Promise<TeamDetail | null> {
   if (USE_MOCK) {
-    const teams = mockTeams as unknown as Record<string, TeamDetail>;
+    const teams = (await import("./mock/teams.json")).default as unknown as Record<string, TeamDetail>;
     return teams[abbr.toUpperCase()] ?? null;
   }
   const res = await fetch(`${BASE}/api/teams/${encodeURIComponent(abbr)}`, { cache: "no-store" });
@@ -29,3 +28,21 @@ export async function getTeam(abbr: string): Promise<TeamDetail | null> {
   if (!res.ok) throw new Error(`API /api/teams/${abbr} failed with status ${res.status}`);
   return res.json() as Promise<TeamDetail>;
 }
+
+async function post<T>(path: string, body?: unknown): Promise<T> {
+  if (USE_MOCK) throw new Error("This feature needs the API running (turn off NEXT_PUBLIC_USE_MOCK).");
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API ${path} failed with status ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+/** Randomly play out the rest of the regular season once; returns final records and playoff seeds. */
+export const simulateSeason = () => post<SimulatedSeason>("/api/sim/season");
+
+/** Roll one playoff game. With play=false it only returns the win probability. */
+export const rollGame = (home: string, away: string, neutral: boolean, play = true) =>
+  post<PlayoffGameResponse>("/api/sim/game", { home, away, neutral, play });
