@@ -8,8 +8,9 @@ START_RATING = 1500.0
 @dataclass(frozen=True)
 class EloConfig:
     k: float = 20.0                # how fast ratings move after each game
-    home_field: float = 65.0       # Elo points added to the home team (~2.5 pts)
-    season_regression: float = 1 / 3  # pull toward 1500 each offseason
+    # home_field and season_regression were tuned by backtest (scripts/run_backtest.py)
+    home_field: float = 55.0       # Elo points added to the home team (~2 pts)
+    season_regression: float = 0.45   # pull toward 1500 each offseason
 
 
 def expected_home_win(home_elo: float, away_elo: float, hfa: float) -> float:
@@ -47,7 +48,7 @@ def walk_games(games, cfg: EloConfig = EloConfig(), ratings: dict | None = None)
 
     `games` is an iterable of dicts with: season, home_team, away_team,
     home_score, away_score, neutral. Must be chronological. Between seasons,
-    every rating is pulled 1/3 of the way back to 1500 (rosters turn over).
+    every rating is pulled 45% of the way back to 1500 (rosters turn over).
     """
     ratings = {} if ratings is None else ratings
     current_season = None
