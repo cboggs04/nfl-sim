@@ -1,4 +1,4 @@
-"""Milestone 1: Elo ratings -> Monte Carlo of one 272-game season -> terminal table.
+"""Elo ratings -> Monte Carlo of the 272-game season + playoffs -> terminal table.
 
 Run from backend/:  .venv/bin/python -m scripts.run_milestone1 [--season 2026] [--sims 10000]
 """
@@ -8,7 +8,7 @@ import polars as pl
 
 from engine.data import load_games
 from engine.elo import EloConfig, compute_ratings, regress_to_mean
-from engine.simulate import simulate_season, summarize
+from engine.simulate import simulate_league
 
 FIRST_SEASON = 2010  # ~15 years of history is plenty for Elo to converge
 
@@ -32,16 +32,14 @@ def main():
     print(f"Ratings from {len(history)} games ({FIRST_SEASON}-{args.season - 1}), "
           f"regressed 1/3 to the mean for the new season.\n")
 
-    teams, wins = simulate_season(schedule, ratings, args.sims, cfg, args.seed)
-    rows = summarize(teams, wins)
+    league = simulate_league(schedule, ratings, args.sims, cfg, args.seed)
 
-    print(f"{'Team':<5}{'Elo':>6}{'ExpW':>7}  {'Win distribution (most likely win totals)'}")
-    for r in rows:
-        top = sorted(range(18), key=lambda w: -r["dist"][w])[:3]
-        mode = max(range(18), key=lambda w: r["dist"][w])
-        bar = "#" * round(r["dist"][mode] * 100)
-        likely = ", ".join(f"{w}W {r['dist'][w]:.0%}" for w in sorted(top))
-        print(f"{r['team']:<5}{ratings[r['team']]:>6.0f}{r['exp_wins']:>7.2f}  {likely:<26}{bar}")
+    print(f"{'Team':<5}{'Elo':>5}{'ExpW':>6}{'Div':>6}{'Playoff':>9}{'#1 Seed':>9}{'Conf':>6}{'SB':>6}  Likely wins")
+    for t, r in sorted(league.items(), key=lambda kv: -kv[1]["p_super_bowl"] - kv[1]["p_playoffs"] * 1e-3):
+        top = sorted(sorted(range(18), key=lambda w: -r["win_dist"][w])[:3])
+        likely = ", ".join(f"{w}W {r['win_dist'][w]:.0%}" for w in top)
+        print(f"{t:<5}{ratings[t]:>5.0f}{r['exp_wins']:>6.1f}{r['p_division']:>6.0%}{r['p_playoffs']:>9.0%}"
+              f"{r['p_top_seed']:>9.0%}{r['p_conference']:>6.0%}{r['p_super_bowl']:>6.0%}  {likely}")
 
 
 if __name__ == "__main__":
