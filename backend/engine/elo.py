@@ -40,14 +40,16 @@ def update(home_elo, away_elo, home_pts, away_pts, neutral, cfg: EloConfig):
     return home_elo + delta, away_elo - delta
 
 
-def compute_ratings(games, cfg: EloConfig = EloConfig()) -> dict[str, float]:
-    """Walk through completed games in order and return each team's final rating.
+def walk_games(games, cfg: EloConfig = EloConfig(), ratings: dict | None = None):
+    """Generator: step through completed games in order, yielding
+    (game, home_elo, away_elo) as they were BEFORE the game, then updating.
+    Pass a dict as `ratings` to get the final ratings filled in as it runs.
 
     `games` is an iterable of dicts with: season, home_team, away_team,
     home_score, away_score, neutral. Must be chronological. Between seasons,
     every rating is pulled 1/3 of the way back to 1500 (rosters turn over).
     """
-    ratings: dict[str, float] = {}
+    ratings = {} if ratings is None else ratings
     current_season = None
     for g in games:
         if g["season"] != current_season:
@@ -56,10 +58,18 @@ def compute_ratings(games, cfg: EloConfig = EloConfig()) -> dict[str, float]:
                     ratings[t] += (START_RATING - ratings[t]) * cfg.season_regression
             current_season = g["season"]
         h, a = g["home_team"], g["away_team"]
+        yield g, ratings.get(h, START_RATING), ratings.get(a, START_RATING)
         ratings[h], ratings[a] = update(
             ratings.get(h, START_RATING), ratings.get(a, START_RATING),
             g["home_score"], g["away_score"], g["neutral"], cfg,
         )
+
+
+def compute_ratings(games, cfg: EloConfig = EloConfig()) -> dict[str, float]:
+    """Return each team's final Elo rating after all `games`."""
+    ratings: dict[str, float] = {}
+    for _ in walk_games(games, cfg, ratings):
+        pass
     return ratings
 
 

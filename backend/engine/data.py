@@ -37,3 +37,35 @@ def _clean(df: pl.DataFrame) -> pl.DataFrame:
         .with_columns((pl.col("location") == "Neutral").alias("neutral"))
         .sort(["season", "gameday", "game_id"])
     )
+
+
+def load_team_game_epa(seasons: list[int], refresh: bool = False) -> pl.DataFrame:
+    """Per team-game offensive EPA/play from play-by-play (pass + run plays only).
+
+    One row per (game, offensive team): game_id, season, team, opp, epa (mean EPA
+    per play), plays. A team's *defense* in a game is just its opponent's row.
+    Play-by-play is huge (~100 MB/season), so we aggregate each season once and
+    cache only the small result in backend/data/team_game_epa.parquet.
+    """
+    cache = DATA_DIR / "team_game_epa.parquet"
+    have = pl.read_parquet(cache) if cache.exists() and not refresh else None
+    have_seasons = set(have["season"].unique().to_list()) if have is not None else set()
+    missing = [s for s in seasons if s not in have_seasons]
+    if missing:
+        import nflreadpy as nfl
+
+        parts = [have] if have is not None else []
+        for season in missing:
+            pbp = nfl.load_pbp([season])
+            parts.append(
+                pbp.filter(pl.col("play_type").is_in(["pass", "run"]) & pl.col("epa").is_not_null())
+                .group_by("game_id", "season", "posteam", "defteam")
+                .agg(pl.col("epa").mean(), pl.len().alias("plays"))
+                .rename({"posteam": "team", "defteam": "opp"})
+            )
+        have = pl.concat(parts)
+        DATA_DIR.mkdir(exist_ok=True)
+        have.write_parquet(cache)
+    return have.filter(pl.col("season").is_in(seasons)).with_columns(
+        pl.col("team", "opp").replace(TEAM_ALIASES)
+    )
