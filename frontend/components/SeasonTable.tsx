@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import ProbCell from "@/components/ProbCell";
+import TeamLogo from "@/components/TeamLogo";
 import type { Conference, TeamOdds } from "@/lib/types";
 
 type SortKey =
@@ -109,10 +110,15 @@ export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
               <tr key={t.team} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/60">
                 <td className="px-3 py-2 text-zinc-400 tabular-nums">{i + 1}</td>
                 <td className="px-3 py-2">
-                  <Link href={`/teams/${t.team}`} className="font-medium hover:underline">
-                    {t.name}
-                  </Link>
-                  <div className="text-xs text-zinc-500">{t.division}</div>
+                  <div className="flex items-center gap-3">
+                    <TeamLogo abbr={t.team} size={32} />
+                    <div>
+                      <Link href={`/teams/${t.team}`} className="font-medium hover:underline">
+                        {t.name}
+                      </Link>
+                      <div className="text-xs text-zinc-500">{t.division}</div>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-3 py-2 text-right tabular-nums">
                   {t.record.wins}-{t.record.losses}
