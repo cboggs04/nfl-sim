@@ -90,3 +90,50 @@ export interface WhatIfRequest {
   game_overrides: { game_id: string; home_win: boolean }[]; // forced results for unplayed games
   n_sims: number;
 }
+
+export interface CalibrationBin {
+  bin_low: number;
+  bin_high: number;
+  games: number;
+  predicted: number; // average model P(home win) in this bucket
+  actual: number; // share of those games the home team really won
+}
+
+export interface SeasonMetrics {
+  season: number;
+  games: number;
+  brier: number;
+  log_loss: number;
+  accuracy: number;
+}
+
+export interface WinTotalError {
+  season: number;
+  mae: number; // average miss of preseason expected wins vs actual wins
+  baseline_mae: number; // same, guessing the league average for every team
+}
+
+export interface ModelBacktest {
+  config: Record<string, number>;
+  games: number;
+  brier: number;
+  log_loss: number;
+  accuracy: number;
+  calibration: CalibrationBin[];
+  by_season: SeasonMetrics[];
+  win_total_error: WinTotalError[];
+}
+
+export interface TuningResult {
+  k: number;
+  home_field: number;
+  regression: number;
+  train_brier: number;
+}
+
+export interface BacktestResponse {
+  train_seasons: number[]; // [first, last]
+  test_seasons: number[]; // [first, last]
+  models: Record<string, ModelBacktest>;
+  tuning_top10: TuningResult[];
+}

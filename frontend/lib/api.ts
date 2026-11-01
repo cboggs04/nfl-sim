@@ -1,5 +1,5 @@
 // The ONLY place the frontend talks to the backend. Components import from here.
-import type { PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, WhatIfRequest } from "./types";
+import type { BacktestResponse, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, WhatIfRequest } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Set NEXT_PUBLIC_USE_MOCK=1 to build the UI without the API running.
@@ -27,6 +27,12 @@ export async function getTeam(abbr: string): Promise<TeamDetail | null> {
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`API /api/teams/${abbr} failed with status ${res.status}`);
   return res.json() as Promise<TeamDetail>;
+}
+
+/** How accurate the model has been on past seasons it was never tuned on. */
+export async function getBacktest(): Promise<BacktestResponse> {
+  if (USE_MOCK) throw new Error("The backtest page needs the API running (turn off NEXT_PUBLIC_USE_MOCK).");
+  return get<BacktestResponse>("/api/backtest");
 }
 
 async function post<T>(path: string, body?: unknown): Promise<T> {

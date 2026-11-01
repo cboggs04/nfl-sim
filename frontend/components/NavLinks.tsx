@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/", label: "Dashboard" },
   { href: "/bracket", label: "Playoff simulator" },
   { href: "/whatif", label: "What-if" },
+  { href: "/backtest", label: "Model accuracy" },
 ];
 
 export default function NavLinks() {
