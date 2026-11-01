@@ -118,7 +118,13 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
                 <span className="bg-black/30 px-3 py-1.5 text-sm font-semibold text-white/85">
                   {remaining.length} games left
                 </span>
-                <span className="bg-black/30 px-3 py-1.5 text-sm font-semibold text-white/85">Elo {Math.round(odds.elo)}</span>
+                <span className="bg-black/30 px-3 py-1.5 text-sm font-semibold text-white/85">Rating {Math.round(odds.elo)}</span>
+                {odds.qb && (
+                  <span className="bg-black/30 px-3 py-1.5 text-sm font-semibold text-white/85" title="Projected starting quarterback and the Elo points he adds to the team's rating">
+                    QB {odds.qb} · {(odds.qb_adj ?? 0) >= 0 ? "+" : "−"}
+                    {Math.abs(Math.round(odds.qb_adj ?? 0))}
+                  </span>
+                )}
               </div>
             </div>
           </div>

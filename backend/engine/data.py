@@ -69,3 +69,36 @@ def load_team_game_epa(seasons: list[int], refresh: bool = False) -> pl.DataFram
     return have.filter(pl.col("season").is_in(seasons)).with_columns(
         pl.col("team", "opp").replace(TEAM_ALIASES)
     )
+
+
+def load_qb_game_epa(seasons: list[int], refresh: bool = False) -> pl.DataFrame:
+    """Each quarterback's passing value in each game, from play-by-play.
+
+    One row per (game, passer): game_id, season, team, passer_id, passer, dropbacks
+    (pass attempts + sacks + scrambles) and epa (total EPA on those plays). Cached to
+    backend/data/qb_game_epa.parquet, one season at a time, like load_team_game_epa.
+    refresh=True re-downloads only the latest requested season (the one still being played).
+    """
+    cache = DATA_DIR / "qb_game_epa.parquet"
+    have = pl.read_parquet(cache) if cache.exists() else None
+    if have is not None and refresh:
+        have = have.filter(pl.col("season") != max(seasons))
+    have_seasons = set(have["season"].unique().to_list()) if have is not None else set()
+    missing = [s for s in seasons if s not in have_seasons]
+    if missing:
+        import nflreadpy as nfl
+
+        parts = [have] if have is not None else []
+        for season in missing:
+            pbp = nfl.load_pbp([season])
+            parts.append(
+                pbp.filter((pl.col("qb_dropback") == 1) & pl.col("qb_epa").is_not_null() & pl.col("passer_player_id").is_not_null())
+                .group_by("game_id", "season", "posteam", "passer_player_id")
+                .agg(pl.col("passer_player_name").first().alias("passer"), pl.len().alias("dropbacks"),
+                     pl.col("qb_epa").sum().alias("epa"))
+                .rename({"posteam": "team", "passer_player_id": "passer_id"})
+            )
+        have = pl.concat(parts)
+        DATA_DIR.mkdir(exist_ok=True)
+        have.write_parquet(cache)
+    return have.filter(pl.col("season").is_in(seasons)).with_columns(pl.col("team").replace(TEAM_ALIASES))

@@ -25,6 +25,8 @@ class TeamOdds(BaseModel):
     p_top_seed: float               # the 1 seed (first-round bye)
     p_conference: float             # wins the conference title (reaches the Super Bowl)
     p_super_bowl: float             # wins the Super Bowl
+    qb: str | None = None           # projected starting quarterback
+    qb_adj: float = 0.0             # Elo points the QB adds to (or takes from) the team's rating
 
 
 class SeasonResponse(BaseModel):
@@ -138,6 +140,7 @@ class ModelBacktest(BaseModel):
     calibration: list[CalibrationBin]
     by_season: list[SeasonMetrics]
     win_total_error: list[WinTotalError]
+    hfa_by_season: dict[str, float] | None = None   # home-field edge used in each test season (rolling models)
 
 
 class TuningResult(BaseModel):
@@ -147,12 +150,21 @@ class TuningResult(BaseModel):
     train_brier: float
 
 
+class LiveConfig(BaseModel):
+    """The settings the live simulation uses (chosen by the backtest)."""
+    k: float
+    home_field: float
+    season_regression: float
+    qb: dict[str, float] | None = None
+
+
 class BacktestResponse(BaseModel):
     """GET /api/backtest."""
     train_seasons: list[int]
     test_seasons: list[int]
     models: dict[str, ModelBacktest]
     tuning_top10: list[TuningResult]
+    live: LiveConfig | None = None
 
 
 # ---- Interactive simulation (live endpoints) ----

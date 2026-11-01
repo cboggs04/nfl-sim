@@ -15,6 +15,8 @@ const PRESETS = [
 ];
 
 const N_SIMS = 2000;
+// A replacement-level backup adds about -30 Elo (QbConfig.prior x elo_per_epa in engine/qb.py).
+const BACKUP_ADJ = -30;
 
 interface Forced {
   team: string;
@@ -161,6 +163,19 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
             <TeamLogo abbr={boostTeam} size={40} />
             <TeamSelect value={boostTeam} onChange={setBoostTeam} teams={teams} />
           </div>
+          {base[boostTeam].qb && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+              <span>
+                Starting QB: <b className="text-strong">{base[boostTeam].qb}</b> ({signed(Math.round(base[boostTeam].qb_adj ?? 0))} Elo)
+              </span>
+              <button
+                onClick={() => setDelta(Math.max(-150, Math.round(BACKUP_ADJ - (base[boostTeam].qb_adj ?? 0))))}
+                className="rounded-full px-3 py-1 font-semibold text-muted ring-1 ring-line hover:bg-hover hover:text-strong"
+              >
+                If he&apos;s out ({signed(Math.max(-150, Math.round(BACKUP_ADJ - (base[boostTeam].qb_adj ?? 0))))})
+              </button>
+            </div>
+          )}
           <div className="mt-4 flex items-baseline justify-between">
             <span className="font-display text-5xl text-strong tabular-nums">{signed(delta)}</span>
             <span className="text-xs text-muted">Elo points</span>

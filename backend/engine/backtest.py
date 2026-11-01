@@ -9,15 +9,15 @@ from math import log
 from .elo import EloConfig, START_RATING, expected_home_win, walk_games
 
 
-def predict_games(games, cfg: EloConfig = EloConfig()):
+def predict_games(games, cfg: EloConfig = EloConfig(), qb=None):
     """Pre-game win probability for every regular-season game.
 
     `games`: chronological completed games (see elo.walk_games for the fields; also
-    needs game_type and week). Returns rows {season, week, home, away, p, y} where
+    needs game_type and week). With `qb` (a qb.QbTracker) predictions include the QB adjustment. Returns rows {season, week, home, away, p, y} where
     p = P(home wins) and y = 1 (home won), 0 (home lost) or 0.5 (tie).
     """
     rows = []
-    for g, eh, ea in walk_games(games, cfg):
+    for g, eh, ea in walk_games(games, cfg, qb=qb):
         if g["game_type"] != "REG":
             continue
         p = expected_home_win(eh, ea, 0.0 if g["neutral"] else cfg.home_field)
@@ -66,7 +66,7 @@ def tune(games, train_seasons, k_values, hfa_values, regression_values):
     return sorted(results, key=lambda x: x[0])
 
 
-def season_win_errors(games, cfg: EloConfig, seasons):
+def season_win_errors(games, cfg: EloConfig, seasons, qb=None):
     """How well do *preseason* ratings predict each team's final win total?
 
     For each season, freeze every team's rating at its first game, add up that
@@ -75,7 +75,7 @@ def season_win_errors(games, cfg: EloConfig, seasons):
     the league average (half the games) for everyone.
     """
     start, sched = {}, {}
-    for g, eh, ea in walk_games(games, cfg):
+    for g, eh, ea in walk_games(games, cfg, qb=qb):
         if g["game_type"] != "REG":
             continue
         s = g["season"]
@@ -102,3 +102,26 @@ def season_win_errors(games, cfg: EloConfig, seasons):
             "baseline_mae": sum(abs(r["games"] / 2 - r["actual"]) for r in rows) / len(rows),
         })
     return summary, team_rows
+
+
+def pick_rolling_hfa(rows_by_hfa: dict, test_seasons, window: int = 6):
+    """Walk-forward home-field choice: for each test season, use the home-field edge that scored best
+    over the `window` seasons BEFORE it. `rows_by_hfa` maps an edge (Elo points) to predict_games rows.
+    Returns (rows for the test seasons, {season: edge chosen})."""
+    picks, rows = {}, []
+    for s in test_seasons:
+        recent = set(range(s - window, s))
+        picks[s] = min(rows_by_hfa, key=lambda h: metrics([r for r in rows_by_hfa[h] if r["season"] in recent])["brier"])
+        rows += [r for r in rows_by_hfa[picks[s]] if r["season"] == s]
+    return rows, picks
+
+
+def tune_qb(games, make_tracker, cfg: EloConfig, train_seasons, grid):
+    """Grid-search quarterback-rating settings by Brier score on `train_seasons` only.
+    `make_tracker(qb_cfg)` must return a fresh QbTracker; `grid` is a list of QbConfig.
+    Returns [(brier, QbConfig), ...] best-first."""
+    out = []
+    for qcfg in grid:
+        rows = [r for r in predict_games(games, cfg, qb=make_tracker(qcfg)) if r["season"] in train_seasons]
+        out.append((metrics(rows)["brier"], qcfg))
+    return sorted(out, key=lambda x: x[0])

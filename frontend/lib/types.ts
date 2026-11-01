@@ -22,6 +22,8 @@ export interface TeamOdds {
   p_top_seed: number;
   p_conference: number;
   p_super_bowl: number;
+  qb?: string | null; // projected starting quarterback
+  qb_adj?: number; // Elo points the QB adds to (or takes from) the team rating
 }
 
 export interface SeasonResponse {
@@ -122,6 +124,7 @@ export interface ModelBacktest {
   calibration: CalibrationBin[];
   by_season: SeasonMetrics[];
   win_total_error: WinTotalError[];
+  hfa_by_season?: Record<string, number> | null; // home-field edge used each test season (rolling models)
 }
 
 export interface TuningResult {
@@ -136,4 +139,5 @@ export interface BacktestResponse {
   test_seasons: number[]; // [first, last]
   models: Record<string, ModelBacktest>;
   tuning_top10: TuningResult[];
+  live?: { k: number; home_field: number; season_regression: number; qb?: Record<string, number> | null } | null;
 }

@@ -8,8 +8,9 @@ START_RATING = 1500.0
 @dataclass(frozen=True)
 class EloConfig:
     k: float = 20.0                # how fast ratings move after each game
-    # home_field and season_regression were tuned by backtest (scripts/run_backtest.py)
-    home_field: float = 55.0       # Elo points added to the home team (~2 pts)
+    # Settings come from the backtest (scripts/run_backtest.py). The home-field edge has shrunk in
+    # recent seasons, so it is re-fitted on the latest 6 seasons (it was 55 when fitted on 2012-17).
+    home_field: float = 20.0       # Elo points added to the home team (~1 pt)
     season_regression: float = 0.45   # pull toward 1500 each offseason
 
 
@@ -47,7 +48,7 @@ def update(home_elo, away_elo, home_pts, away_pts, neutral, cfg: EloConfig):
     return home_elo + delta, away_elo - delta
 
 
-def walk_games(games, cfg: EloConfig = EloConfig(), ratings: dict | None = None):
+def walk_games(games, cfg: EloConfig = EloConfig(), ratings: dict | None = None, qb=None):
     """Generator: step through completed games in order, yielding
     (game, home_elo, away_elo) as they were BEFORE the game, then updating.
     Pass a dict as `ratings` to get the final ratings filled in as it runs.
@@ -55,6 +56,10 @@ def walk_games(games, cfg: EloConfig = EloConfig(), ratings: dict | None = None)
     `games` is an iterable of dicts with: season, home_team, away_team,
     home_score, away_score, neutral. Must be chronological. Between seasons,
     every rating is pulled 45% of the way back to 1500 (rosters turn over).
+
+    Optional `qb` (a qb.QbTracker): the yielded ratings then include each team's quarterback
+    adjustment for that game, the Elo update uses the adjusted ratings (so a backup QB's loss
+    doesn't drag down the team's own rating), and `ratings` keeps the plain team Elo.
     """
     ratings = {} if ratings is None else ratings
     current_season = None
@@ -65,11 +70,13 @@ def walk_games(games, cfg: EloConfig = EloConfig(), ratings: dict | None = None)
                     ratings[t] += (START_RATING - ratings[t]) * cfg.season_regression
             current_season = g["season"]
         h, a = g["home_team"], g["away_team"]
-        yield g, ratings.get(h, START_RATING), ratings.get(a, START_RATING)
-        ratings[h], ratings[a] = update(
-            ratings.get(h, START_RATING), ratings.get(a, START_RATING),
-            g["home_score"], g["away_score"], g["neutral"], cfg,
-        )
+        adj_h, adj_a = qb.pre(g) if qb else (0.0, 0.0)
+        eh, ea = ratings.get(h, START_RATING) + adj_h, ratings.get(a, START_RATING) + adj_a
+        yield g, eh, ea
+        new_h, new_a = update(eh, ea, g["home_score"], g["away_score"], g["neutral"], cfg)
+        ratings[h], ratings[a] = new_h - adj_h, new_a - adj_a
+        if qb:
+            qb.update(g)
 
 
 def compute_ratings(games, cfg: EloConfig = EloConfig()) -> dict[str, float]:

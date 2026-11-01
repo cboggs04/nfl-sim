@@ -18,20 +18,42 @@ import polars as pl
 from app.schemas import (BacktestResponse, BracketConference, BracketResponse, GameView,
                          Record, SeasonResponse, SeedProb, SeedSlot, SimState, StateGame,
                          TeamAdvancement, TeamDetail, TeamOdds)
-from engine.data import DATA_DIR, load_games
-from engine.elo import EloConfig, compute_ratings, game_probability
+from engine.data import DATA_DIR, load_games, load_qb_game_epa
+from engine.elo import EloConfig, game_probability, walk_games
+from engine.qb import QbConfig, QbTracker, projected_starters, stats_by_game
 from engine.simulate import simulate_league
 from engine.teams import CONFERENCE_OF, DIVISION_OF, TEAM_NAMES, TEAMS
 
 FIRST_SEASON = 2010
 
 
+def live_settings() -> tuple[EloConfig, QbConfig | None]:
+    """The model settings the backtest chose (backtest.json); defaults if it hasn't been run."""
+    path = DATA_DIR / "backtest.json"
+    if path.exists():
+        live = BacktestResponse.model_validate_json(path.read_text()).live
+        if live:
+            return (EloConfig(k=live.k, home_field=live.home_field, season_regression=live.season_regression),
+                    QbConfig(**live.qb) if live.qb else None)
+    return EloConfig(), None
+
+
 def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False):
     """Run the simulation and build every cached response. Returns a dict of pydantic models."""
-    cfg = EloConfig()
-    df = load_games(list(range(FIRST_SEASON, season + 1)), refresh=refresh)
-    ratings = compute_ratings(df.filter(pl.col("result").is_not_null()).to_dicts(), cfg)
+    cfg, qb_cfg = live_settings()
+    seasons = list(range(FIRST_SEASON, season + 1))
+    df = load_games(seasons, refresh=refresh)
     schedule = df.filter((pl.col("season") == season) & (pl.col("game_type") == "REG")).to_dicts()
+
+    # Plain team Elo (learned with each game's quarterbacks accounted for), then add the adjustment for
+    # each team's projected starting QB. Everything downstream (sims, what-if) just sees one rating per team.
+    tracker = QbTracker(stats_by_game(load_qb_game_epa(seasons, refresh=refresh).to_dicts()), qb_cfg) if qb_cfg else None
+    team_elo: dict[str, float] = {}
+    for _ in walk_games(df.filter(pl.col("result").is_not_null()).to_dicts(), cfg, team_elo, qb=tracker):
+        pass
+    starters = projected_starters(schedule) if tracker else {}
+    qb_adj = {t: tracker.adjustment(t, starters[t][0]) if t in starters else 0.0 for t in TEAMS} if tracker else dict.fromkeys(TEAMS, 0.0)
+    ratings = {t: team_elo[t] + qb_adj[t] for t in TEAMS}
     league = simulate_league(schedule, ratings, n_sims, cfg, seed)
 
     records = {t: Record(wins=0, losses=0, ties=0) for t in TEAMS}
@@ -52,7 +74,8 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False):
             team=t, name=TEAM_NAMES[t], conference=CONFERENCE_OF[t], division=DIVISION_OF[t],
             elo=round(ratings[t], 1), record=records[t], exp_wins=r["exp_wins"],
             win_dist=list(r["win_dist"]), p_division=r["p_division"], p_playoffs=r["p_playoffs"],
-            p_top_seed=r["p_top_seed"], p_conference=r["p_conference"], p_super_bowl=r["p_super_bowl"])
+            p_top_seed=r["p_top_seed"], p_conference=r["p_conference"], p_super_bowl=r["p_super_bowl"],
+            qb=starters[t][1] if t in starters else None, qb_adj=round(qb_adj[t], 1))
 
     season_resp = SeasonResponse(
         season=season, n_sims=n_sims, generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
