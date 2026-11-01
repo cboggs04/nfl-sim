@@ -2,24 +2,25 @@
 
 /* Broadcast / game-menu look: one dark theme, bold condensed display type, angled panels. */
 :root {
-  --background: #060912;
+  --background: #08122a;
   --foreground: #eef2ff;
-  --panel: #0d1424;
-  --panel-2: #141e38;
-  --line: #243456;
+  --panel: #0e1b3a;
+  --panel-2: #162850;
+  --line: #28407a;
   --muted: #8d9cc0;
-  --accent: #d50a0a; /* NFL red: primary actions and highlights */
+  --accent: #2f8bff; /* bright blue: primary actions and highlights */
+  --gold: #f5b301; /* champion highlight only */
   --blue: #2b8cff;
   --good: #22c55e;
   --bad: #f04b4b;
 
   --chart-bar: #2b8cff;
   --chart-bar-hover: #6cb0ff;
-  --chart-grid: #243456;
+  --chart-grid: #28407a;
   --chart-text: #8d9cc0;
 
   --strong: #ffffff; /* headings and emphasized text */
-  --accent-ink: #ff5252; /* red used as text */
+  --accent-ink: #5aaaff; /* accent used as text */
   --on-accent: #ffffff;
   --head: rgba(0, 0, 0, 0.3);
   --gauge: rgba(0, 0, 0, 0.4);
@@ -27,11 +28,11 @@
   --rowtint: rgba(255, 255, 255, 0.025);
   --good-ink: #bbf7d0;
   --bad-ink: #fecaca;
-  --edge: #3a4f7a; /* inactive bracket lines */
+  --edge: #3d5a9a; /* inactive bracket lines */
   --bg-glow-1: rgba(43, 140, 255, 0.22);
-  --bg-glow-2: rgba(240, 75, 75, 0.14);
+  --bg-glow-2: rgba(120, 90, 255, 0.12);
   --stripe: rgba(255, 255, 255, 0.018);
-  --card-end: #0d1424; /* team-color cards always fade to dark, so their white text stays readable */
+  --card-end: #0b1630; /* team-color cards always fade to dark, so their white text stays readable */
 }
 
 :root[data-theme="light"] {
@@ -41,7 +42,8 @@
   --panel-2: #f3f6fc;
   --line: #cbd5e8;
   --muted: #55658a;
-  --accent: #d50a0a;
+  --accent: #1f6fe0;
+  --gold: #b07800;
   --blue: #1a56b0;
   --good: #1f9d4d;
   --bad: #d63a3a;
@@ -52,7 +54,7 @@
   --chart-text: #55658a;
 
   --strong: #0b1530;
-  --accent-ink: #c40909;
+  --accent-ink: #1a56b0;
   --head: rgba(15, 26, 51, 0.06);
   --gauge: rgba(15, 26, 51, 0.12);
   --hover: rgba(15, 26, 51, 0.05);
@@ -73,6 +75,7 @@
   --color-line: var(--line);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-gold: var(--gold);
   --color-blue: var(--blue);
   --color-good: var(--good);
   --color-bad: var(--bad);
@@ -153,7 +156,7 @@ body {
   transform: translateY(-1px);
 }
 .btn-primary {
-  background: linear-gradient(180deg, #f0262b, var(--accent));
+  background: linear-gradient(180deg, #5aaaff, var(--accent));
   color: var(--on-accent);
 }
 .btn-ghost {

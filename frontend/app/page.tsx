@@ -21,7 +21,7 @@ async function Dashboard() {
         </h1>
         <div className="mt-4 flex max-w-xl items-center gap-3 text-sm text-muted">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-line" role="img" aria-label={`${progress}% of the season played`}>
-            <div className="h-full rounded-full bg-gradient-to-r from-[#013369] to-accent" style={{ width: `${progress}%` }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-[#1d4f9e] to-accent" style={{ width: `${progress}%` }} />
           </div>
           <span className="tabular-nums">
             {season.games_played} of {season.games_total} games played

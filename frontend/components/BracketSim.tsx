@@ -276,7 +276,7 @@ function BracketView({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx;
               {champ && (
                 <div className="rise flex flex-col items-center">
                   <TeamLogo abbr={champ} size={150} />
-                  <div className="font-display mt-3 text-xl text-accent-ink">Champions</div>
+                  <div className="font-display mt-3 text-xl text-gold">Champions</div>
                   <div className="font-display text-3xl text-strong">{nickname(champ)}</div>
                   <div className="text-xs text-muted">
                     {ctx.records[champ]} · #{seedLabel(sim.seeds, champ)} seed
