@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import ProbCell from "@/components/ProbCell";
 import TeamLogo from "@/components/TeamLogo";
+import { teamInfo } from "@/lib/teams";
 import type { Conference, TeamOdds } from "@/lib/types";
 
 type SortKey =
@@ -64,39 +65,35 @@ export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
 
   return (
     <div>
-      <div className="mb-3 flex gap-2" role="group" aria-label="Filter by conference">
+      <div className="mb-4 flex gap-2" role="group" aria-label="Filter by conference">
         {(["ALL", "AFC", "NFC"] as const).map((c) => (
           <button
             key={c}
             onClick={() => setConf(c)}
             aria-pressed={conf === c}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-              conf === c
-                ? "border-sky-600 bg-sky-600 text-white"
-                : "border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            }`}
+            className={`btn btn-sm ${conf === c ? "btn-gold" : "btn-ghost"}`}
           >
             {c === "ALL" ? "All teams" : c}
           </button>
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-        <table className="w-full min-w-[820px] text-sm">
-          <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+      <div className="panel-flat overflow-x-auto">
+        <table className="w-full min-w-[900px] text-sm">
+          <thead className="border-b border-line bg-black/30 text-xs tracking-widest text-muted uppercase">
             <tr>
-              <th className="w-8 px-3 py-2 text-left">#</th>
-              <th className="px-3 py-2 text-left">
-                <button onClick={() => onSort("name")} className="font-semibold uppercase hover:text-zinc-900 dark:hover:text-white">
+              <th className="w-10 px-3 py-3 text-left">#</th>
+              <th className="px-3 py-3 text-left">
+                <button onClick={() => onSort("name")} className="font-semibold uppercase hover:text-white">
                   Team{arrow("name")}
                 </button>
               </th>
               {COLUMNS.map((c) => (
-                <th key={c.key} className="px-3 py-2 text-right" aria-sort={c.key === sortKey ? (desc ? "descending" : "ascending") : "none"}>
+                <th key={c.key} className="px-3 py-3 text-right" aria-sort={c.key === sortKey ? (desc ? "descending" : "ascending") : "none"}>
                   <button
                     onClick={() => onSort(c.key)}
                     title={c.hint}
-                    className="font-semibold uppercase hover:text-zinc-900 dark:hover:text-white"
+                    className={`font-semibold uppercase hover:text-white ${c.key === sortKey ? "text-accent" : ""}`}
                   >
                     {c.label}
                     {arrow(c.key)}
@@ -105,27 +102,30 @@ export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tbody className="divide-y divide-line/60">
             {rows.map((t, i) => (
-              <tr key={t.team} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/60">
-                <td className="px-3 py-2 text-zinc-400 tabular-nums">{i + 1}</td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-3">
-                    <TeamLogo abbr={t.team} size={32} />
-                    <div>
-                      <Link href={`/teams/${t.team}`} className="font-medium hover:underline">
-                        {t.name}
-                      </Link>
-                      <div className="text-xs text-zinc-500">{t.division}</div>
-                    </div>
-                  </div>
+              <tr key={t.team} className="group transition-colors hover:bg-white/[0.04]">
+                <td
+                  className="font-display px-3 py-2 text-2xl text-muted tabular-nums"
+                  style={{ boxShadow: `inset 5px 0 0 ${teamInfo(t.team).primary}` }}
+                >
+                  {i + 1}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="px-3 py-2">
+                  <Link href={`/teams/${t.team}`} className="flex items-center gap-4">
+                    <TeamLogo abbr={t.team} size={48} />
+                    <div>
+                      <div className="text-base font-semibold text-white group-hover:text-accent">{t.name}</div>
+                      <div className="text-xs text-muted">{t.division}</div>
+                    </div>
+                  </Link>
+                </td>
+                <td className="px-3 py-2 text-right text-base font-semibold tabular-nums">
                   {t.record.wins}-{t.record.losses}
                   {t.record.ties ? `-${t.record.ties}` : ""}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">{Math.round(t.elo)}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{t.exp_wins.toFixed(1)}</td>
+                <td className="px-3 py-2 text-right text-base tabular-nums">{Math.round(t.elo)}</td>
+                <td className="px-3 py-2 text-right text-base tabular-nums">{t.exp_wins.toFixed(1)}</td>
                 <ProbCell p={t.p_division} />
                 <ProbCell p={t.p_playoffs} />
                 <ProbCell p={t.p_top_seed} />

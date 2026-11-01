@@ -48,56 +48,53 @@ export default function SeasonRoller({
   if (!games.length) return null;
 
   return (
-    <section className="mt-6 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="font-semibold">Play out the rest of the season</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+    <section className="panel mt-6 p-5 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-2xl">
+          <h2 className="font-display text-4xl text-white">Play out the season</h2>
+          <p className="mt-1 text-sm text-muted">
             Each click randomly decides every remaining game using its win probability. Run it a few times to see how much
             one season can vary.
           </p>
         </div>
-        <button
-          onClick={roll}
-          className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"
-        >
+        <button onClick={roll} className="btn btn-gold text-xl">
           {outcomes ? "Simulate again" : "Simulate one season"}
         </button>
       </div>
 
       {outcomes && (
-        <div className="mt-4" aria-live="polite">
-          <div className="flex flex-wrap items-baseline gap-x-3">
-            <span className="text-3xl font-semibold tabular-nums">{recordText}</span>
-            <span className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="mt-5" aria-live="polite">
+          <div className="flex flex-wrap items-baseline gap-x-4">
+            <span className="font-display text-7xl text-white tabular-nums">{recordText}</span>
+            <span className="text-sm text-muted">
               {diff === 0
                 ? "exactly the most likely finish"
                 : `${Math.abs(diff)} ${Math.abs(diff) === 1 ? "win" : "wins"} ${diff > 0 ? "better" : "worse"} than the most likely finish`}
             </span>
           </div>
-          <ul className="mt-3 flex flex-wrap gap-2">
+          <ul className="mt-4 flex flex-wrap gap-2">
             {games.map((g, i) => (
               <li
                 key={g.game_id}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-200 py-1 pr-2 pl-1.5 text-xs dark:border-zinc-700"
+                className="flex items-center gap-2 rounded bg-black/30 py-1.5 pr-3 pl-1.5 text-xs ring-1 ring-line"
                 title={`Week ${g.week}: ${g.neutral || g.home ? "vs" : "@"} ${g.opponent} (${Math.round(g.p_win * 100)}% to win)`}
               >
                 <span
-                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
-                    outcomes[i] ? "bg-emerald-600" : "bg-rose-600"
+                  className={`font-display inline-flex h-8 w-8 items-center justify-center rounded text-lg text-white ${
+                    outcomes[i] ? "bg-good" : "bg-bad"
                   }`}
                   aria-label={outcomes[i] ? "Win" : "Loss"}
                 >
                   {outcomes[i] ? "W" : "L"}
                 </span>
-                <span className="text-zinc-500 tabular-nums dark:text-zinc-400">Wk {g.week}</span>
-                <TeamLogo abbr={g.opponent} size={20} />
+                <span className="font-semibold text-muted tabular-nums">Wk {g.week}</span>
+                <TeamLogo abbr={g.opponent} size={30} />
               </li>
             ))}
           </ul>
           {history.length > 1 && (
-            <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-              Your runs so far (wins): <span className="tabular-nums text-zinc-700 dark:text-zinc-200">{history.join(", ")}</span>
+            <p className="mt-4 text-sm text-muted">
+              Your runs so far (wins): <span className="font-semibold text-white tabular-nums">{history.join(", ")}</span>
             </p>
           )}
         </div>

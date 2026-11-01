@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Barlow_Condensed, Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import NavLinks from "@/components/NavLinks";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,6 +14,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const display = Barlow_Condensed({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["700", "800"],
+  style: ["italic"],
+});
+
 export const metadata: Metadata = {
   title: "NFL Season Simulator",
   description: "Monte Carlo projections of every team's record, playoff odds, and Super Bowl odds.",
@@ -20,22 +28,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <nav className="border-b border-zinc-200 dark:border-zinc-800">
-          <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3 text-sm sm:px-6">
-            <Link href="/" className="font-semibold">
-              NFL Simulator
+        <nav className="sticky top-0 z-30 border-b border-line bg-[#060912]/85 backdrop-blur">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2.5 sm:px-6">
+            <Link href="/" className="flex items-center gap-2" aria-label="NFL Simulator home">
+              <span
+                className="font-display bg-accent px-3 py-1 text-2xl text-[#1a1200]"
+                style={{ clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)" }}
+              >
+                NFL
+              </span>
+              <span className="font-display text-2xl text-white">SIM</span>
             </Link>
-            <Link href="/" className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
-              Dashboard
-            </Link>
-            <Link href="/bracket" className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
-              Playoff simulator
-            </Link>
+            <NavLinks />
           </div>
         </nav>
         {children}

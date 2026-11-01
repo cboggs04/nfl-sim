@@ -13,9 +13,9 @@ function ChartTooltip({ active, payload, valueName }: { active?: boolean; payloa
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="rounded-md border border-line bg-panel px-3 py-2 text-xs shadow-lg shadow-black/50">
       <div className="text-base font-semibold tabular-nums">{(d.value * 100).toFixed(1)}%</div>
-      <div className="text-zinc-500 dark:text-zinc-400">
+      <div className="text-muted">
         {valueName}: {d.label}
       </div>
     </div>
@@ -42,19 +42,19 @@ export default function ColumnChart({
   const max = Math.max(...data.map((d) => d.value), 0.01);
 
   return (
-    <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+    <section className="panel-flat p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-semibold">{title}</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+          <h2 className="font-display text-3xl text-white">{title}</h2>
+          <p className="text-sm text-muted">{subtitle}</p>
         </div>
-        <div className="flex shrink-0 overflow-hidden rounded-md border border-zinc-300 text-xs dark:border-zinc-700" role="group" aria-label="View">
+        <div className="flex shrink-0 overflow-hidden rounded-md border border-line text-xs" role="group" aria-label="View">
           {(["chart", "table"] as const).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
               aria-pressed={view === v}
-              className={`px-2.5 py-1 capitalize ${view === v ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"}`}
+              className={`px-2.5 py-1 capitalize ${view === v ? "bg-accent font-semibold text-[#1a1200]" : "text-muted hover:bg-white/10"}`}
             >
               {v}
             </button>
@@ -83,7 +83,7 @@ export default function ColumnChart({
               <Bar
                 dataKey="value"
                 fill="var(--chart-bar)"
-                maxBarSize={24}
+                maxBarSize={28}
                 radius={[4, 4, 0, 0]}
                 activeBar={{ fill: "var(--chart-bar-hover)" }}
                 isAnimationActive={false}
@@ -103,13 +103,13 @@ export default function ColumnChart({
       ) : (
         <div className="max-h-60 overflow-auto">
           <table className="w-full text-sm">
-            <thead className="text-xs uppercase text-zinc-500">
+            <thead className="text-xs uppercase text-muted">
               <tr>
                 <th className="py-1 text-left font-medium">{xLabel}</th>
                 <th className="py-1 text-right font-medium">Probability</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="divide-y divide-line/60">
               {data.map((d) => (
                 <tr key={d.label}>
                   <td className="py-1">{d.label}</td>

@@ -1,34 +1,132 @@
 @import "tailwindcss";
 
+/* Broadcast / game-menu look: one dark theme, bold italic display type, angled panels. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --chart-bar: #0284c7;
-  --chart-bar-hover: #0369a1;
-  --chart-grid: #e4e4e7;
-  --chart-text: #71717a;
+  --background: #060912;
+  --foreground: #eef2ff;
+  --panel: #0d1424;
+  --panel-2: #141e38;
+  --line: #243456;
+  --muted: #8d9cc0;
+  --accent: #f5b301; /* gold: primary actions and highlights */
+  --blue: #2b8cff;
+  --good: #22c55e;
+  --bad: #f04b4b;
+
+  --chart-bar: #2b8cff;
+  --chart-bar-hover: #6cb0ff;
+  --chart-grid: #243456;
+  --chart-text: #8d9cc0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-blue: var(--blue);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --chart-bar: #38bdf8;
-    --chart-bar-hover: #7dd3fc;
-    --chart-grid: #27272a;
-    --chart-text: #a1a1aa;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(1100px 520px at 85% -8%, rgba(43, 140, 255, 0.22), transparent 70%),
+    radial-gradient(900px 480px at -10% 8%, rgba(240, 75, 75, 0.14), transparent 70%),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.018) 0 2px, transparent 2px 22px);
+  background-attachment: fixed;
+}
+
+/* Big italic condensed headings, like a game's menu screens. */
+.font-display {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.95;
+}
+
+/* Panel with two cut corners. */
+.panel {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--line);
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+
+/* Plain rounded panel (used where tooltips must not be clipped). */
+.panel-flat {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+/* Parallelogram buttons. */
+.btn {
+  font-family: var(--font-display), sans-serif;
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.7rem 1.7rem;
+  clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  transition: filter 120ms, transform 120ms;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn:not(:disabled):hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+.btn-gold {
+  background: linear-gradient(180deg, #ffd04a, var(--accent));
+  color: #1a1200;
+}
+.btn-ghost {
+  background: var(--panel-2);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.btn-sm {
+  padding: 0.35rem 1.1rem;
+  font-size: 0.9rem;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 380ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+  .btn {
+    transition: none;
+  }
 }
