@@ -31,7 +31,7 @@ function Delta({ value, unit = "pts", digits = 1, noise = 1 }: { value: number; 
   const color = small ? "text-muted" : value > 0 ? "text-good-ink" : "text-bad-ink";
   return (
     <span className={`text-xs font-semibold tabular-nums ${color}`} title={small ? "Within simulation noise" : undefined}>
-      {value === 0 ? "—" : `${value > 0 ? "▲" : "▼"} ${Math.abs(value).toFixed(digits)}${unit === "pts" ? "" : ` ${unit}`}`}
+      {value === 0 ? "—" : `${value > 0 ? "▲" : "▼"} ${Math.abs(value).toFixed(digits)} ${unit}`}
     </span>
   );
 }
@@ -65,6 +65,7 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
   const [forced, setForced] = useState<Record<string, Forced>>({});
 
   const [result, setResult] = useState<SeasonResponse | null>(null);
+  const [ran, setRan] = useState<{ adjust: Record<string, number>; forced: Record<string, Forced> } | null>(null); // the changes behind `result`
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -107,13 +108,13 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
     setLoading(true);
     setError(null);
     try {
-      setResult(
-        await runWhatIf({
-          rating_adjustments: adjust,
-          game_overrides: Object.entries(forced).map(([game_id, f]) => ({ game_id, home_win: f.homeWin })),
-          n_sims: N_SIMS,
-        }),
-      );
+      const res = await runWhatIf({
+        rating_adjustments: adjust,
+        game_overrides: Object.entries(forced).map(([game_id, f]) => ({ game_id, home_win: f.homeWin })),
+        n_sims: N_SIMS,
+      });
+      setResult(res);
+      setRan({ adjust: { ...adjust }, forced: { ...forced } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -125,6 +126,7 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
     setAdjust({});
     setForced({});
     setResult(null);
+    setRan(null);
     setError(null);
   }
 
@@ -137,6 +139,17 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
     }))
     .sort((a, b) => Math.abs(b.dSb) + Math.abs(b.dPo) / 4 - (Math.abs(a.dSb) + Math.abs(a.dPo) / 4));
   const shown = showAll ? rows : rows.slice(0, 10);
+
+  // The teams you touched: boosted/hurt ones, plus any team whose game result you forced.
+  const touched = ran ? [...new Set([...Object.keys(ran.adjust), ...Object.values(ran.forced).map((f) => f.team)])] : [];
+  const after = Object.fromEntries((result?.teams ?? []).map((t) => [t.team, t]));
+  const describe = (team: string) => {
+    const parts: string[] = [];
+    if (ran && team in ran.adjust) parts.push(`${signed(ran.adjust[team])} Elo`);
+    for (const f of Object.values(ran?.forced ?? {}))
+      if (f.team === team) parts.push(`${f.teamWins ? "beat" : "lost to"} ${f.opponent} (wk ${f.week})`);
+    return parts.join(" · ");
+  };
 
   return (
     <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
@@ -269,6 +282,52 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
             Make a change on the left and click Run what-if. You&apos;ll see how every team&apos;s odds shift compared with the normal projection.
           </div>
         ) : (
+          <div className="space-y-6">
+            {touched.length > 0 && (
+              <div>
+                <h2 className="font-display mb-3 text-3xl text-strong">Your {touched.length === 1 ? "team" : "teams"}</h2>
+                <ul className="space-y-3">
+                  {touched.map((team) => {
+                    const b = base[team];
+                    const a = after[team];
+                    const info = teamInfo(team);
+                    const stats = [
+                      { label: "Exp. wins", b: b.exp_wins.toFixed(1), a: a.exp_wins.toFixed(1), d: a.exp_wins - b.exp_wins, unit: "wins", noise: 0.15 },
+                      { label: "Win division", b: pct(b.p_division), a: pct(a.p_division), d: (a.p_division - b.p_division) * 100 },
+                      { label: "Make playoffs", b: pct(b.p_playoffs), a: pct(a.p_playoffs), d: (a.p_playoffs - b.p_playoffs) * 100 },
+                      { label: "Win Super Bowl", b: pct(b.p_super_bowl), a: pct(a.p_super_bowl), d: (a.p_super_bowl - b.p_super_bowl) * 100 },
+                    ];
+                    return (
+                      <li
+                        key={team}
+                        className="panel flex flex-col gap-4 p-4 sm:flex-row sm:items-center"
+                        style={{ backgroundImage: `linear-gradient(110deg, ${info.primary}33, transparent 45%), linear-gradient(180deg, var(--panel-2), var(--panel))` }}
+                      >
+                        <div className="flex items-center gap-4 sm:w-60">
+                          <TeamLogo abbr={team} size={72} />
+                          <div className="min-w-0">
+                            <div className="font-display text-2xl text-strong">{info.name}</div>
+                            <div className="text-xs font-semibold text-accent-ink">{describe(team)}</div>
+                          </div>
+                        </div>
+                        <dl className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
+                          {stats.map((st) => (
+                            <div key={st.label}>
+                              <dt className="text-[11px] font-semibold tracking-widest text-muted uppercase">{st.label}</dt>
+                              <dd className="mt-0.5 tabular-nums">
+                                <span className="text-sm text-muted">{st.b} → </span>
+                                <span className="font-display text-3xl text-strong">{st.a}</span>
+                              </dd>
+                              <Delta value={st.d} unit={st.unit} noise={st.noise} />
+                            </div>
+                          ))}
+                        </dl>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           <div className="panel-flat overflow-hidden">
             <div className="flex flex-wrap items-end justify-between gap-2 border-b border-line p-4">
               <h2 className="font-display text-3xl text-strong">Biggest changes</h2>
@@ -331,6 +390,7 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
                 {showAll ? "Show top 10" : "Show all 32 teams"}
               </button>
             </div>
+          </div>
           </div>
         )}
       </section>
