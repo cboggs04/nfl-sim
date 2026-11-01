@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Barlow_Condensed, Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import NavLinks from "@/components/NavLinks";
+import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,9 +29,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}>
+      <head>
+        {/* Set the saved theme before first paint so there's no flash. Dark is the default. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{document.documentElement.dataset.theme=localStorage.getItem("theme")==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
-        <nav className="sticky top-0 z-30 border-b border-line bg-[#060912]/85 backdrop-blur">
+        <nav className="sticky top-0 z-30 border-b border-line bg-background/85 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2.5 sm:px-6">
             <Link href="/" className="flex items-center gap-2" aria-label="NFL Simulator home">
               <span
@@ -39,9 +48,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               >
                 NFL
               </span>
-              <span className="font-display text-2xl text-white">SIM</span>
+              <span className="font-display text-2xl text-strong">SIM</span>
             </Link>
-            <NavLinks />
+            <div className="flex items-center gap-2 sm:gap-4">
+              <NavLinks />
+              <ThemeToggle />
+            </div>
           </div>
         </nav>
         {children}

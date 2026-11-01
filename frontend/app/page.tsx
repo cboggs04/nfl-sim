@@ -15,9 +15,9 @@ async function Dashboard() {
   return (
     <>
       <header className="rise">
-        <div className="text-sm font-semibold tracking-[0.25em] text-accent uppercase">{season.season} season</div>
-        <h1 className="font-display mt-1 text-6xl text-white sm:text-8xl">
-          Title <span className="text-accent">Odds</span>
+        <div className="text-sm font-semibold tracking-[0.25em] text-accent-ink uppercase">{season.season} season</div>
+        <h1 className="font-display mt-1 text-6xl text-strong sm:text-8xl">
+          Super Bowl <span className="text-accent-ink">Odds</span>
         </h1>
         <div className="mt-4 flex max-w-xl items-center gap-3 text-sm text-muted">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-line" role="img" aria-label={`${progress}% of the season played`}>
@@ -37,7 +37,7 @@ async function Dashboard() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-display mb-4 text-4xl text-white">League board</h2>
+        <h2 className="font-display mb-4 text-4xl text-strong">League board</h2>
         <SeasonTable teams={season.teams} />
       </section>
     </>

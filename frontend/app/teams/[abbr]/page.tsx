@@ -14,8 +14,8 @@ function Tile({ label, value, ratio, color }: { label: string; value: string; ra
   return (
     <div className="panel p-4">
       <div className="text-xs font-semibold tracking-widest text-muted uppercase">{label}</div>
-      <div className="font-display mt-1 text-5xl text-white">{value}</div>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/40" aria-hidden>
+      <div className="font-display mt-1 text-5xl text-strong">{value}</div>
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gauge" aria-hidden>
         <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(2, ratio * 100))}%`, backgroundColor: color }} />
       </div>
     </div>
@@ -24,11 +24,11 @@ function Tile({ label, value, ratio, color }: { label: string; value: string; ra
 
 /** Describe an unplayed game in words instead of a hard W/L: even a 70% favorite loses 3 times in 10. */
 function tier(p: number) {
-  if (p >= 0.7) return { label: "Likely win", style: "bg-good/25 text-green-200 ring-1 ring-good/50" };
-  if (p >= 0.55) return { label: "Lean win", style: "bg-good/12 text-green-300 ring-1 ring-good/25" };
-  if (p > 0.45) return { label: "Toss-up", style: "bg-white/10 text-zinc-200 ring-1 ring-white/20" };
-  if (p > 0.3) return { label: "Lean loss", style: "bg-bad/12 text-red-300 ring-1 ring-bad/25" };
-  return { label: "Likely loss", style: "bg-bad/25 text-red-200 ring-1 ring-bad/50" };
+  if (p >= 0.7) return { label: "Likely win", style: "bg-good/25 text-good-ink ring-1 ring-good/50" };
+  if (p >= 0.55) return { label: "Lean win", style: "bg-good/12 text-good-ink ring-1 ring-good/25" };
+  if (p > 0.45) return { label: "Toss-up", style: "bg-head text-strong ring-1 ring-line" };
+  if (p > 0.3) return { label: "Lean loss", style: "bg-bad/12 text-bad-ink ring-1 ring-bad/25" };
+  return { label: "Likely loss", style: "bg-bad/25 text-bad-ink ring-1 ring-bad/50" };
 }
 
 function ResultCell({ g }: { g: GameView }) {
@@ -89,13 +89,13 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
 
   return (
     <>
-      <Link href="/" className="text-sm font-semibold tracking-widest text-muted uppercase hover:text-white">
+      <Link href="/" className="text-sm font-semibold tracking-widest text-muted uppercase hover:text-strong">
         ← All teams
       </Link>
 
       <header
         className="panel relative mt-4 overflow-hidden"
-        style={{ backgroundImage: `linear-gradient(120deg, ${info.primary}ee 0%, ${info.primary}55 45%, var(--panel) 100%)` }}
+        style={{ backgroundImage: `linear-gradient(120deg, ${info.primary}ee 0%, ${info.primary}55 45%, var(--card-end) 100%)` }}
       >
         <Image
           src={logoSrc(odds.team)}
@@ -160,7 +160,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
 
       <section className="mt-10">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-          <h2 className="font-display text-4xl text-white">Schedule &amp; outlook</h2>
+          <h2 className="font-display text-4xl text-strong">Schedule &amp; outlook</h2>
           <p className="text-sm text-muted">
             {remaining.length > 0
               ? `Expected ${expectedMore.toFixed(1)} more wins from ${remaining.length} remaining games`
@@ -169,7 +169,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
         </div>
         <div className="panel-flat overflow-x-auto">
           <table className="w-full min-w-[680px] text-sm">
-            <thead className="border-b border-line bg-black/30 text-xs tracking-widest text-muted uppercase">
+            <thead className="border-b border-line bg-head text-xs tracking-widest text-muted uppercase">
               <tr>
                 <th className="px-4 py-3 text-left font-semibold">Week</th>
                 <th className="px-3 py-3 text-left font-semibold">Opponent</th>
@@ -179,12 +179,12 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
             </thead>
             <tbody className="divide-y divide-line/60">
               {games.map((g) => (
-                <tr key={g.game_id} className={`transition-colors hover:bg-white/[0.04] ${g.played ? "" : "bg-white/[0.025]"}`}>
+                <tr key={g.game_id} className={`transition-colors hover:bg-hover ${g.played ? "" : "bg-rowtint"}`}>
                   <td className="font-display px-4 py-2 text-2xl text-muted tabular-nums">{g.week}</td>
                   <td className="px-3 py-2">
                     <Link href={`/teams/${g.opponent}`} className="group flex items-center gap-4">
                       <TeamLogo abbr={g.opponent} size={48} />
-                      <span className="text-base font-semibold text-white group-hover:text-accent">
+                      <span className="text-base font-semibold text-strong group-hover:text-accent-ink">
                         <span className="mr-2 text-sm font-normal text-muted">{g.neutral || g.home ? "vs" : "@"}</span>
                         {teamInfo(g.opponent).name}
                         {g.neutral && <span className="ml-2 text-xs font-normal text-muted">neutral site</span>}

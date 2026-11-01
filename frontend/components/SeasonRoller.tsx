@@ -51,7 +51,7 @@ export default function SeasonRoller({
     <section className="panel mt-6 p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="max-w-2xl">
-          <h2 className="font-display text-4xl text-white">Play out the season</h2>
+          <h2 className="font-display text-4xl text-strong">Play out the season</h2>
           <p className="mt-1 text-sm text-muted">
             Each click randomly decides every remaining game using its win probability. Run it a few times to see how much
             one season can vary.
@@ -65,7 +65,7 @@ export default function SeasonRoller({
       {outcomes && (
         <div className="mt-5" aria-live="polite">
           <div className="flex flex-wrap items-baseline gap-x-4">
-            <span className="font-display text-7xl text-white tabular-nums">{recordText}</span>
+            <span className="font-display text-7xl text-strong tabular-nums">{recordText}</span>
             <span className="text-sm text-muted">
               {diff === 0
                 ? "exactly the most likely finish"
@@ -76,11 +76,11 @@ export default function SeasonRoller({
             {games.map((g, i) => (
               <li
                 key={g.game_id}
-                className="flex items-center gap-2 rounded bg-black/30 py-1.5 pr-3 pl-1.5 text-xs ring-1 ring-line"
+                className="flex items-center gap-2 rounded bg-head py-1.5 pr-3 pl-1.5 text-xs ring-1 ring-line"
                 title={`Week ${g.week}: ${g.neutral || g.home ? "vs" : "@"} ${g.opponent} (${Math.round(g.p_win * 100)}% to win)`}
               >
                 <span
-                  className={`font-display inline-flex h-8 w-8 items-center justify-center rounded text-lg text-white ${
+                  className={`font-display inline-flex h-8 w-8 items-center justify-center rounded text-lg text-strong ${
                     outcomes[i] ? "bg-good" : "bg-bad"
                   }`}
                   aria-label={outcomes[i] ? "Win" : "Loss"}
@@ -94,7 +94,7 @@ export default function SeasonRoller({
           </ul>
           {history.length > 1 && (
             <p className="mt-4 text-sm text-muted">
-              Your runs so far (wins): <span className="font-semibold text-white tabular-nums">{history.join(", ")}</span>
+              Your runs so far (wins): <span className="font-semibold text-strong tabular-nums">{history.join(", ")}</span>
             </p>
           )}
         </div>

@@ -80,11 +80,11 @@ export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
 
       <div className="panel-flat overflow-x-auto">
         <table className="w-full min-w-[900px] text-sm">
-          <thead className="border-b border-line bg-black/30 text-xs tracking-widest text-muted uppercase">
+          <thead className="border-b border-line bg-head text-xs tracking-widest text-muted uppercase">
             <tr>
               <th className="w-10 px-3 py-3 text-left">#</th>
               <th className="px-3 py-3 text-left">
-                <button onClick={() => onSort("name")} className="font-semibold uppercase hover:text-white">
+                <button onClick={() => onSort("name")} className="font-semibold uppercase hover:text-strong">
                   Team{arrow("name")}
                 </button>
               </th>
@@ -93,7 +93,7 @@ export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
                   <button
                     onClick={() => onSort(c.key)}
                     title={c.hint}
-                    className={`font-semibold uppercase hover:text-white ${c.key === sortKey ? "text-accent" : ""}`}
+                    className={`font-semibold uppercase hover:text-strong ${c.key === sortKey ? "text-accent-ink" : ""}`}
                   >
                     {c.label}
                     {arrow(c.key)}
@@ -104,7 +104,7 @@ export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
           </thead>
           <tbody className="divide-y divide-line/60">
             {rows.map((t, i) => (
-              <tr key={t.team} className="group transition-colors hover:bg-white/[0.04]">
+              <tr key={t.team} className="group transition-colors hover:bg-hover">
                 <td
                   className="font-display px-3 py-2 text-2xl text-muted tabular-nums"
                   style={{ boxShadow: `inset 5px 0 0 ${teamInfo(t.team).primary}` }}
@@ -115,7 +115,7 @@ export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
                   <Link href={`/teams/${t.team}`} className="flex items-center gap-4">
                     <TeamLogo abbr={t.team} size={48} />
                     <div>
-                      <div className="text-base font-semibold text-white group-hover:text-accent">{t.name}</div>
+                      <div className="text-base font-semibold text-strong group-hover:text-accent-ink">{t.name}</div>
                       <div className="text-xs text-muted">{t.division}</div>
                     </div>
                   </Link>

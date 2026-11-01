@@ -51,7 +51,7 @@ function TeamRow({ team, m, ctx, isHome }: { team: string | null; m: Matchup; ct
       <span className="font-display w-4 pl-1 text-lg text-muted tabular-nums">{seed}</span>
       <TeamLogo abbr={team} size={34} />
       <span className="min-w-0 flex-1 leading-tight">
-        <span className={`block truncate text-sm ${won ? "font-bold text-white" : "font-semibold"}`}>{nickname(team)}</span>
+        <span className={`block truncate text-sm ${won ? "font-bold text-strong" : "font-semibold"}`}>{nickname(team)}</span>
         <span className="block text-[11px] text-muted">{ctx.records[team]}</span>
       </span>
       {won ? (
@@ -103,7 +103,7 @@ function ByeCard({ conf, ctx }: { conf: Conference; ctx: Ctx }) {
           <span className="block truncate text-sm font-semibold">{nickname(team)}</span>
           <span className="block text-[11px] text-muted">{ctx.records[team]}</span>
         </span>
-        <span className="text-[10px] font-bold tracking-widest text-accent">BYE</span>
+        <span className="text-[10px] font-bold tracking-widest text-accent-ink">BYE</span>
       </div>
     </div>
   );
@@ -112,7 +112,7 @@ function ByeCard({ conf, ctx }: { conf: Conference; ctx: Ctx }) {
 function SeedList({ conf, sim, ctx }: { conf: Conference; sim: SimulatedSeason; ctx: Ctx }) {
   return (
     <div>
-      <h4 className="font-display mb-3 text-2xl text-accent">{conf} final seeding</h4>
+      <h4 className="font-display mb-3 text-2xl text-accent-ink">{conf} final seeding</h4>
       <ol className="panel-flat overflow-hidden">
         {sim.seeds[conf].map((t, i) => (
           <li
@@ -170,7 +170,7 @@ function bracketEdges(b: Bracket, seeds: Record<Conference, string[]>, winners: 
 }
 
 function ColumnTitle({ children }: { children: React.ReactNode }) {
-  return <h4 className="font-display mb-3 text-center text-xl text-accent">{children}</h4>;
+  return <h4 className="font-display mb-3 text-center text-xl text-accent-ink">{children}</h4>;
 }
 
 function RoundColumn({ title, children }: { title: string; children: React.ReactNode }) {
@@ -251,8 +251,8 @@ function BracketView({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx;
   return (
     <div className="overflow-x-auto pb-2">
       <div className="mb-2 flex min-w-[1280px] items-end justify-between px-1">
-        <h3 className="font-display text-7xl text-white">AFC</h3>
-        <h3 className="font-display text-7xl text-white">NFC</h3>
+        <h3 className="font-display text-7xl text-strong">AFC</h3>
+        <h3 className="font-display text-7xl text-strong">NFC</h3>
       </div>
       <div ref={wrap} className="relative grid min-w-[1280px] grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,1.15fr)_repeat(3,minmax(0,1fr))] gap-x-7">
         <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full" aria-hidden>
@@ -263,7 +263,7 @@ function BracketView({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx;
               fill="none"
               strokeWidth={p.active ? 3 : 2}
               strokeLinejoin="round"
-              stroke={p.active ? "var(--accent)" : "#3a4f7a"}
+              stroke={p.active ? "var(--accent)" : "var(--edge)"}
               strokeDasharray={p.active ? undefined : "5 5"}
             />
           ))}
@@ -276,8 +276,8 @@ function BracketView({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx;
               {champ && (
                 <div className="rise flex flex-col items-center">
                   <TeamLogo abbr={champ} size={150} />
-                  <div className="font-display mt-3 text-xl text-accent">Champions</div>
-                  <div className="font-display text-3xl text-white">{nickname(champ)}</div>
+                  <div className="font-display mt-3 text-xl text-accent-ink">Champions</div>
+                  <div className="font-display text-3xl text-strong">{nickname(champ)}</div>
                   <div className="text-xs text-muted">
                     {ctx.records[champ]} · #{seedLabel(sim.seeds, champ)} seed
                   </div>
@@ -401,7 +401,7 @@ export default function BracketSim() {
         )}
       </div>
       {error && (
-        <p role="alert" className="mt-4 rounded-md bg-bad/15 px-4 py-2 text-sm text-red-200 ring-1 ring-bad/40">
+        <p role="alert" className="mt-4 rounded-md bg-bad/15 px-4 py-2 text-sm text-bad-ink ring-1 ring-bad/40">
           {error}. Is the API running on port 8000?
         </p>
       )}

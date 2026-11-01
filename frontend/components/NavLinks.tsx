@@ -20,7 +20,7 @@ export default function NavLinks() {
             href={l.href}
             aria-current={active ? "page" : undefined}
             className={`font-display border-b-[3px] px-2 py-1 text-lg transition-colors sm:px-3 sm:text-xl ${
-              active ? "border-accent text-white" : "border-transparent text-muted hover:text-white"
+              active ? "border-accent text-strong" : "border-transparent text-muted hover:text-strong"
             }`}
           >
             {l.label}

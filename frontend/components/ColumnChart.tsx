@@ -45,7 +45,7 @@ export default function ColumnChart({
     <section className="panel-flat p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-display text-3xl text-white">{title}</h2>
+          <h2 className="font-display text-3xl text-strong">{title}</h2>
           <p className="text-sm text-muted">{subtitle}</p>
         </div>
         <div className="flex shrink-0 overflow-hidden rounded-md border border-line text-xs" role="group" aria-label="View">
@@ -54,7 +54,7 @@ export default function ColumnChart({
               key={v}
               onClick={() => setView(v)}
               aria-pressed={view === v}
-              className={`px-2.5 py-1 capitalize ${view === v ? "bg-accent font-semibold text-[#1a1200]" : "text-muted hover:bg-white/10"}`}
+              className={`px-2.5 py-1 capitalize ${view === v ? "bg-accent font-semibold text-[#1a1200]" : "text-muted hover:bg-hover"}`}
             >
               {v}
             </button>
