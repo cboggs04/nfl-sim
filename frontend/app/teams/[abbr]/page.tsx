@@ -95,7 +95,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
 
       <header
         className="panel relative mt-4 overflow-hidden"
-        style={{ backgroundImage: `linear-gradient(120deg, ${info.primary}ee 0%, ${info.primary}55 45%, var(--card-end) 100%)` }}
+        style={{ backgroundColor: "var(--card-end)", backgroundImage: `linear-gradient(120deg, ${info.primary}ee 0%, ${info.primary}55 45%, var(--card-end) 100%)` }}
       >
         <Image
           src={logoSrc(odds.team)}

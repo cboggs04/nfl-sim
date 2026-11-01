@@ -8,7 +8,7 @@
   --panel-2: #162850;
   --line: #28407a;
   --muted: #8d9cc0;
-  --accent: #2f8bff; /* bright blue: primary actions and highlights */
+  --accent: #1d6fe0; /* bright blue: primary actions and highlights */
   --gold: #f5b301; /* champion highlight only */
   --blue: #2b8cff;
   --good: #22c55e;
@@ -20,7 +20,7 @@
   --chart-text: #8d9cc0;
 
   --strong: #ffffff; /* headings and emphasized text */
-  --accent-ink: #5aaaff; /* accent used as text */
+  --accent-ink: #5aa5ff; /* accent used as text */
   --on-accent: #ffffff;
   --head: rgba(0, 0, 0, 0.3);
   --gauge: rgba(0, 0, 0, 0.4);
@@ -42,7 +42,7 @@
   --panel-2: #f3f6fc;
   --line: #cbd5e8;
   --muted: #55658a;
-  --accent: #1f6fe0;
+  --accent: #1a5fcc;
   --gold: #b07800;
   --blue: #1a56b0;
   --good: #1f9d4d;
@@ -156,7 +156,7 @@ body {
   transform: translateY(-1px);
 }
 .btn-primary {
-  background: linear-gradient(180deg, #5aaaff, var(--accent));
+  background: linear-gradient(180deg, #3a86ee, var(--accent));
   color: var(--on-accent);
 }
 .btn-ghost {

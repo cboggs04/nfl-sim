@@ -16,7 +16,7 @@ export default function ContenderCards({ teams }: { teams: TeamOdds[] }) {
             <Link
               href={`/teams/${t.team}`}
               className="panel group relative block h-full overflow-hidden p-4 transition-transform hover:-translate-y-1"
-              style={{ backgroundImage: `linear-gradient(150deg, ${info.primary}cc 0%, ${info.primary}44 45%, var(--card-end) 100%)` }}
+              style={{ backgroundColor: "var(--card-end)", backgroundImage: `linear-gradient(150deg, ${info.primary}cc 0%, ${info.primary}44 45%, var(--card-end) 100%)` }}
             >
               <span className="font-display absolute top-2 left-3 text-5xl text-white/25">{i + 1}</span>
               <div className="flex justify-center pt-3 pb-2 transition-transform group-hover:scale-105">
