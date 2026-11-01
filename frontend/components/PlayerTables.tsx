@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Headshot from "@/components/Headshot";
 import { MAIN_STAT, POSITION_NAMES, STAT_LABELS, UNITS, formatStat } from "@/lib/roster";
 import type { RosterPlayer, TeamRoster } from "@/lib/types";
@@ -165,49 +164,6 @@ export function PositionSections({
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-/** Every player on the team, grouped by unit and position, with stats so far or projected through the end of the season. */
-export default function RosterView({ roster, color }: { roster: TeamRoster; color: string }) {
-  const [view, setView] = useState<View>("current");
-  const [unit, setUnit] = useState<string>("All");
-  const noSim = useMemo(() => new Map<string, Record<string, number>>(), []);
-  const noGp = useMemo(() => new Map<string, number>(), []);
-
-  const views: { key: View; label: string }[] = [
-    { key: "current", label: "So far" },
-    { key: "projected", label: "Projected final" },
-  ];
-
-  return (
-    <div className="mt-6">
-      <div className="panel flex flex-wrap items-center justify-between gap-4 p-4">
-        <div role="group" aria-label="Which numbers to show" className="flex flex-wrap gap-2">
-          {views.map((v) => (
-            <button key={v.key} aria-pressed={view === v.key} onClick={() => setView(v.key)} className={`btn btn-sm text-lg ${view === v.key ? "btn-primary" : "btn-ghost"}`}>
-              {v.label}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-muted">Want a simulated season? Use the Season simulator tab.</p>
-      </div>
-      <p className="mt-3 text-xs text-muted">
-        {view === "current"
-          ? `Regular-season totals after ${roster.team_games_played} games.`
-          : `Each player's current total plus his per-game rate (blended with last season) × the chance he plays × ${roster.games_remaining} remaining games. Small gray numbers show what's still to come.`}
-      </p>
-
-      <div className="mt-4 flex gap-2" role="group" aria-label="Filter by unit">
-        {["All", ...UNITS.map((u) => u.key)].map((u) => (
-          <button key={u} onClick={() => setUnit(u)} aria-pressed={unit === u} className={`btn btn-sm text-lg ${unit === u ? "btn-primary" : "btn-ghost"}`}>
-            {u}
-          </button>
-        ))}
-      </div>
-
-      <PositionSections roster={roster} color={color} unit={unit} view={view} simStats={noSim} simGp={noGp} />
     </div>
   );
 }

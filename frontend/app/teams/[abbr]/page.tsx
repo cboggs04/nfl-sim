@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import ColumnChart from "@/components/ColumnChart";
 import ProbCell, { pct } from "@/components/ProbCell";
-import RosterView from "@/components/RosterView";
 import SeasonSimulator from "@/components/SeasonSimulator";
 import TeamTabs from "@/components/TeamTabs";
 import TeamLogo from "@/components/TeamLogo";
@@ -220,13 +219,6 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
               <SeasonSimulator roster={roster} color={info.primary} wins={odds.record.wins} losses={odds.record.losses} ties={odds.record.ties} likelyWins={modeWins} />
             ) : (
               <p className="mt-6 text-muted">Simulator data isn&apos;t available. Is the API running, and has `python -m scripts.precompute` been run?</p>
-            )
-          }
-          roster={
-            roster ? (
-              <RosterView roster={roster} color={info.primary} />
-            ) : (
-              <p className="mt-6 text-muted">Roster data isn&apos;t available. Is the API running, and has `python -m scripts.precompute` been run?</p>
             )
           }
         />

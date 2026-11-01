@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PositionSections } from "@/components/RosterView";
+import { PositionSections, type View } from "@/components/PlayerTables";
 import TeamLogo from "@/components/TeamLogo";
 import { simulateTeam } from "@/lib/api";
 import { UNITS } from "@/lib/roster";
@@ -36,6 +36,8 @@ export default function SeasonSimulator({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unit, setUnit] = useState("All");
+  const [picked, setPicked] = useState<View>("current"); // what you chose; a fresh simulation shows itself until you choose again
+  const [pickedSince, setPickedSince] = useState(false);
 
   async function run() {
     setLoading(true);
@@ -43,6 +45,7 @@ export default function SeasonSimulator({
     try {
       const data = await simulateTeam(roster.team, mode);
       setResult({ mode, data });
+      setPickedSince(false);
       const w = data.games.filter((g) => g.win).length;
       setHistory((h) => [(mode === "rest" ? wins : 0) + w, ...h].slice(0, 8));
     } catch (e) {
@@ -76,6 +79,14 @@ export default function SeasonSimulator({
   const realPlayed = result?.mode === "full" ? (sim?.games.filter((g) => g.played) ?? []) : [];
   const realWins = realPlayed.filter((g) => g.actual_win).length;
   const flipped = realPlayed.filter((g) => g.actual_win !== null && g.actual_win !== g.win).length;
+
+  const view: View = result && !pickedSince ? "simulated" : picked === "simulated" && !result ? "current" : picked;
+  const views: { key: View; label: string; disabled?: boolean }[] = [
+    { key: "current", label: "So far" },
+    { key: "projected", label: "Projected final" },
+    { key: "simulated", label: "Simulated season", disabled: !result },
+  ];
+  const showDelta = view !== "simulated" || result?.mode === "rest";
 
   const simStats = useMemo(() => new Map(sim?.players.map((p) => [p.id, p.stats])), [sim]);
   const simGp = useMemo(() => new Map(sim?.players.map((p) => [p.id, p.gp])), [sim]);
@@ -166,23 +177,43 @@ export default function SeasonSimulator({
               </p>
             )}
           </section>
-
-          <h3 className="font-display mt-8 text-4xl text-strong">Simulated player stats</h3>
-          <p className="mt-1 text-sm text-muted">
-            {result.mode === "rest"
-              ? "Season totals: stats so far plus the simulated games. Small gray numbers show what was added."
-              : "Season totals from the replayed season alone. Injured players are treated as healthy for a replay."}
-          </p>
-          <div className="mt-3 flex gap-2" role="group" aria-label="Filter by unit">
-            {["All", ...UNITS.map((u) => u.key)].map((u) => (
-              <button key={u} onClick={() => setUnit(u)} aria-pressed={unit === u} className={`btn btn-sm text-lg ${unit === u ? "btn-primary" : "btn-ghost"}`}>
-                {u}
-              </button>
-            ))}
-          </div>
-          <PositionSections roster={roster} color={color} unit={unit} view="simulated" simStats={simStats} simGp={simGp} showDelta={result.mode === "rest"} />
         </div>
       )}
+
+      <h3 className="font-display mt-8 text-4xl text-strong">Roster &amp; player stats</h3>
+      <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Which numbers to show">
+        {views.map((v) => (
+          <button
+            key={v.key}
+            disabled={v.disabled}
+            aria-pressed={view === v.key}
+            onClick={() => {
+              setPicked(v.key);
+              setPickedSince(true);
+            }}
+            className={`btn btn-sm text-lg ${view === v.key ? "btn-primary" : "btn-ghost"}`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+      <p className="mt-2 text-sm text-muted">
+        {view === "current" && `Regular-season totals after ${roster.team_games_played} games.`}
+        {view === "projected" &&
+          `Each player's current total plus his per-game rate (blended with last season) × the chance he plays × ${roster.games_remaining} remaining games. Small gray numbers show what's still to come.`}
+        {view === "simulated" &&
+          (result?.mode === "rest"
+            ? "Season totals: stats so far plus the simulated games. Small gray numbers show what was added."
+            : "Season totals from the replayed season alone. Injured players are treated as healthy for a replay.")}
+      </p>
+      <div className="mt-3 flex gap-2" role="group" aria-label="Filter by unit">
+        {["All", ...UNITS.map((u) => u.key)].map((u) => (
+          <button key={u} onClick={() => setUnit(u)} aria-pressed={unit === u} className={`btn btn-sm text-lg ${unit === u ? "btn-primary" : "btn-ghost"}`}>
+            {u}
+          </button>
+        ))}
+      </div>
+      <PositionSections roster={roster} color={color} unit={unit} view={view} simStats={simStats} simGp={simGp} showDelta={showDelta} />
     </div>
   );
 }
