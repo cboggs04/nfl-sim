@@ -59,3 +59,32 @@ def test_sim_game_endpoint():
     odds = client.post("/api/sim/game", json={"home": "SEA", "away": "NE", "play": False}).json()
     assert odds["winner"] is None and 0 < odds["p_home"] < 1
     assert client.post("/api/sim/game", json={"home": "XXX", "away": "NE"}).status_code == 422
+
+
+@needs_data
+def test_whatif_rating_boost_helps_and_validates():
+    base = {t["team"]: t for t in client.get("/api/season").json()["teams"]}
+    r = client.post("/api/whatif", json={"rating_adjustments": {"CHI": 150}, "n_sims": 1000})
+    assert r.status_code == 200
+    out = {t["team"]: t for t in r.json()["teams"]}
+    assert len(out) == 32 and out["CHI"]["elo"] == pytest.approx(base["CHI"]["elo"] + 150, abs=0.1)
+    assert out["CHI"]["exp_wins"] > base["CHI"]["exp_wins"] + 0.5
+    assert client.post("/api/whatif", json={"rating_adjustments": {"XXX": 10}}).status_code == 422
+    assert client.post("/api/whatif", json={"rating_adjustments": {"CHI": 999}}).status_code == 422
+    assert client.post("/api/whatif", json={"n_sims": 5}).status_code == 422
+
+
+@needs_data
+def test_whatif_game_override():
+    games = client.get("/api/teams/KC").json()["games"]
+    nxt = next(g for g in games if not g["played"])
+    home_win = nxt["home"]  # force KC to win
+    base = client.get("/api/season").json()["teams"]
+    kc_base = next(t for t in base if t["team"] == "KC")["exp_wins"]
+    r = client.post("/api/whatif", json={"game_overrides": [{"game_id": nxt["game_id"], "home_win": home_win}], "n_sims": 1000})
+    assert r.status_code == 200
+    kc = next(t for t in r.json()["teams"] if t["team"] == "KC")
+    assert kc["exp_wins"] > kc_base
+    played = next(g for g in games if g["played"])
+    assert client.post("/api/whatif", json={"game_overrides": [{"game_id": played["game_id"], "home_win": True}]}).status_code == 422
+    assert client.post("/api/whatif", json={"game_overrides": [{"game_id": "nope", "home_win": True}]}).status_code == 422
