@@ -143,6 +143,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
 
       
         <TeamTabs
+          key={odds.team} // a fresh page every time: always opens on Overview
           overview={
             <>
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">

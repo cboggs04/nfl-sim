@@ -35,7 +35,7 @@ export default function SeasonSimulator({
   const [history, setHistory] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [unit, setUnit] = useState("All");
+  const [unit, setUnit] = useState<string>(UNITS[0].key); // Offense first
   const [picked, setPicked] = useState<View>("current"); // what you chose; a fresh simulation shows itself until you choose again
   const [pickedSince, setPickedSince] = useState(false);
 
@@ -210,7 +210,7 @@ export default function SeasonSimulator({
                 : "Season totals from the replayed season alone. Injured players are treated as healthy for a replay.")}
           </p>
           <div className="mt-3 flex gap-2" role="group" aria-label="Filter by unit">
-            {["All", ...UNITS.map((u) => u.key)].map((u) => (
+            {UNITS.map((u) => u.key).map((u) => (
               <button key={u} onClick={() => setUnit(u)} aria-pressed={unit === u} className={`btn btn-sm text-lg ${unit === u ? "btn-primary" : "btn-ghost"}`}>
                 {u}
               </button>
