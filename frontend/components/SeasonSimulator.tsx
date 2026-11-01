@@ -180,40 +180,45 @@ export default function SeasonSimulator({
         </div>
       )}
 
-      <h3 className="font-display mt-8 text-4xl text-strong">Roster &amp; player stats</h3>
-      <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Which numbers to show">
-        {views.map((v) => (
-          <button
-            key={v.key}
-            disabled={v.disabled}
-            aria-pressed={view === v.key}
-            onClick={() => {
-              setPicked(v.key);
-              setPickedSince(true);
-            }}
-            className={`btn btn-sm text-lg ${view === v.key ? "btn-primary" : "btn-ghost"}`}
-          >
-            {v.label}
-          </button>
-        ))}
-      </div>
-      <p className="mt-2 text-sm text-muted">
-        {view === "current" && `Regular-season totals after ${roster.team_games_played} games.`}
-        {view === "projected" &&
-          `Each player's current total plus his per-game rate (blended with last season) × the chance he plays × ${roster.games_remaining} remaining games. Small gray numbers show what's still to come.`}
-        {view === "simulated" &&
-          (result?.mode === "rest"
-            ? "Season totals: stats so far plus the simulated games. Small gray numbers show what was added."
-            : "Season totals from the replayed season alone. Injured players are treated as healthy for a replay.")}
-      </p>
-      <div className="mt-3 flex gap-2" role="group" aria-label="Filter by unit">
-        {["All", ...UNITS.map((u) => u.key)].map((u) => (
-          <button key={u} onClick={() => setUnit(u)} aria-pressed={unit === u} className={`btn btn-sm text-lg ${unit === u ? "btn-primary" : "btn-ghost"}`}>
-            {u}
-          </button>
-        ))}
-      </div>
-      <PositionSections roster={roster} color={color} unit={unit} view={view} simStats={simStats} simGp={simGp} showDelta={showDelta} />
+      {/* Players appear only once a season has been simulated. */}
+      {result && (
+        <>
+          <h3 className="font-display mt-8 text-4xl text-strong">Roster &amp; player stats</h3>
+          <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Which numbers to show">
+            {views.map((v) => (
+              <button
+                key={v.key}
+                disabled={v.disabled}
+                aria-pressed={view === v.key}
+                onClick={() => {
+                  setPicked(v.key);
+                  setPickedSince(true);
+                }}
+                className={`btn btn-sm text-lg ${view === v.key ? "btn-primary" : "btn-ghost"}`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-sm text-muted">
+            {view === "current" && `Regular-season totals after ${roster.team_games_played} games.`}
+            {view === "projected" &&
+              `Each player's current total plus his per-game rate (blended with last season) × the chance he plays × ${roster.games_remaining} remaining games. Small gray numbers show what's still to come.`}
+            {view === "simulated" &&
+              (result?.mode === "rest"
+                ? "Season totals: stats so far plus the simulated games. Small gray numbers show what was added."
+                : "Season totals from the replayed season alone. Injured players are treated as healthy for a replay.")}
+          </p>
+          <div className="mt-3 flex gap-2" role="group" aria-label="Filter by unit">
+            {["All", ...UNITS.map((u) => u.key)].map((u) => (
+              <button key={u} onClick={() => setUnit(u)} aria-pressed={unit === u} className={`btn btn-sm text-lg ${unit === u ? "btn-primary" : "btn-ghost"}`}>
+                {u}
+              </button>
+            ))}
+          </div>
+          <PositionSections roster={roster} color={color} unit={unit} view={view} simStats={simStats} simGp={simGp} showDelta={showDelta} />
+        </>
+      )}
     </div>
   );
 }
