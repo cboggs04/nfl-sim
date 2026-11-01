@@ -5,8 +5,7 @@ import { Suspense } from "react";
 import ColumnChart from "@/components/ColumnChart";
 import ProbCell, { pct } from "@/components/ProbCell";
 import RosterView from "@/components/RosterView";
-import SeasonRoller from "@/components/SeasonRoller";
-import { TeamSimProvider } from "@/components/TeamSim";
+import SeasonSimulator from "@/components/SeasonSimulator";
 import TeamTabs from "@/components/TeamTabs";
 import TeamLogo from "@/components/TeamLogo";
 import { getRoster, getTeam } from "@/lib/api";
@@ -143,7 +142,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
         </div>
       </header>
 
-      <TeamSimProvider team={odds.team}>
+      
         <TeamTabs
           overview={
             <>
@@ -155,21 +154,6 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
         <Tile label="Super Bowl" value={pct(odds.p_conference)} ratio={odds.p_conference} color={info.primary} />
         <Tile label="Win it all" value={pct(odds.p_super_bowl)} ratio={odds.p_super_bowl} color="var(--accent)" />
       </div>
-
-      <SeasonRoller
-        games={remaining.map((g) => ({
-          game_id: g.game_id,
-          week: g.week,
-          opponent: g.opponent,
-          home: g.home,
-          neutral: g.neutral,
-          p_win: g.p_win ?? 0.5,
-        }))}
-        wins={odds.record.wins}
-        losses={odds.record.losses}
-        ties={odds.record.ties}
-        likelyWins={modeWins}
-      />
 
       <section className="mt-10">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
@@ -231,15 +215,21 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
       </div>
             </>
           }
+          simulator={
+            roster ? (
+              <SeasonSimulator roster={roster} color={info.primary} wins={odds.record.wins} losses={odds.record.losses} ties={odds.record.ties} likelyWins={modeWins} />
+            ) : (
+              <p className="mt-6 text-muted">Simulator data isn&apos;t available. Is the API running, and has `python -m scripts.precompute` been run?</p>
+            )
+          }
           roster={
             roster ? (
-              <RosterView roster={roster} color={info.primary} wins={odds.record.wins} losses={odds.record.losses} ties={odds.record.ties} />
+              <RosterView roster={roster} color={info.primary} />
             ) : (
               <p className="mt-6 text-muted">Roster data isn&apos;t available. Is the API running, and has `python -m scripts.precompute` been run?</p>
             )
           }
         />
-      </TeamSimProvider>
     </>
   );
 }

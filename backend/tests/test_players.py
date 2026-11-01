@@ -92,3 +92,20 @@ def test_talent_uncertainty_widens_outcomes_without_shifting_the_average():
     fixed, uncertain = np.array(sacks_like(False)), np.array(sacks_like(True))
     assert uncertain.std() > fixed.std() * 1.1
     assert uncertain.mean() == pytest.approx(fixed.mean(), rel=0.08)
+
+
+def test_full_season_replay_ignores_results_so_far():
+    p = qb()                                                   # 1,700 passing yards so far
+    one_game = simulate_player(p, [True], np.random.default_rng(5), full_season=True)
+    assert one_game["stats"]["passing_yards"] < 700            # stats start at zero: just this one simulated game
+    rest = simulate_player(p, [True], np.random.default_rng(5))
+    assert rest["stats"]["passing_yards"] >= 1700              # rest-of-season keeps what he has
+    full = simulate_player(p, [True, False] * 8 + [True], np.random.default_rng(5), full_season=True)
+    assert 2500 < full["stats"]["passing_yards"] < 6500 and full["gp"] <= 17
+
+
+def test_full_season_replay_can_use_an_injured_player():
+    p = qb(status="RES")
+    assert p["avail"] == 0 and p["avail_full"] > 0.5
+    full = simulate_player(p, [True] * 17, np.random.default_rng(6), full_season=True)
+    assert full["gp"] > 5 and full["stats"]["passing_yards"] > 0

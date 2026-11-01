@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 
-/** Overview / Roster tabs. Both panels are rendered by the server page; this only decides which one shows. */
-export default function TeamTabs({ overview, roster }: { overview: React.ReactNode; roster: React.ReactNode }) {
-  const [tab, setTab] = useState<"overview" | "roster">("overview");
+/** Overview / Roster / Season simulator tabs. Both panels are rendered by the server page; this only decides which one shows. */
+export default function TeamTabs({ overview, roster, simulator }: { overview: React.ReactNode; roster: React.ReactNode; simulator: React.ReactNode }) {
+  const [tab, setTab] = useState<"overview" | "roster" | "simulator">("overview");
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "roster", label: "Roster & player stats" },
+    { key: "simulator", label: "Season simulator" },
   ] as const;
   return (
     <div className="mt-6">
@@ -33,6 +34,9 @@ export default function TeamTabs({ overview, roster }: { overview: React.ReactNo
       </div>
       <div role="tabpanel" id="panel-roster" aria-labelledby="tab-roster" hidden={tab !== "roster"}>
         {roster}
+      </div>
+      <div role="tabpanel" id="panel-simulator" aria-labelledby="tab-simulator" hidden={tab !== "simulator"}>
+        {simulator}
       </div>
     </div>
   );

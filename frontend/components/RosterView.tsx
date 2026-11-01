@@ -2,28 +2,27 @@
 
 import { useMemo, useState } from "react";
 import Headshot from "@/components/Headshot";
-import { useTeamSim } from "@/components/TeamSim";
 import { MAIN_STAT, POSITION_NAMES, STAT_LABELS, UNITS, formatStat } from "@/lib/roster";
 import type { RosterPlayer, TeamRoster } from "@/lib/types";
 
-type View = "current" | "projected" | "simulated";
+export type View = "current" | "projected" | "simulated";
 
 const STATUS_BADGE: Record<string, { label: string; style: string; title: string }> = {
   RES: { label: "IR", style: "bg-bad/20 text-bad-ink ring-bad/40", title: "Injured reserve: projected to miss the rest of the season" },
   INA: { label: "OUT", style: "bg-accent/20 text-accent-ink ring-accent/40", title: "Inactive this week: counted as playing about half of his remaining games" },
 };
 
-function Cell({ stat, value, base, view }: { stat: string; value: number; base: number; view: View }) {
+function Cell({ stat, value, base, view, showDelta }: { stat: string; value: number; base: number; view: View; showDelta: boolean }) {
   const added = value - base;
   return (
     <td className="px-3 py-2 text-right tabular-nums">
       <div className="text-base font-semibold">{formatStat(stat, value)}</div>
-      {view !== "current" && Math.round(added * 2) > 0 && <div className="text-[10px] text-muted">+{formatStat(stat, added)}</div>}
+      {view !== "current" && showDelta && Math.round(added * 2) > 0 && <div className="text-[10px] text-muted">+{formatStat(stat, added)}</div>}
     </td>
   );
 }
 
-function PositionTable({
+export function PositionTable({
   position,
   players,
   columns,
@@ -31,7 +30,9 @@ function PositionTable({
   simStats,
   simGp,
   color,
+  showDelta = true,
 }: {
+  showDelta?: boolean;
   position: string;
   players: RosterPlayer[];
   columns: string[];
@@ -104,11 +105,11 @@ function PositionTable({
                   {columns.length > 0 && (
                     <td className="px-3 py-2 text-right tabular-nums">
                       <div className="text-base font-semibold">{Math.round(gpOf(p))}</div>
-                      {view !== "current" && gpOf(p) - p.gp >= 0.5 && <div className="text-[10px] text-muted">+{Math.round(gpOf(p) - p.gp)}</div>}
+                      {view !== "current" && showDelta && gpOf(p) - p.gp >= 0.5 && <div className="text-[10px] text-muted">+{Math.round(gpOf(p) - p.gp)}</div>}
                     </td>
                   )}
                   {columns.map((c) => (
-                    <Cell key={c} stat={c} value={valueOf(p, c) ?? 0} base={p.stats[c] ?? 0} view={view} />
+                    <Cell key={c} stat={c} value={valueOf(p, c) ?? 0} base={p.stats[c] ?? 0} view={view} showDelta={showDelta} />
                   ))}
                 </tr>
               );
@@ -120,92 +121,82 @@ function PositionTable({
   );
 }
 
-/** Every player on the team, grouped by unit and position, with stats so far, projected, or from a simulated season. */
-export default function RosterView({
+/** The roster's position tables, grouped Offense / Defense / Special teams, for one unit or all. */
+export function PositionSections({
   roster,
   color,
-  wins,
-  losses,
-  ties,
+  unit,
+  view,
+  simStats,
+  simGp,
+  showDelta = true,
 }: {
   roster: TeamRoster;
   color: string;
-  wins: number;
-  losses: number;
-  ties: number;
+  unit: string;
+  view: View;
+  simStats: Map<string, Record<string, number>>;
+  simGp: Map<string, number>;
+  showDelta?: boolean;
 }) {
-  const { sim, loading, error, run } = useTeamSim();
-  const [chosen, setChosen] = useState<View>("current");
+  return (
+    <div className="mt-4 space-y-8">
+      {UNITS.filter((u) => unit === "All" || u.key === unit).map((u) => (
+        <div key={u.key}>
+          <h2 className="font-display mb-3 text-4xl text-strong">{u.key}</h2>
+          <div className="space-y-4">
+            {u.positions.map((pos) => {
+              const players = roster.players.filter((p) => p.position === pos);
+              if (!players.length) return null;
+              return (
+                <PositionTable
+                  key={pos}
+                  position={pos}
+                  players={players}
+                  columns={roster.columns[pos] ?? []}
+                  view={view}
+                  simStats={simStats}
+                  simGp={simGp}
+                  color={color}
+                  showDelta={showDelta}
+                />
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Every player on the team, grouped by unit and position, with stats so far or projected through the end of the season. */
+export default function RosterView({ roster, color }: { roster: TeamRoster; color: string }) {
+  const [view, setView] = useState<View>("current");
   const [unit, setUnit] = useState<string>("All");
+  const noSim = useMemo(() => new Map<string, Record<string, number>>(), []);
+  const noGp = useMemo(() => new Map<string, number>(), []);
 
-  // Show the simulated season as soon as one exists, unless you picked another view since.
-  const [pickedSinceSim, setPickedSinceSim] = useState(false);
-  const view: View = sim && !pickedSinceSim ? "simulated" : chosen === "simulated" && !sim ? "current" : chosen;
-
-  const simStats = useMemo(() => new Map(sim?.players.map((p) => [p.id, p.stats])), [sim]);
-  const simGp = useMemo(() => new Map(sim?.players.map((p) => [p.id, p.gp])), [sim]);
-  const simWins = sim ? sim.games.filter((g) => g.win).length : 0;
-
-  const views: { key: View; label: string; disabled?: boolean }[] = [
+  const views: { key: View; label: string }[] = [
     { key: "current", label: "So far" },
     { key: "projected", label: "Projected final" },
-    { key: "simulated", label: "Simulated season", disabled: !sim },
   ];
-
-  const units = UNITS.filter((u) => unit === "All" || u.key === unit);
 
   return (
     <div className="mt-6">
       <div className="panel flex flex-wrap items-center justify-between gap-4 p-4">
         <div role="group" aria-label="Which numbers to show" className="flex flex-wrap gap-2">
           {views.map((v) => (
-            <button
-              key={v.key}
-              disabled={v.disabled}
-              aria-pressed={view === v.key}
-              onClick={() => {
-                setChosen(v.key);
-                setPickedSinceSim(true);
-              }}
-              className={`btn btn-sm text-lg ${view === v.key ? "btn-primary" : "btn-ghost"}`}
-            >
+            <button key={v.key} aria-pressed={view === v.key} onClick={() => setView(v.key)} className={`btn btn-sm text-lg ${view === v.key ? "btn-primary" : "btn-ghost"}`}>
               {v.label}
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {sim && (
-            <span className="text-sm text-muted">
-              Simulated finish:{" "}
-              <b className="font-display text-2xl text-strong">
-                {wins + simWins}-{losses + sim.games.length - simWins}
-                {ties ? `-${ties}` : ""}
-              </b>
-            </span>
-          )}
-          <button
-            onClick={() => {
-              setPickedSinceSim(false);
-              void run();
-            }}
-            disabled={loading || roster.games_remaining === 0}
-            className="btn btn-primary text-xl"
-          >
-            {loading ? "Simulating…" : sim ? "Simulate again" : "Simulate a season"}
-          </button>
-        </div>
+        <p className="text-xs text-muted">Want a simulated season? Use the Season simulator tab.</p>
       </div>
-      {error && (
-        <p role="alert" className="mt-3 rounded-md bg-bad/15 px-4 py-2 text-sm text-bad-ink ring-1 ring-bad/40">
-          {error}. Is the API running on port 8000?
-        </p>
-      )}
       <p className="mt-3 text-xs text-muted">
-        {view === "current" && `Regular-season totals after ${roster.team_games_played} games.`}
-        {view === "projected" &&
-          `Each player's current total plus his per-game rate (blended with last season) × the chance he plays × ${roster.games_remaining} remaining games. Small gray numbers show what's still to come.`}
-        {view === "simulated" &&
-          "One randomly simulated rest of season. Wins make touchdowns, rushing and takeaways more likely and losses mean more passing, using patterns measured from 2020–2025. Run it again for a different season."}
+        {view === "current"
+          ? `Regular-season totals after ${roster.team_games_played} games.`
+          : `Each player's current total plus his per-game rate (blended with last season) × the chance he plays × ${roster.games_remaining} remaining games. Small gray numbers show what's still to come.`}
       </p>
 
       <div className="mt-4 flex gap-2" role="group" aria-label="Filter by unit">
@@ -216,31 +207,7 @@ export default function RosterView({
         ))}
       </div>
 
-      <div className="mt-4 space-y-8">
-        {units.map((u) => (
-          <div key={u.key}>
-            <h2 className="font-display mb-3 text-4xl text-strong">{u.key}</h2>
-            <div className="space-y-4">
-              {u.positions.map((pos) => {
-                const players = roster.players.filter((p) => p.position === pos);
-                if (!players.length) return null;
-                return (
-                  <PositionTable
-                    key={pos}
-                    position={pos}
-                    players={players}
-                    columns={roster.columns[pos] ?? []}
-                    view={view}
-                    simStats={simStats}
-                    simGp={simGp}
-                    color={color}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
+      <PositionSections roster={roster} color={color} unit={unit} view={view} simStats={noSim} simGp={noGp} />
     </div>
   );
 }

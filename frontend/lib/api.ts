@@ -71,5 +71,5 @@ export const rollGame = (home: string, away: string, neutral: boolean, play = tr
 /** Re-run the season simulation with changed team ratings and/or forced game results (~1 second). */
 export const runWhatIf = (req: WhatIfRequest) => post<SeasonResponse>("/api/whatif", req);
 
-/** Simulate one team's rest of season: its game results and every player's resulting stats. */
-export const simulateTeam = (team: string) => post<SimTeamResult>("/api/sim/team", { team });
+/** Simulate one team's season: its game results and every player's resulting stats. "rest" plays out the remaining games; "full" replays all of them, ignoring results so far. */
+export const simulateTeam = (team: string, mode: "rest" | "full" = "rest") => post<SimTeamResult>("/api/sim/team", { team, mode });

@@ -128,3 +128,17 @@ def test_leaders_endpoint():
     assert all(p["projected"] >= p["current"] - 0.2 for rows in d["leaders"].values() for p in rows)
     qb = next(p for p in client.get("/api/teams/KC/roster").json()["players"] if p["position"] == "QB" and p["gp"] > 0)
     assert "rushing_tds" in qb["stats"]
+
+
+@needs_data
+def test_sim_team_full_season_mode_replays_every_game():
+    r = client.post("/api/sim/team", json={"team": "KC", "mode": "full"})
+    assert r.status_code == 200
+    d = r.json()
+    roster = client.get("/api/teams/KC/roster").json()
+    assert len(d["games"]) == 17
+    played = [g for g in d["games"] if g["played"]]
+    assert len(played) == roster["team_games_played"] and all(g["actual_win"] in (True, False) for g in played)
+    assert all(g["actual_win"] is None for g in d["games"] if not g["played"])
+    assert {p["id"] for p in d["players"]} == {p["id"] for p in roster["players"]}
+    assert client.post("/api/sim/team", json={"team": "KC", "mode": "weird"}).status_code == 422

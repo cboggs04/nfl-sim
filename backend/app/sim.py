@@ -65,25 +65,33 @@ def playoff_game(req: PlayoffGameRequest):
 
 @router.post("/team", response_model=SimTeamResult)
 def simulate_team_season(req: SimTeamRequest):
-    """Play out one team's remaining games, then its players' stats, with results driving the stats."""
+    """Simulate one team's season and its players' stats, with the results driving the stats.
+
+    mode "rest": play out the remaining games (results so far stay).
+    mode "full": replay every game of the season from scratch, ignoring results so far (uses today's team ratings)."""
     import numpy as np
 
     team = req.team.upper()
     if team not in TEAMS:
         raise HTTPException(422, f"Unknown team '{req.team}'")
+    full = req.mode == "full"
     state, cfg, schedule = _state()
     rng = random.Random()
     games = []
-    for g in sorted((g for g in schedule if g["result"] is None and team in (g["home_team"], g["away_team"])), key=lambda g: g["week"]):
+    mine = (g for g in schedule if team in (g["home_team"], g["away_team"]) and (full or g["result"] is None))
+    for g in sorted(mine, key=lambda g: g["week"]):
         home = g["home_team"] == team
         p_home = game_probability(g, state.ratings, cfg)
         p = p_home if home else 1 - p_home
+        played = g["result"] is not None
+        actual = None if not played or g["result"] == 0 else (g["result"] > 0) == home
         games.append(SimTeamGame(game_id=g["game_id"], week=g["week"], opponent=g["away_team"] if home else g["home_team"],
-                                 home=home, neutral=g["neutral"], p_win=p, win=rng.random() < p))
+                                 home=home, neutral=g["neutral"], p_win=p, win=rng.random() < p,
+                                 played=full and played, actual_win=actual if full else None))
     nprng = np.random.default_rng()
     wins = [g.win for g in games]
     players = []
     for pl in load_rosters()[team].players:
-        sim = simulate_player(pl.model_dump(), wins, nprng)
+        sim = simulate_player(pl.model_dump(), wins, nprng, full_season=full)
         players.append(SimPlayerResult(id=pl.id, gp=sim["gp"], stats={k: round(v, 1) for k, v in sim["stats"].items()}))
     return SimTeamResult(team=team, games=games, players=players)

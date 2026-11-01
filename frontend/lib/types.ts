@@ -154,6 +154,7 @@ export interface RosterPlayer {
   gp: number; // games played so far
   proj_gp: number;
   avail: number; // chance he plays each remaining game
+  avail_full?: number; // same, ignoring his injury status
   stats: Record<string, number>; // season totals so far
   proj: Record<string, number>; // projected final totals
   rates: Record<string, number>; // per-game rates behind the projection
@@ -177,6 +178,8 @@ export interface SimTeamGame {
   neutral: boolean;
   p_win: number;
   win: boolean;
+  played?: boolean; // full-season mode: this game has really been played...
+  actual_win?: boolean | null; // ...and this is how it really went
 }
 
 export interface SimTeamResult {

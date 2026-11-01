@@ -162,7 +162,7 @@ def build_rosters(season: int, schedule: list[dict], refresh: bool = False) -> d
                 id=pid, name=r["full_name"], position=r["position"], jersey=r["jersey_number"], status=r["status"],
                 headshot=r["headshot_url"], years_exp=r["years_exp"],
                 age=None if born is None else today.year - born.year - ((today.month, today.day) < (born.month, born.day)),
-                gp=p["gp"], proj_gp=round(p["proj_gp"], 2), avail=round(p["avail"], 3),
+                gp=p["gp"], proj_gp=round(p["proj_gp"], 2), avail=round(p["avail"], 3), avail_full=round(p["avail_full"], 3),
                 stats={k: round(v, 1) for k, v in p["stats"].items()}, proj={k: round(v, 1) for k, v in p["proj"].items()},
                 rates={k: round(v, 4) for k, v in p["rates"].items()}))
         out[t] = TeamRoster(team=t, season=season, generated_at=now, team_games_played=played[t], games_remaining=remaining[t],

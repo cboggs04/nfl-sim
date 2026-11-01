@@ -67,10 +67,11 @@ def build_player(roster: dict, cur: dict | None, prev: dict | None, cur_games: i
             rates[s] = (tot + stats_prev[s] / prev_games * PRIOR_GAMES) / (cur_games + PRIOR_GAMES)
         else:                                          # rookie or newcomer: nothing to blend with
             rates[s] = tot / cur_games if cur_games > 0 else 0.0
-    availability = (cur_games + AVAIL_PRIOR * AVAIL_GAMES) / (team_games_played + AVAIL_GAMES) if team_games_played else AVAIL_PRIOR
-    availability = min(1.0, availability) * STATUS_AVAIL.get(roster["status"], 0.0)
+    base = (cur_games + AVAIL_PRIOR * AVAIL_GAMES) / (team_games_played + AVAIL_GAMES) if team_games_played else AVAIL_PRIOR
+    base = min(1.0, base)
     if cur_games == 0 and prev_games == 0:
-        availability *= 0.3     # no track record: likely a reserve who rarely plays
+        base *= 0.3     # no track record: likely a reserve who rarely plays
+    availability = base * STATUS_AVAIL.get(roster["status"], 0.0)
     exp_games = availability * remaining_games
     return {
         **roster,
@@ -78,6 +79,7 @@ def build_player(roster: dict, cur: dict | None, prev: dict | None, cur_games: i
         "stats": stats_cur,
         "rates": rates,
         "avail": availability,
+        "avail_full": base,       # availability ignoring current injury status: used to replay a whole season
         "proj_gp": cur_games + exp_games,
         "proj": {s: stats_cur[s] + rates[s] * exp_games for s in stats_cur},
     }
@@ -166,16 +168,20 @@ def talent_multipliers(player: dict, rng) -> dict[str, float]:
     return out
 
 
-def simulate_player(player: dict, wins: list[bool], rng, talent_noise: bool = True) -> dict:
-    """Simulate a player's rest of the season given his team's results in its remaining games.
+def simulate_player(player: dict, wins: list[bool], rng, talent_noise: bool = True, full_season: bool = False) -> dict:
+    """Simulate a player's games given his team's results (`wins`, one per game simulated).
 
-    Returns {"gp": games played in total, "stats": final totals}; current totals plus simulated games."""
+    Rest-of-season (default): `wins` are the team's remaining games; the result is current totals plus the
+    simulated games. Full season: `wins` is every game; results so far are ignored, stats start at zero and
+    availability ignores today's injury status (a replay of the whole year).
+    Returns {"gp": games played, "stats": totals}."""
     win = np.asarray(wins, dtype=bool)
-    plays = rng.random(len(win)) < player["avail"]
+    plays = rng.random(len(win)) < player["avail_full" if full_season else "avail"]
     rates = player["rates"]
     if talent_noise:
         mult = talent_multipliers(player, rng)
         rates = {s: r * mult[s] for s, r in rates.items()}
     drawn = simulate_game_stats(player["position"], rates, win[plays], rng) if plays.any() else {}
-    stats = {s: player["stats"][s] + float(drawn[s].sum()) if s in drawn else player["stats"][s] for s in player["stats"]}
-    return {"gp": player["gp"] + int(plays.sum()), "stats": stats}
+    start = dict.fromkeys(player["stats"], 0.0) if full_season else player["stats"]
+    stats = {s: start[s] + float(drawn[s].sum()) if s in drawn else start[s] for s in start}
+    return {"gp": (0 if full_season else player["gp"]) + int(plays.sum()), "stats": stats}

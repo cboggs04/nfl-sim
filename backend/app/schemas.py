@@ -240,6 +240,7 @@ class RosterPlayer(BaseModel):
     gp: int                          # games played so far
     proj_gp: float                   # projected games played by the end of the regular season
     avail: float                     # chance he plays in each remaining game
+    avail_full: float = 0.9          # same, ignoring his injury status (used to replay a whole season)
     stats: dict[str, float]          # season totals so far (keys depend on position, see TeamRoster.columns)
     proj: dict[str, float]           # projected final totals
     rates: dict[str, float]          # per-game rates behind the projection
@@ -258,6 +259,7 @@ class TeamRoster(BaseModel):
 
 class SimTeamRequest(BaseModel):
     team: str
+    mode: Literal["rest", "full"] = "rest"   # rest: play out the remaining games; full: replay all games, ignoring results so far
 
 
 class SimTeamGame(BaseModel):
@@ -268,6 +270,8 @@ class SimTeamGame(BaseModel):
     neutral: bool
     p_win: float
     win: bool                        # this simulation's result
+    played: bool = False             # full mode only: the game has really been played...
+    actual_win: bool | None = None   # ...and this is how it really went (None if tied or unplayed)
 
 
 class SimPlayerResult(BaseModel):
