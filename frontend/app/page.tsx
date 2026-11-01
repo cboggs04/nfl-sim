@@ -1,12 +1,10 @@
 import { Suspense } from "react";
 import ContenderCards from "@/components/ContenderCards";
-import DashboardTabs from "@/components/DashboardTabs";
-import LeadersView from "@/components/LeadersView";
 import SeasonTable from "@/components/SeasonTable";
-import { getLeaders, getSeason } from "@/lib/api";
+import { getSeason } from "@/lib/api";
 
 async function Dashboard() {
-  const [season, leaders] = await Promise.all([getSeason(), getLeaders().catch(() => null)]);
+  const season = await getSeason();
   const updated = new Date(season.generated_at).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -15,52 +13,34 @@ async function Dashboard() {
   });
   const progress = Math.round((season.games_played / season.games_total) * 100);
   return (
-    <DashboardTabs
-      eyebrow={`${season.season} season`}
-      intro={
-        <>
-          <div className="mt-4 flex max-w-xl items-center gap-3 text-sm text-muted">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-line" role="img" aria-label={`${progress}% of the season played`}>
-              <div className="h-full rounded-full bg-gradient-to-r from-[#1d4f9e] to-accent" style={{ width: `${progress}%` }} />
-            </div>
-            <span className="tabular-nums">
-              {season.games_played} of {season.games_total} games played
-            </span>
+    <>
+      <header className="rise">
+        <div className="text-sm font-semibold tracking-[0.25em] text-accent-ink uppercase">{season.season} season</div>
+        <h1 className="font-display mt-1 text-6xl text-strong sm:text-8xl">
+          Super Bowl <span className="text-accent-ink">Odds</span>
+        </h1>
+        <div className="mt-4 flex max-w-xl items-center gap-3 text-sm text-muted">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-line" role="img" aria-label={`${progress}% of the season played`}>
+            <div className="h-full rounded-full bg-gradient-to-r from-[#1d4f9e] to-accent" style={{ width: `${progress}%` }} />
           </div>
-          <p className="mt-2 text-sm text-muted">
-            Based on {season.n_sims.toLocaleString("en-US")} simulated seasons · updated {updated}
-          </p>
-        </>
-      }
-      tabs={[
-        {
-          key: "teams",
-          label: "Teams",
-          title: ["Super Bowl", "Odds"],
-          content: (
-            <>
-              <section className="mt-8" aria-label="Super Bowl favorites">
-                <ContenderCards teams={season.teams} />
-              </section>
-              <section className="mt-12">
-                <h2 className="font-display mb-4 text-4xl text-strong">League board</h2>
-                <SeasonTable teams={season.teams} />
-              </section>
-            </>
-          ),
-        },
-        {
-          key: "overall",
-          label: "Overall",
-          title: ["League", "Leaders"],
-          content: leaders ? (
-            <LeadersView data={leaders} />
-          ) : (
-            <p className="mt-8 text-muted">Leaders data isn&apos;t available. Is the API running, and has `python -m scripts.precompute` been run?</p>
-          ),
-        },
-      ]}
-    />
+          <span className="tabular-nums">
+            {season.games_played} of {season.games_total} games played
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-muted">
+          Based on {season.n_sims.toLocaleString("en-US")} simulated seasons · updated {updated}
+        </p>
+      </header>
+
+      <section className="mt-8" aria-label="Super Bowl favorites">
+        <ContenderCards teams={season.teams} />
+      </section>
+
+      <section className="mt-12">
+        <h2 className="font-display mb-4 text-4xl text-strong">League board</h2>
+        <SeasonTable teams={season.teams} />
+      </section>
+    </>
   );
 }
 

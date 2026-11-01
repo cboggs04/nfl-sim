@@ -5,13 +5,18 @@ from fastapi import APIRouter, HTTPException
 
 from engine.data import DATA_DIR
 
+from .datafiles import file_stamp
 from .schemas import TeamRoster
 
 router = APIRouter(prefix="/api")
 
 
-@lru_cache
 def load_rosters() -> dict[str, TeamRoster]:
+    return _load_rosters_cached(file_stamp("rosters.json"))
+
+
+@lru_cache
+def _load_rosters_cached(stamp: tuple) -> dict[str, TeamRoster]:
     import json
 
     path = DATA_DIR / "rosters.json"

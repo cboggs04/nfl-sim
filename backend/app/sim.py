@@ -11,6 +11,7 @@ from engine.playoffs import play_game
 from engine.simulate import simulate_one_season
 from engine.teams import TEAMS
 
+from .datafiles import file_stamp
 from .rosters import load_rosters
 from .schemas import (PlayoffGameRequest, PlayoffGameResponse, SimGameResult, SimState,
                       SimPlayerResult, SimStanding, SimTeamGame, SimTeamRequest, SimTeamResult, SimulatedSeason)
@@ -18,8 +19,12 @@ from .schemas import (PlayoffGameRequest, PlayoffGameResponse, SimGameResult, Si
 router = APIRouter(prefix="/api/sim")
 
 
-@lru_cache
 def _state() -> tuple[SimState, EloConfig, list[dict]]:
+    return _state_cached(file_stamp("sim_state.json"))
+
+
+@lru_cache
+def _state_cached(stamp: tuple) -> tuple[SimState, EloConfig, list[dict]]:
     path = DATA_DIR / "sim_state.json"
     if not path.exists():
         raise HTTPException(503, "sim_state.json not generated yet. Run: python -m scripts.precompute")

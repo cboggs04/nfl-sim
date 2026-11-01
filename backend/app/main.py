@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from engine.data import DATA_DIR
 
+from .datafiles import file_stamp
 from .leaders import router as leaders_router
 from .rosters import router as rosters_router
 from .sim import router as sim_router
@@ -32,20 +33,28 @@ app.include_router(whatif_router)
 
 
 @lru_cache
-def _load(model: type[BaseModel], filename: str) -> BaseModel:
-    """Read and validate a cached JSON file once, then keep it in memory."""
+def _load_cached(model: type[BaseModel], filename: str, stamp: tuple) -> BaseModel:
     path = DATA_DIR / filename
     if not path.exists():
         raise HTTPException(503, f"{filename} not generated yet. Run: python -m scripts.precompute")
     return model.model_validate_json(path.read_text())
 
 
+def _load(model: type[BaseModel], filename: str) -> BaseModel:
+    """Read and validate a precomputed JSON file, kept in memory until the file changes."""
+    return _load_cached(model, filename, file_stamp(filename))
+
+
 @lru_cache
-def _load_teams() -> dict[str, TeamDetail]:
+def _load_teams_cached(stamp: tuple) -> dict[str, TeamDetail]:
     path = DATA_DIR / "teams.json"
     if not path.exists():
         raise HTTPException(503, "teams.json not generated yet. Run: python -m scripts.precompute")
     return {k: TeamDetail.model_validate(v) for k, v in json.loads(path.read_text()).items()}
+
+
+def _load_teams() -> dict[str, TeamDetail]:
+    return _load_teams_cached(file_stamp("teams.json"))
 
 
 @app.get("/api/season", response_model=SeasonResponse)

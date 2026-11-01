@@ -124,20 +124,7 @@ function LeaderCard({ title, stat, rows, projected }: { title: string; stat: str
 export default function LeadersView({ data }: { data: LeadersResponse }) {
   const [projected, setProjected] = useState(true);
   return (
-    <div className="mt-8 space-y-12">
-      <section>
-        <h2 className="font-display text-4xl text-strong">Award watch</h2>
-        <p className="mt-1 max-w-3xl text-sm text-muted">
-          Each player&apos;s chance to win, from {data.n_sims.toLocaleString("en-US")} simulated seasons. Awards go to the best
-          production (MVP also counts the team&apos;s record). Real voters are less predictable, so read this as who the numbers favor.
-        </p>
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {AWARD_INFO.map((a) => (
-            <AwardCard key={a.key} title={a.title} blurb={a.blurb} rows={data.awards[a.key] ?? []} />
-          ))}
-        </div>
-      </section>
-
+    <div className="mt-10 space-y-12">
       <section>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -158,6 +145,20 @@ export default function LeadersView({ data }: { data: LeadersResponse }) {
         <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {LEADER_INFO.map((l) => (
             <LeaderCard key={l.key} title={l.title} stat={l.key} rows={data.leaders[l.key] ?? []} projected={projected} />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="font-display text-4xl text-strong">Award watch</h2>
+        <p className="mt-1 max-w-3xl text-sm text-muted">
+          Each player&apos;s chance to win, from {data.n_sims.toLocaleString("en-US")} simulated seasons. Awards go to the best
+          production (MVP also counts the team&apos;s record), and a player can win only one award a season, so a player who wins
+          MVP is not also counted for Offensive Player of the Year. Real voters are less predictable, so read this as who the numbers favor.
+        </p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {AWARD_INFO.map((a) => (
+            <AwardCard key={a.key} title={a.title} blurb={a.blurb} rows={data.awards[a.key] ?? []} />
           ))}
         </div>
       </section>

@@ -54,9 +54,11 @@ def test_better_quarterback_wins_mvp_more_often_and_probabilities_sum_to_one():
 
 
 def test_rookie_awards_only_go_to_rookies():
-    players = [player("vet", "AAA", "QB", QB_STAR, years_exp=6), player("rook", "BBB", "QB", QB_MID, years_exp=0)]
+    # Two rookies and a veteran. The veteran can never win a rookie award.
+    players = [player("vet", "AAA", "QB", QB_STAR, years_exp=6), player("r1", "BBB", "QB", QB_MID, years_exp=0),
+               player("r2", "BBB", "RB", {"carries": 14, "rushing_yards": 60, "rushing_tds": 0.4, "receptions": 2, "receiving_yards": 15, "receiving_tds": 0.05}, years_exp=0)]
     out = simulate_awards(players, schedule(), {"AAA": 1500.0, "BBB": 1500.0}, EloConfig(), n_sims=100, seed=2)
-    assert set(out["awards"]["oroy"]) == {"rook"} and out["awards"]["oroy"]["rook"] == pytest.approx(1.0)
+    assert set(out["awards"]["oroy"]) <= {"r1", "r2"}
     assert out["awards"]["droy"] == {}
 
 
@@ -64,3 +66,14 @@ def test_same_seed_same_odds():
     players = [player("star", "AAA", "QB", QB_STAR), player("mid", "BBB", "QB", QB_MID)]
     args = (players, schedule(), {"AAA": 1520.0, "BBB": 1500.0}, EloConfig())
     assert simulate_awards(*args, n_sims=50, seed=3) == simulate_awards(*args, n_sims=50, seed=3)
+
+
+def test_a_player_wins_at_most_one_award_a_season():
+    # Star QB would win both MVP and OPOTY on production; the one-award rule hands OPOTY to someone else.
+    players = [player("star", "AAA", "QB", QB_STAR), player("mid", "BBB", "QB", QB_MID), player("rb", "BBB", "RB", {"carries": 17, "rushing_yards": 85, "rushing_tds": 0.6, "receptions": 3, "receiving_yards": 22, "receiving_tds": 0.1})]
+    out = simulate_awards(players, schedule(), {"AAA": 1550.0, "BBB": 1500.0}, EloConfig(), n_sims=300, seed=4)
+    for pid in ("star", "mid", "rb"):
+        total = sum(out["awards"][a].get(pid, 0.0) for a in out["awards"])
+        assert total <= 1.0 + 1e-9, pid
+    assert out["awards"]["mvp"]["star"] + out["awards"]["opoty"].get("star", 0) <= 1.0 + 1e-9
+    assert out["awards"]["opoty"].get("mid", 0) + out["awards"]["opoty"].get("rb", 0) > 0.5   # star is usually taken by MVP

@@ -1,7 +1,8 @@
 """Projected league leaders and award winners from many simulated seasons. Pure Python + numpy.
 
 Each simulated season: every unplayed game is decided from its win probability, then every candidate's
-stats are simulated from those results (engine.players), and each award goes to the best score. Counting
+stats are simulated from those results (engine.players), and each award goes to the best score. A player can
+win only one award a season (MVP is decided first, then OPOTY, DPOTY and the rookie awards). Counting
 winners over many seasons gives each player's chance. The award formulas are simple, stated assumptions,
 not a model of how voters think: voters are unpredictable, so treat the odds as 'who the numbers favor'.
 """
@@ -95,7 +96,7 @@ def simulate_awards(players: list[dict], schedule: list[dict], ratings: dict, cf
             team_wins.setdefault(away, []).append(not home_won)
         totals = {t: played_wins[t] + sum(w) for t, w in team_wins.items()}
 
-        best = dict.fromkeys(AWARDS)           # award -> (score, id)
+        scores: dict[str, list[tuple[float, str]]] = {a: [] for a in AWARDS}   # award -> [(score, player id)]
         lead = dict.fromkeys(LEADER_CATEGORIES)
         for p in cand:
             sim = simulate_player(p, team_wins.get(p["team"], []), nprng)
@@ -103,21 +104,23 @@ def simulate_awards(players: list[dict], schedule: list[dict], ratings: dict, cf
             rookie = p.get("years_exp") == 0
             if p["position"] in OFFENSE:
                 pts = offense_points(s)
-                for award, score in (("mvp", mvp_score(p, s, totals.get(p["team"], 0))), ("opoty", pts), ("oroy", pts if rookie else None)):
-                    if score is not None:
-                        score *= float(np.exp(nprng.normal(0, VOTER_NOISE[award])))
-                    if score is not None and (best[award] is None or score > best[award][0]):
-                        best[award] = (score, p["id"])
+                entries = [("mvp", mvp_score(p, s, totals.get(p["team"], 0))), ("opoty", pts)] + ([("oroy", pts)] if rookie else [])
             else:
                 pts = defense_points(s)
-                for award, score in (("dpoty", pts), ("droy", pts if rookie else None)):
-                    if score is not None:
-                        score *= float(np.exp(nprng.normal(0, VOTER_NOISE[award])))
-                    if score is not None and (best[award] is None or score > best[award][0]):
-                        best[award] = (score, p["id"])
+                entries = [("dpoty", pts)] + ([("droy", pts)] if rookie else [])
+            for award, score in entries:
+                scores[award].append((score * float(np.exp(nprng.normal(0, VOTER_NOISE[award]))), p["id"]))
             for cat, key in LEADER_CATEGORIES.items():
                 if key in s and (lead[cat] is None or s[key] > lead[cat][0]):
                     lead[cat] = (s[key], p["id"])
+        # A player can win only one award a season, handed out in this order: the best remaining player wins each.
+        taken: set[str] = set()
+        best = {}
+        for award in AWARDS:
+            eligible = [x for x in scores[award] if x[1] not in taken]
+            best[award] = max(eligible) if eligible else None
+            if best[award]:
+                taken.add(best[award][1])
         for a, b in best.items():
             if b:
                 awards[a][b[1]] += 1

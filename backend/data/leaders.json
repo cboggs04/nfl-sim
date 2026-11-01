@@ -1,6 +1,6 @@
 {
  "season": 2026,
- "generated_at": "2026-11-01T20:11:50+00:00",
+ "generated_at": "2026-11-01T20:19:37+00:00",
  "n_sims": 500,
  "leaders": {
   "passing_yards": [
@@ -728,13 +728,30 @@
   ],
   "opoty": [
    {
+    "id": "00-0039139",
+    "name": "Jahmyr Gibbs",
+    "team": "DET",
+    "position": "RB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/cursejnmmp1i9hnxihkj",
+    "rookie": false,
+    "prob": 0.472,
+    "proj": {
+     "carries": 344.8,
+     "rushing_yards": 1616.0,
+     "rushing_tds": 18.1,
+     "receptions": 86.3,
+     "receiving_yards": 721.3,
+     "receiving_tds": 5.4
+    }
+   },
+   {
     "id": "00-0034857",
     "name": "Josh Allen",
     "team": "BUF",
     "position": "QB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ynrhq9iv30ysjpwmrfdv",
     "rookie": false,
-    "prob": 0.548,
+    "prob": 0.198,
     "proj": {
      "completions": 316.9,
      "attempts": 471.5,
@@ -746,30 +763,13 @@
     }
    },
    {
-    "id": "00-0039139",
-    "name": "Jahmyr Gibbs",
-    "team": "DET",
-    "position": "RB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/cursejnmmp1i9hnxihkj",
-    "rookie": false,
-    "prob": 0.29,
-    "proj": {
-     "carries": 344.8,
-     "rushing_yards": 1616.0,
-     "rushing_tds": 18.1,
-     "receptions": 86.3,
-     "receiving_yards": 721.3,
-     "receiving_tds": 5.4
-    }
-   },
-   {
     "id": "00-0038543",
     "name": "Jaxon Smith-Njigba",
     "team": "SEA",
     "position": "WR",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/yx1xjrupbqdknnjaq4a6",
     "rookie": false,
-    "prob": 0.072,
+    "prob": 0.11,
     "proj": {
      "targets": 182.4,
      "receptions": 135.2,
@@ -784,7 +784,7 @@
     "position": "QB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/kaicbot8qhzrvddilbtp",
     "rookie": false,
-    "prob": 0.028,
+    "prob": 0.054,
     "proj": {
      "completions": 411.4,
      "attempts": 610.3,
@@ -796,31 +796,13 @@
     }
    },
    {
-    "id": "00-0037834",
-    "name": "Brock Purdy",
-    "team": "SF",
-    "position": "QB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xs2fyj1sqdgwvt9ihbri",
-    "rookie": false,
-    "prob": 0.018,
-    "proj": {
-     "completions": 353.0,
-     "attempts": 509.9,
-     "passing_yards": 4163.4,
-     "passing_tds": 36.2,
-     "passing_interceptions": 11.2,
-     "rushing_yards": 366.3,
-     "rushing_tds": 3.0
-    }
-   },
-   {
     "id": "00-0036442",
     "name": "Joe Burrow",
     "team": "CIN",
     "position": "QB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/gnnvcgui1cijybukk2w7",
     "rookie": false,
-    "prob": 0.012,
+    "prob": 0.032,
     "proj": {
      "completions": 421.4,
      "attempts": 595.7,
@@ -829,6 +811,24 @@
      "passing_interceptions": 8.8,
      "rushing_yards": 149.8,
      "rushing_tds": 2.2
+    }
+   },
+   {
+    "id": "00-0037834",
+    "name": "Brock Purdy",
+    "team": "SF",
+    "position": "QB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xs2fyj1sqdgwvt9ihbri",
+    "rookie": false,
+    "prob": 0.03,
+    "proj": {
+     "completions": 353.0,
+     "attempts": 509.9,
+     "passing_yards": 4163.4,
+     "passing_tds": 36.2,
+     "passing_interceptions": 11.2,
+     "rushing_yards": 366.3,
+     "rushing_tds": 3.0
     }
    }
   ],
@@ -1048,7 +1048,7 @@
     "position": "LB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/tvhqfy34evkal6zpu9to",
     "rookie": true,
-    "prob": 0.224,
+    "prob": 0.226,
     "proj": {
      "tackles": 131.8,
      "def_tackles_for_loss": 12.0,
@@ -1064,7 +1064,7 @@
     "position": "LB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ew3ilkxo5ub3bnzisc2t",
     "rookie": true,
-    "prob": 0.204,
+    "prob": 0.202,
     "proj": {
      "tackles": 167.2,
      "def_tackles_for_loss": 8.4,
@@ -1080,7 +1080,7 @@
     "position": "LB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/bzanl4jdvmkvsdmsyxwg",
     "rookie": true,
-    "prob": 0.2,
+    "prob": 0.194,
     "proj": {
      "tackles": 81.5,
      "def_tackles_for_loss": 16.8,
@@ -1112,7 +1112,7 @@
     "position": "DB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/lkqxlsmgrd6zfnxvwfph",
     "rookie": true,
-    "prob": 0.038,
+    "prob": 0.044,
     "proj": {
      "tackles": 110.3,
      "def_tackles_for_loss": 4.8,
