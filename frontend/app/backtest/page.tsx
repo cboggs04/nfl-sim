@@ -72,9 +72,10 @@ async function Backtest() {
                   : `Overall, home teams won ${pct(meanActual)} of games and the model expected ${pct(meanPred)}.`}
               </li>
               <li>
-                At the extremes the model is <b className="text-strong">overconfident</b>. When it gave the home team about{" "}
-                {pct(first.predicted)}, they won {pct(first.actual)}. When it said {pct(last.predicted)}, they won {pct(last.actual)}.
-                Real games are less predictable than Elo thinks, so treat big favorites as a little less certain than the number says.
+                The outermost dots rest on very few games ({first.games} and {last.games}), so they wiggle by luck. The one at{" "}
+                {pct(first.predicted)} came in at {pct(first.actual)}, but a gap that size is well within chance for that few games.
+                We checked: stretching or shrinking all the probabilities does not improve the score, so there is no sign the model is
+                systematically over- or under-confident.
               </li>
             </ul>
           </section>
