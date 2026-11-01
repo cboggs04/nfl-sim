@@ -71,7 +71,7 @@ export default function SeasonTable({ teams }: { teams: TeamOdds[] }) {
             key={c}
             onClick={() => setConf(c)}
             aria-pressed={conf === c}
-            className={`btn btn-sm ${conf === c ? "btn-gold" : "btn-ghost"}`}
+            className={`btn btn-sm ${conf === c ? "btn-primary" : "btn-ghost"}`}
           >
             {c === "ALL" ? "All teams" : c}
           </button>

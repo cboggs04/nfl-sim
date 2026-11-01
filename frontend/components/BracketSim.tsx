@@ -81,7 +81,7 @@ function MatchupCard({ m, ctx, label }: { m: Matchup; ctx: Ctx; label?: string }
         <button
           onClick={() => ctx.onPlay(m)}
           disabled={ctx.busy}
-          className="font-display w-full border-t border-line bg-accent/90 py-1 text-base text-[#1a1200] hover:bg-accent disabled:opacity-40"
+          className="font-display w-full border-t border-line bg-accent/90 py-1 text-base text-on-accent hover:bg-accent disabled:opacity-40"
         >
           Play game
         </button>
@@ -383,7 +383,7 @@ export default function BracketSim() {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-4">
-        <button onClick={newSeason} disabled={loading || busy} className="btn btn-gold text-xl">
+        <button onClick={newSeason} disabled={loading || busy} className="btn btn-primary text-xl">
           {loading ? "Simulating…" : sim ? "Simulate a new season" : "Simulate the rest of the season"}
         </button>
         {sim && (

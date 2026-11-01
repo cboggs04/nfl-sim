@@ -54,7 +54,7 @@ export default function ColumnChart({
               key={v}
               onClick={() => setView(v)}
               aria-pressed={view === v}
-              className={`px-2.5 py-1 capitalize ${view === v ? "bg-accent font-semibold text-[#1a1200]" : "text-muted hover:bg-hover"}`}
+              className={`px-2.5 py-1 capitalize ${view === v ? "bg-accent font-semibold text-on-accent" : "text-muted hover:bg-hover"}`}
             >
               {v}
             </button>

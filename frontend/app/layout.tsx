@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, Geist, Geist_Mono } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import NavLinks from "@/components/NavLinks";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -19,7 +20,7 @@ const display = Barlow_Condensed({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["700", "800"],
-  style: ["italic"],
+  style: ["normal"],
 });
 
 export const metadata: Metadata = {
@@ -42,13 +43,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <nav className="sticky top-0 z-30 border-b border-line bg-background/85 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2.5 sm:px-6">
             <Link href="/" className="flex items-center gap-2" aria-label="NFL Simulator home">
-              <span
-                className="font-display bg-accent px-3 py-1 text-2xl text-[#1a1200]"
-                style={{ clipPath: "polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)" }}
-              >
-                NFL
-              </span>
-              <span className="font-display text-2xl text-strong">SIM</span>
+              <Image src="/nfl-logo.png" alt="NFL" width={44} height={44} priority className="h-11 w-11 object-contain" />
+              <span className="font-display text-3xl text-strong">SIMULATOR</span>
             </Link>
             <div className="flex items-center gap-2 sm:gap-4">
               <NavLinks />

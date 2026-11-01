@@ -57,7 +57,7 @@ export default function SeasonRoller({
             one season can vary.
           </p>
         </div>
-        <button onClick={roll} className="btn btn-gold text-xl">
+        <button onClick={roll} className="btn btn-primary text-xl">
           {outcomes ? "Simulate again" : "Simulate one season"}
         </button>
       </div>

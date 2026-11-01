@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Broadcast / game-menu look: one dark theme, bold italic display type, angled panels. */
+/* Broadcast / game-menu look: one dark theme, bold condensed display type, angled panels. */
 :root {
   --background: #060912;
   --foreground: #eef2ff;
@@ -8,7 +8,7 @@
   --panel-2: #141e38;
   --line: #243456;
   --muted: #8d9cc0;
-  --accent: #f5b301; /* gold: primary actions and highlights */
+  --accent: #d50a0a; /* NFL red: primary actions and highlights */
   --blue: #2b8cff;
   --good: #22c55e;
   --bad: #f04b4b;
@@ -19,7 +19,8 @@
   --chart-text: #8d9cc0;
 
   --strong: #ffffff; /* headings and emphasized text */
-  --accent-ink: #f5b301; /* gold used as text */
+  --accent-ink: #ff5252; /* red used as text */
+  --on-accent: #ffffff;
   --head: rgba(0, 0, 0, 0.3);
   --gauge: rgba(0, 0, 0, 0.4);
   --hover: rgba(255, 255, 255, 0.05);
@@ -40,8 +41,8 @@
   --panel-2: #f3f6fc;
   --line: #cbd5e8;
   --muted: #55658a;
-  --accent: #f5b301;
-  --blue: #2b6fd6;
+  --accent: #d50a0a;
+  --blue: #1a56b0;
   --good: #1f9d4d;
   --bad: #d63a3a;
 
@@ -51,7 +52,7 @@
   --chart-text: #55658a;
 
   --strong: #0b1530;
-  --accent-ink: #9a6700;
+  --accent-ink: #c40909;
   --head: rgba(15, 26, 51, 0.06);
   --gauge: rgba(15, 26, 51, 0.12);
   --hover: rgba(15, 26, 51, 0.05);
@@ -77,6 +78,7 @@
   --color-bad: var(--bad);
   --color-strong: var(--strong);
   --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
   --color-head: var(--head);
   --color-gauge: var(--gauge);
   --color-hover: var(--hover);
@@ -105,10 +107,10 @@ body {
   background-attachment: fixed;
 }
 
-/* Big italic condensed headings, like a game's menu screens. */
+/* Big upright condensed headings, in the spirit of the NFL's own wordmark type. */
 .font-display {
   font-family: var(--font-display), var(--font-sans), sans-serif;
-  font-style: italic;
+  font-style: normal;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.01em;
@@ -132,7 +134,7 @@ body {
 /* Parallelogram buttons. */
 .btn {
   font-family: var(--font-display), sans-serif;
-  font-style: italic;
+  font-style: normal;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -150,9 +152,9 @@ body {
   filter: brightness(1.12);
   transform: translateY(-1px);
 }
-.btn-gold {
-  background: linear-gradient(180deg, #ffd04a, var(--accent));
-  color: #1a1200;
+.btn-primary {
+  background: linear-gradient(180deg, #f0262b, var(--accent));
+  color: var(--on-accent);
 }
 .btn-ghost {
   background: var(--panel-2);
