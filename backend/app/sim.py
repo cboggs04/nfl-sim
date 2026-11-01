@@ -5,13 +5,15 @@ from functools import lru_cache
 from fastapi import APIRouter, HTTPException
 
 from engine.data import DATA_DIR
-from engine.elo import EloConfig
+from engine.elo import EloConfig, game_probability
+from engine.players import simulate_player
 from engine.playoffs import play_game
 from engine.simulate import simulate_one_season
 from engine.teams import TEAMS
 
+from .rosters import load_rosters
 from .schemas import (PlayoffGameRequest, PlayoffGameResponse, SimGameResult, SimState,
-                      SimStanding, SimulatedSeason)
+                      SimPlayerResult, SimStanding, SimTeamGame, SimTeamRequest, SimTeamResult, SimulatedSeason)
 
 router = APIRouter(prefix="/api/sim")
 
@@ -54,3 +56,29 @@ def playoff_game(req: PlayoffGameRequest):
     p_home, winner = play_game(req.home, req.away, state.ratings, random.Random(), cfg, req.neutral)
     return PlayoffGameResponse(home=req.home, away=req.away, p_home=p_home,
                                winner=winner if req.play else None)
+
+
+@router.post("/team", response_model=SimTeamResult)
+def simulate_team_season(req: SimTeamRequest):
+    """Play out one team's remaining games, then its players' stats, with results driving the stats."""
+    import numpy as np
+
+    team = req.team.upper()
+    if team not in TEAMS:
+        raise HTTPException(422, f"Unknown team '{req.team}'")
+    state, cfg, schedule = _state()
+    rng = random.Random()
+    games = []
+    for g in sorted((g for g in schedule if g["result"] is None and team in (g["home_team"], g["away_team"])), key=lambda g: g["week"]):
+        home = g["home_team"] == team
+        p_home = game_probability(g, state.ratings, cfg)
+        p = p_home if home else 1 - p_home
+        games.append(SimTeamGame(game_id=g["game_id"], week=g["week"], opponent=g["away_team"] if home else g["home_team"],
+                                 home=home, neutral=g["neutral"], p_win=p, win=rng.random() < p))
+    nprng = np.random.default_rng()
+    wins = [g.win for g in games]
+    players = []
+    for pl in load_rosters()[team].players:
+        sim = simulate_player(pl.model_dump(), wins, nprng)
+        players.append(SimPlayerResult(id=pl.id, gp=sim["gp"], stats={k: round(v, 1) for k, v in sim["stats"].items()}))
+    return SimTeamResult(team=team, games=games, players=players)

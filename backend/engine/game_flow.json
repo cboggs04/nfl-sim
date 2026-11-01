@@ -1,0 +1,106 @@
+{
+ "completions": {
+  "win": 0.984,
+  "loss": 1.016
+ },
+ "attempts": {
+  "win": 0.939,
+  "loss": 1.061
+ },
+ "passing_yards": {
+  "win": 1.028,
+  "loss": 0.972
+ },
+ "passing_tds": {
+  "win": 1.209,
+  "loss": 0.791
+ },
+ "passing_interceptions": {
+  "win": 0.619,
+  "loss": 1.381
+ },
+ "carries": {
+  "win": 1.139,
+  "loss": 0.861
+ },
+ "rushing_yards": {
+  "win": 1.145,
+  "loss": 0.855
+ },
+ "rushing_tds": {
+  "win": 1.314,
+  "loss": 0.686
+ },
+ "targets": {
+  "win": 0.941,
+  "loss": 1.059
+ },
+ "receptions": {
+  "win": 0.984,
+  "loss": 1.016
+ },
+ "receiving_yards": {
+  "win": 1.028,
+  "loss": 0.972
+ },
+ "receiving_tds": {
+  "win": 1.209,
+  "loss": 0.791
+ },
+ "def_tackles_solo": {
+  "win": 0.979,
+  "loss": 1.021
+ },
+ "def_tackle_assists": {
+  "win": 0.933,
+  "loss": 1.067
+ },
+ "def_tackles_for_loss": {
+  "win": 1.055,
+  "loss": 0.945
+ },
+ "def_sacks": {
+  "win": 1.225,
+  "loss": 0.775
+ },
+ "def_interceptions": {
+  "win": 1.381,
+  "loss": 0.619
+ },
+ "def_pass_defended": {
+  "win": 1.196,
+  "loss": 0.804
+ },
+ "fg_made": {
+  "win": 1.177,
+  "loss": 0.823
+ },
+ "fg_att": {
+  "win": 1.13,
+  "loss": 0.87
+ },
+ "pat_made": {
+  "win": 1.316,
+  "loss": 0.684
+ },
+ "pat_att": {
+  "win": 1.307,
+  "loss": 0.693
+ },
+ "pt_att": {
+  "win": 0.942,
+  "loss": 1.058
+ },
+ "pt_yards": {
+  "win": 0.936,
+  "loss": 1.064
+ },
+ "pt_inside_20": {
+  "win": 1.024,
+  "loss": 0.976
+ },
+ "tackles": {
+  "win": 0.961,
+  "loss": 1.039
+ }
+}

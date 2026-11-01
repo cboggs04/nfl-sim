@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import TeamLogo from "@/components/TeamLogo";
+import { useTeamSim } from "@/components/TeamSim";
 
 export interface RemainingGame {
   game_id: string;
@@ -13,9 +13,8 @@ export interface RemainingGame {
 }
 
 /**
- * Plays out the rest of the season once, using each game's win probability, so you can
- * see how much one realistic season varies. Each click is one random draw; the real
- * model does the same thing 20,000 times.
+ * Plays out the rest of the season once, using each game's win probability, so you can see how much one
+ * realistic season varies. The same button (and the same result) drives the Roster tab's player stats.
  */
 export default function SeasonRoller({
   games,
@@ -30,22 +29,17 @@ export default function SeasonRoller({
   ties: number;
   likelyWins: number;
 }) {
-  // Nothing is rolled on first render (random numbers differ between server and browser).
-  const [outcomes, setOutcomes] = useState<boolean[] | null>(null);
-  const [history, setHistory] = useState<number[]>([]);
-
-  function roll() {
-    const result = games.map((g) => Math.random() < g.p_win);
-    setOutcomes(result);
-    setHistory((h) => [result.filter(Boolean).length + wins, ...h].slice(0, 8));
-  }
-
-  const finalWins = outcomes ? wins + outcomes.filter(Boolean).length : 0;
-  const finalLosses = outcomes ? losses + outcomes.filter((w) => !w).length : 0;
-  const recordText = `${finalWins}-${finalLosses}${ties ? `-${ties}` : ""}`;
-  const diff = finalWins - likelyWins;
+  const { sim, loading, error, run, history } = useTeamSim();
 
   if (!games.length) return null;
+
+  const winById = new Map(sim?.games.map((g) => [g.game_id, g.win]));
+  const outcomes = sim ? games.map((g) => winById.get(g.game_id) ?? false) : null;
+  const simWins = outcomes ? outcomes.filter(Boolean).length : 0;
+  const finalWins = wins + simWins;
+  const finalLosses = outcomes ? losses + outcomes.length - simWins : 0;
+  const recordText = `${finalWins}-${finalLosses}${ties ? `-${ties}` : ""}`;
+  const diff = finalWins - likelyWins;
 
   return (
     <section className="panel mt-6 p-5 sm:p-6">
@@ -53,14 +47,19 @@ export default function SeasonRoller({
         <div className="max-w-2xl">
           <h2 className="font-display text-4xl text-strong">Play out the season</h2>
           <p className="mt-1 text-sm text-muted">
-            Each click randomly decides every remaining game using its win probability. Run it a few times to see how much
-            one season can vary.
+            Each click randomly decides every remaining game using its win probability, and every player&apos;s stats along with it
+            (see the Roster tab). Run it a few times to see how much one season can vary.
           </p>
         </div>
-        <button onClick={roll} className="btn btn-primary text-xl">
-          {outcomes ? "Simulate again" : "Simulate one season"}
+        <button onClick={() => void run()} disabled={loading} className="btn btn-primary text-xl">
+          {loading ? "Simulating…" : sim ? "Simulate again" : "Simulate one season"}
         </button>
       </div>
+      {error && (
+        <p role="alert" className="mt-3 rounded-md bg-bad/15 px-4 py-2 text-sm text-bad-ink ring-1 ring-bad/40">
+          {error}. Is the API running on port 8000?
+        </p>
+      )}
 
       {outcomes && (
         <div className="mt-5" aria-live="polite">
@@ -80,7 +79,7 @@ export default function SeasonRoller({
                 title={`Week ${g.week}: ${g.neutral || g.home ? "vs" : "@"} ${g.opponent} (${Math.round(g.p_win * 100)}% to win)`}
               >
                 <span
-                  className={`font-display inline-flex h-8 w-8 items-center justify-center rounded text-lg text-strong ${
+                  className={`font-display inline-flex h-8 w-8 items-center justify-center rounded text-lg text-white ${
                     outcomes[i] ? "bg-good" : "bg-bad"
                   }`}
                   aria-label={outcomes[i] ? "Win" : "Loss"}
@@ -94,7 +93,7 @@ export default function SeasonRoller({
           </ul>
           {history.length > 1 && (
             <p className="mt-4 text-sm text-muted">
-              Your runs so far (wins): <span className="font-semibold text-strong tabular-nums">{history.join(", ")}</span>
+              Your runs so far (wins): <span className="font-semibold text-strong tabular-nums">{history.map((h) => h + wins).join(", ")}</span>
             </p>
           )}
         </div>

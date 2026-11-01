@@ -141,3 +141,46 @@ export interface BacktestResponse {
   tuning_top10: TuningResult[];
   live?: { k: number; home_field: number; season_regression: number; qb?: Record<string, number> | null } | null;
 }
+
+export interface RosterPlayer {
+  id: string;
+  name: string;
+  position: string; // QB RB WR TE OL DL LB DB K P LS
+  jersey: number | null;
+  status: string; // ACT, INA (inactive), RES (injured reserve)
+  headshot: string | null;
+  age: number | null;
+  years_exp: number | null;
+  gp: number; // games played so far
+  proj_gp: number;
+  avail: number; // chance he plays each remaining game
+  stats: Record<string, number>; // season totals so far
+  proj: Record<string, number>; // projected final totals
+  rates: Record<string, number>; // per-game rates behind the projection
+}
+
+export interface TeamRoster {
+  team: string;
+  season: number;
+  generated_at: string;
+  team_games_played: number;
+  games_remaining: number;
+  columns: Record<string, string[]>; // stat keys to show, by position
+  players: RosterPlayer[];
+}
+
+export interface SimTeamGame {
+  game_id: string;
+  week: number;
+  opponent: string;
+  home: boolean;
+  neutral: boolean;
+  p_win: number;
+  win: boolean;
+}
+
+export interface SimTeamResult {
+  team: string;
+  games: SimTeamGame[];
+  players: { id: string; gp: number; stats: Record<string, number> }[]; // final simulated totals
+}

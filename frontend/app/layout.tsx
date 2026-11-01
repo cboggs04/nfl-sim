@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Barlow_Condensed, Geist, Geist_Mono } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import NavLinks from "@/components/NavLinks";
 import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
@@ -47,7 +48,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <span className="font-display text-3xl text-strong">SIMULATOR</span>
             </Link>
             <div className="flex items-center gap-2 sm:gap-4">
-              <NavLinks />
+              <Suspense fallback={<div className="h-9 w-72" aria-hidden />}>
+                <NavLinks />
+              </Suspense>
               <ThemeToggle />
             </div>
           </div>

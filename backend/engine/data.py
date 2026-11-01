@@ -102,3 +102,82 @@ def load_qb_game_epa(seasons: list[int], refresh: bool = False) -> pl.DataFrame:
         DATA_DIR.mkdir(exist_ok=True)
         have.write_parquet(cache)
     return have.filter(pl.col("season").is_in(seasons)).with_columns(pl.col("team").replace(TEAM_ALIASES))
+
+
+# ---- Players (rosters, season stat totals, games played) ----
+
+PLAYER_STAT_COLUMNS = [
+    "completions", "attempts", "passing_yards", "passing_tds", "passing_interceptions",
+    "carries", "rushing_yards", "rushing_tds",
+    "targets", "receptions", "receiving_yards", "receiving_tds",
+    "def_tackles_solo", "def_tackle_assists", "def_tackles_for_loss", "def_sacks", "def_interceptions",
+    "def_pass_defended", "fg_made", "fg_att", "pat_made", "pat_att", "pt_att", "pt_yards", "pt_inside_20",
+]
+ROSTER_COLUMNS = ["gsis_id", "pfr_id", "full_name", "team", "position", "jersey_number", "status",
+                  "years_exp", "birth_date", "headshot_url", "height", "weight", "college"]
+
+
+def load_roster(season: int, refresh: bool = False) -> pl.DataFrame:
+    """Current roster for a season (one row per player), cached to backend/data/roster_<season>.parquet.
+    Includes headshot URLs. Rosters change weekly, so refresh=True re-downloads."""
+    cache = DATA_DIR / f"roster_{season}.parquet"
+    if cache.exists() and not refresh:
+        df = pl.read_parquet(cache)
+    else:
+        import nflreadpy as nfl
+
+        df = nfl.load_rosters([season]).select(ROSTER_COLUMNS)
+        DATA_DIR.mkdir(exist_ok=True)
+        df.write_parquet(cache)
+    return df.with_columns(pl.col("team").replace(TEAM_ALIASES))
+
+
+def load_player_totals(seasons: list[int], refresh: bool = False) -> pl.DataFrame:
+    """Regular-season stat totals per player and season: player_id (gsis), season, weeks (games with
+    a stat line) plus the sums in PLAYER_STAT_COLUMNS. Cached to backend/data/player_totals.parquet;
+    refresh=True re-downloads only the latest requested season."""
+    cache = DATA_DIR / "player_totals.parquet"
+    have = pl.read_parquet(cache) if cache.exists() else None
+    if have is not None and refresh:
+        have = have.filter(pl.col("season") != max(seasons))
+    have_seasons = set(have["season"].unique().to_list()) if have is not None else set()
+    missing = [s for s in seasons if s not in have_seasons]
+    if missing:
+        import nflreadpy as nfl
+
+        parts = [have] if have is not None else []
+        for season in missing:
+            w = nfl.load_player_stats([season]).filter(pl.col("season_type") == "REG")
+            for c in PLAYER_STAT_COLUMNS:  # a column can be missing in a season with no such plays
+                if c not in w.columns:
+                    w = w.with_columns(pl.lit(0).alias(c))
+            parts.append(
+                w.group_by("player_id", "season")
+                .agg(pl.col("week").n_unique().alias("weeks"),
+                     *[pl.col(c).fill_null(0).sum().cast(pl.Float64) for c in PLAYER_STAT_COLUMNS])
+            )
+        have = pl.concat(parts)
+        DATA_DIR.mkdir(exist_ok=True)
+        have.write_parquet(cache)
+    return have.filter(pl.col("season").is_in(seasons))
+
+
+def load_snap_games(season: int, refresh: bool = False) -> pl.DataFrame:
+    """Games each player was on the field for (any offense, defense or special-teams snap): pfr_id, games.
+    This is a truer 'games played' than stat lines (linemen rarely have stats). Cached per season."""
+    cache = DATA_DIR / f"snap_games_{season}.parquet"
+    if cache.exists() and not refresh:
+        return pl.read_parquet(cache)
+    import nflreadpy as nfl
+
+    s = nfl.load_snap_counts([season]).filter(pl.col("game_type") == "REG")
+    out = (
+        s.with_columns((pl.col("offense_snaps").fill_null(0) + pl.col("defense_snaps").fill_null(0)
+                        + pl.col("st_snaps").fill_null(0)).alias("snaps"))
+        .filter(pl.col("snaps") > 0)
+        .group_by("pfr_player_id").agg(pl.col("week").n_unique().alias("games"))
+        .rename({"pfr_player_id": "pfr_id"})
+    )
+    DATA_DIR.mkdir(exist_ok=True)
+    out.write_parquet(cache)
+    return out

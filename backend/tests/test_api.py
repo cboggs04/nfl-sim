@@ -88,3 +88,28 @@ def test_whatif_game_override():
     played = next(g for g in games if g["played"])
     assert client.post("/api/whatif", json={"game_overrides": [{"game_id": played["game_id"], "home_win": True}]}).status_code == 422
     assert client.post("/api/whatif", json={"game_overrides": [{"game_id": "nope", "home_win": True}]}).status_code == 422
+
+
+@needs_data
+def test_roster_endpoint():
+    r = client.get("/api/teams/kc/roster")
+    assert r.status_code == 200
+    d = r.json()
+    assert d["team"] == "KC" and d["games_remaining"] > 0 and len(d["players"]) > 40
+    qbs = [p for p in d["players"] if p["position"] == "QB"]
+    assert qbs and all(set(d["columns"]["QB"]) == set(p["stats"]) for p in qbs)
+    assert all(p["proj"][k] >= p["stats"][k] - 0.2 for p in d["players"] for k in p["stats"])   # projections never go backwards
+    assert client.get("/api/teams/XXX/roster").status_code == 404
+
+
+@needs_data
+def test_sim_team_endpoint_drives_players_with_results():
+    r = client.post("/api/sim/team", json={"team": "KC"})
+    assert r.status_code == 200
+    d = r.json()
+    roster = client.get("/api/teams/KC/roster").json()
+    assert len(d["games"]) == roster["games_remaining"]
+    assert {p["id"] for p in d["players"]} == {p["id"] for p in roster["players"]}
+    by_id = {p["id"]: p for p in roster["players"]}
+    assert all(sp["stats"][k] >= by_id[sp["id"]]["stats"][k] - 0.2 for sp in d["players"] for k in sp["stats"])
+    assert client.post("/api/sim/team", json={"team": "XXX"}).status_code == 422

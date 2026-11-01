@@ -224,3 +224,60 @@ class SimState(BaseModel):
     config: dict[str, float]        # Elo settings: k, home_field, season_regression
     ratings: dict[str, float]
     games: list[StateGame]
+
+
+# ---- Rosters and player stats ----
+
+class RosterPlayer(BaseModel):
+    id: str                          # nflverse (gsis) id
+    name: str
+    position: str                    # QB RB WR TE OL DL LB DB K P LS
+    jersey: int | None
+    status: str                      # ACT (active), INA (inactive this week), RES (injured reserve)
+    headshot: str | None
+    age: int | None
+    years_exp: int | None
+    gp: int                          # games played so far
+    proj_gp: float                   # projected games played by the end of the regular season
+    avail: float                     # chance he plays in each remaining game
+    stats: dict[str, float]          # season totals so far (keys depend on position, see TeamRoster.columns)
+    proj: dict[str, float]           # projected final totals
+    rates: dict[str, float]          # per-game rates behind the projection
+
+
+class TeamRoster(BaseModel):
+    """GET /api/teams/{abbr}/roster."""
+    team: str
+    season: int
+    generated_at: str
+    team_games_played: int
+    games_remaining: int
+    columns: dict[str, list[str]]    # stat keys to show, by position
+    players: list[RosterPlayer]
+
+
+class SimTeamRequest(BaseModel):
+    team: str
+
+
+class SimTeamGame(BaseModel):
+    game_id: str
+    week: int
+    opponent: str
+    home: bool
+    neutral: bool
+    p_win: float
+    win: bool                        # this simulation's result
+
+
+class SimPlayerResult(BaseModel):
+    id: str
+    gp: int                          # games played in total, including simulated ones
+    stats: dict[str, float]          # final totals: current + simulated rest of season
+
+
+class SimTeamResult(BaseModel):
+    """POST /api/sim/team: one simulated rest-of-season for a team and its players."""
+    team: str
+    games: list[SimTeamGame]
+    players: list[SimPlayerResult]

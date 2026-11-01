@@ -1,5 +1,5 @@
 // The ONLY place the frontend talks to the backend. Components import from here.
-import type { BacktestResponse, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, WhatIfRequest } from "./types";
+import type { BacktestResponse, SimTeamResult, TeamRoster, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, WhatIfRequest } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Set NEXT_PUBLIC_USE_MOCK=1 to build the UI without the API running.
@@ -35,6 +35,15 @@ export async function getBacktest(): Promise<BacktestResponse> {
   return get<BacktestResponse>("/api/backtest");
 }
 
+/** Every player on a team with current and projected stats. Null if the team doesn't exist. */
+export async function getRoster(abbr: string): Promise<TeamRoster | null> {
+  if (USE_MOCK) return null;
+  const res = await fetch(`${BASE}/api/teams/${encodeURIComponent(abbr)}/roster`, { cache: "no-store" });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`API /api/teams/${abbr}/roster failed with status ${res.status}`);
+  return res.json() as Promise<TeamRoster>;
+}
+
 async function post<T>(path: string, body?: unknown): Promise<T> {
   if (USE_MOCK) throw new Error("This feature needs the API running (turn off NEXT_PUBLIC_USE_MOCK).");
   const res = await fetch(`${BASE}${path}`, {
@@ -55,3 +64,6 @@ export const rollGame = (home: string, away: string, neutral: boolean, play = tr
 
 /** Re-run the season simulation with changed team ratings and/or forced game results (~1 second). */
 export const runWhatIf = (req: WhatIfRequest) => post<SeasonResponse>("/api/whatif", req);
+
+/** Simulate one team's rest of season: its game results and every player's resulting stats. */
+export const simulateTeam = (team: string) => post<SimTeamResult>("/api/sim/team", { team });

@@ -5,8 +5,8 @@ Re-run whenever new games have been played:
 
     cd backend && .venv/bin/python -m scripts.precompute [--sims 20000]
 
-Writes season.json, teams.json (one TeamDetail per team), bracket.json, and
-sim_state.json (ratings + schedule, so the live endpoints need no data download).
+Writes season.json, teams.json (one TeamDetail per team), bracket.json, rosters.json (players, stats and
+projections), and sim_state.json (ratings + schedule, so the live endpoints need no data download).
 (backtest.json comes from scripts.run_backtest.)
 """
 import argparse
@@ -18,7 +18,11 @@ import polars as pl
 from app.schemas import (BacktestResponse, BracketConference, BracketResponse, GameView,
                          Record, SeasonResponse, SeedProb, SeedSlot, SimState, StateGame,
                          TeamAdvancement, TeamDetail, TeamOdds)
-from engine.data import DATA_DIR, load_games, load_qb_game_epa
+from datetime import date
+
+from app.schemas import RosterPlayer, TeamRoster
+from engine.data import DATA_DIR, load_games, load_player_totals, load_qb_game_epa, load_roster, load_snap_games
+from engine.players import POSITION_STATS, build_player
 from engine.elo import EloConfig, game_probability, walk_games
 from engine.qb import QbConfig, QbTracker, projected_starters, stats_by_game
 from engine.simulate import simulate_league
@@ -122,7 +126,46 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False):
         games=[StateGame(game_id=g["game_id"], week=g["week"], home_team=g["home_team"],
                          away_team=g["away_team"], neutral=g["neutral"],
                          result=None if g["result"] is None else int(g["result"])) for g in schedule])
-    return {"season": season_resp, "teams": teams, "bracket": bracket, "state": state}
+    return {"season": season_resp, "teams": teams, "bracket": bracket, "state": state,
+            "rosters": build_rosters(season, schedule, refresh)}
+
+
+def build_rosters(season: int, schedule: list[dict], refresh: bool = False) -> dict[str, TeamRoster]:
+    """Every team's players with current stats, per-game rates and projections (engine.players)."""
+    roster = load_roster(season, refresh).filter(pl.col("status").is_in(["ACT", "INA", "RES"]) & pl.col("position").is_in(list(POSITION_STATS)))
+    totals = {(r["player_id"], r["season"]): r for r in load_player_totals([season - 1, season], refresh).to_dicts()}
+    snaps = {s: {r["pfr_id"]: r["games"] for r in load_snap_games(s, refresh and s == season).to_dicts()} for s in (season - 1, season)}
+
+    played = {t: 0 for t in TEAMS}
+    remaining = {t: 0 for t in TEAMS}
+    for g in schedule:
+        for t in (g["home_team"], g["away_team"]):
+            played[t] += g["result"] is not None
+            remaining[t] += g["result"] is None
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    today = date.today()
+
+    out: dict[str, TeamRoster] = {}
+    for t in TEAMS:
+        players = []
+        for r in roster.filter(pl.col("team") == t).to_dicts():
+            pid, pfr = r["gsis_id"], r["pfr_id"]
+            cur, prev = totals.get((pid, season)), totals.get((pid, season - 1))
+            cur_games = max(snaps[season].get(pfr, 0), int(cur["weeks"]) if cur else 0)
+            prev_games = max(snaps[season - 1].get(pfr, 0), int(prev["weeks"]) if prev else 0)
+            roster_row = {"id": pid, "name": r["full_name"], "position": r["position"], "status": r["status"]}
+            p = build_player(roster_row, cur, prev, cur_games, prev_games, played[t], remaining[t])
+            born = r["birth_date"]
+            players.append(RosterPlayer(
+                id=pid, name=r["full_name"], position=r["position"], jersey=r["jersey_number"], status=r["status"],
+                headshot=r["headshot_url"], years_exp=r["years_exp"],
+                age=None if born is None else today.year - born.year - ((today.month, today.day) < (born.month, born.day)),
+                gp=p["gp"], proj_gp=round(p["proj_gp"], 2), avail=round(p["avail"], 3),
+                stats={k: round(v, 1) for k, v in p["stats"].items()}, proj={k: round(v, 1) for k, v in p["proj"].items()},
+                rates={k: round(v, 4) for k, v in p["rates"].items()}))
+        out[t] = TeamRoster(team=t, season=season, generated_at=now, team_games_played=played[t], games_remaining=remaining[t],
+                            columns=POSITION_STATS, players=players)
+    return out
 
 
 def main():
@@ -138,12 +181,13 @@ def main():
     (DATA_DIR / "teams.json").write_text(json.dumps({t: json.loads(d.model_dump_json()) for t, d in out["teams"].items()}))
     (DATA_DIR / "bracket.json").write_text(out["bracket"].model_dump_json(indent=1))
     (DATA_DIR / "sim_state.json").write_text(out["state"].model_dump_json())
+    (DATA_DIR / "rosters.json").write_text(json.dumps({t: json.loads(r.model_dump_json()) for t, r in out["rosters"].items()}))
 
     bt = DATA_DIR / "backtest.json"
     if bt.exists():
         BacktestResponse.model_validate_json(bt.read_text())  # fail loudly if the shape drifts
     s = out["season"]
-    print(f"Wrote season.json, teams.json, bracket.json, sim_state.json to {DATA_DIR}")
+    print(f"Wrote season.json, teams.json, bracket.json, sim_state.json, rosters.json to {DATA_DIR}")
     print(f"{s.season}: {s.games_played}/{s.games_total} games played, {s.n_sims:,} sims")
     for o in s.teams[:5]:
         print(f"  {o.team:<4}{o.name:<24}Super Bowl {o.p_super_bowl:.1%}")

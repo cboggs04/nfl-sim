@@ -4,9 +4,12 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import ColumnChart from "@/components/ColumnChart";
 import ProbCell, { pct } from "@/components/ProbCell";
+import RosterView from "@/components/RosterView";
 import SeasonRoller from "@/components/SeasonRoller";
+import { TeamSimProvider } from "@/components/TeamSim";
+import TeamTabs from "@/components/TeamTabs";
 import TeamLogo from "@/components/TeamLogo";
-import { getTeam } from "@/lib/api";
+import { getRoster, getTeam } from "@/lib/api";
 import { logoSrc, teamInfo } from "@/lib/teams";
 import type { GameView } from "@/lib/types";
 
@@ -65,7 +68,7 @@ function quantile(dist: number[], q: number) {
 
 async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
   const { abbr } = await params;
-  const team = await getTeam(abbr);
+  const [team, roster] = await Promise.all([getTeam(abbr), getRoster(abbr).catch(() => null)]);
   if (!team) notFound();
   const { odds, games } = team;
   const info = teamInfo(odds.team);
@@ -140,6 +143,10 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
         </div>
       </header>
 
+      <TeamSimProvider team={odds.team}>
+        <TeamTabs
+          overview={
+            <>
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Tile label="Expected wins" value={odds.exp_wins.toFixed(1)} ratio={odds.exp_wins / 17} color={info.primary} />
         <Tile label="Win division" value={pct(odds.p_division)} ratio={odds.p_division} color={info.primary} />
@@ -222,6 +229,17 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
           xLabel="Seed"
         />
       </div>
+            </>
+          }
+          roster={
+            roster ? (
+              <RosterView roster={roster} color={info.primary} wins={odds.record.wins} losses={odds.record.losses} ties={odds.record.ties} />
+            ) : (
+              <p className="mt-6 text-muted">Roster data isn&apos;t available. Is the API running, and has `python -m scripts.precompute` been run?</p>
+            )
+          }
+        />
+      </TeamSimProvider>
     </>
   );
 }

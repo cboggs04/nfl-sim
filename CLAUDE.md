@@ -26,6 +26,8 @@ Interactive web app that simulates the NFL season with Monte Carlo methods and p
 - GET /api/bracket
 - POST /api/whatif
 - GET /api/backtest
+- GET /api/teams/{abbr}/roster (players, stats, projections)
+- POST /api/sim/season, /api/sim/game, /api/sim/team (interactive single simulations)
 
 ## Feature priority
 1. Season dashboard (sortable table)

@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from engine.data import DATA_DIR
 
+from .rosters import router as rosters_router
 from .sim import router as sim_router
 from .whatif import router as whatif_router
 from .schemas import BacktestResponse, BracketResponse, SeasonResponse, TeamDetail
@@ -24,6 +25,7 @@ app = FastAPI(title="NFL Season Simulator API")
 origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
 app.include_router(sim_router)
+app.include_router(rosters_router)
 app.include_router(whatif_router)
 
 
