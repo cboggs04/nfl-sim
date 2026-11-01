@@ -25,7 +25,7 @@ def schedule(n_each=10):
 def test_scoring_formulas():
     assert offense_points({"passing_yards": 300, "passing_tds": 2, "passing_interceptions": 1}) == pytest.approx(12 + 8 - 2)
     assert offense_points({"receiving_yards": 100, "receptions": 8, "receiving_tds": 1}) == pytest.approx(10 + 4 + 6)
-    assert defense_points({"def_sacks": 2, "tackles": 5, "def_interceptions": 1}) == pytest.approx(8 + 3 + 5)
+    assert defense_points({"def_sacks": 2, "tackles": 5, "def_interceptions": 1}) == pytest.approx(14 + 1 + 8)
     assert team_factor(14) == 1.0 and team_factor(3) == 0.7 and team_factor(14) > team_factor(10) > team_factor(7)
 
 
@@ -77,3 +77,9 @@ def test_a_player_wins_at_most_one_award_a_season():
         assert total <= 1.0 + 1e-9, pid
     assert out["awards"]["mvp"]["star"] + out["awards"]["opoty"].get("star", 0) <= 1.0 + 1e-9
     assert out["awards"]["opoty"].get("mid", 0) + out["awards"]["opoty"].get("rb", 0) > 0.5   # star is usually taken by MVP
+
+
+def test_pass_rushers_outscore_tackle_heavy_linebackers():
+    edge = {"def_sacks": 15, "tackles": 50, "def_tackles_for_loss": 15, "def_interceptions": 0, "def_pass_defended": 2}
+    backer = {"def_sacks": 4, "tackles": 160, "def_tackles_for_loss": 12, "def_interceptions": 2, "def_pass_defended": 6}
+    assert defense_points(edge) > defense_points(backer)

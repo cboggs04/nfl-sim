@@ -84,3 +84,11 @@ def test_same_seed_same_season():
     a = simulate_player(p, [True, False] * 5, np.random.default_rng(7))
     b = simulate_player(p, [True, False] * 5, np.random.default_rng(7))
     assert a == b
+
+
+def test_talent_uncertainty_widens_outcomes_without_shifting_the_average():
+    p = qb()
+    sacks_like = lambda noise: [simulate_player(p, [True, False] * 5, np.random.default_rng(i), talent_noise=noise)["stats"]["passing_tds"] for i in range(600)]  # noqa: E731
+    fixed, uncertain = np.array(sacks_like(False)), np.array(sacks_like(True))
+    assert uncertain.std() > fixed.std() * 1.1
+    assert uncertain.mean() == pytest.approx(fixed.mean(), rel=0.08)

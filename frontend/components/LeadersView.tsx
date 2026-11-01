@@ -43,7 +43,7 @@ function AwardCard({ title, blurb, rows }: { title: string; blurb: string; rows:
   const info = teamInfo(fav.team);
   const topProb = Math.max(...rows.map((r) => r.prob), 0.01);
   return (
-    <section className="panel flex flex-col">
+    <section className="panel flex h-full flex-col">
       <div
         className="p-5 text-center"
         style={{ backgroundColor: "var(--card-end)", backgroundImage: `linear-gradient(160deg, ${info.primary}cc, ${info.primary}33 60%, var(--card-end))` }}
@@ -156,9 +156,12 @@ export default function LeadersView({ data }: { data: LeadersResponse }) {
           production (MVP also counts the team&apos;s record), and a player can win only one award a season, so a player who wins
           MVP is not also counted for Offensive Player of the Year. Real voters are less predictable, so read this as who the numbers favor.
         </p>
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {/* Wrapping flex (not a grid) so a short last row is centered under the rows above it. */}
+        <div className="mt-4 flex flex-wrap justify-center gap-4">
           {AWARD_INFO.map((a) => (
-            <AwardCard key={a.key} title={a.title} blurb={a.blurb} rows={data.awards[a.key] ?? []} />
+            <div key={a.key} className="w-full md:w-[calc(50%-0.5rem)] xl:w-[calc((100%-2rem)/3)]">
+              <AwardCard title={a.title} blurb={a.blurb} rows={data.awards[a.key] ?? []} />
+            </div>
           ))}
         </div>
       </section>

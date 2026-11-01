@@ -148,12 +148,34 @@ def simulate_game_stats(position: str, rates: dict[str, float], win: np.ndarray,
     return out
 
 
-def simulate_player(player: dict, wins: list[bool], rng) -> dict:
+# Stats that come in big piles (yards, attempts, carries, ...): after g games a rate is known to about 25%/sqrt(g).
+VOLUME_STATS = {"completions", "attempts", "passing_yards", "carries", "rushing_yards", "targets", "receptions",
+                "receiving_yards", "fg_att", "pat_att", "pt_att", "pt_yards"}
+
+
+def talent_multipliers(player: dict, rng) -> dict[str, float]:
+    """A player's true per-game rate is only estimated from the games so far, so each simulated season draws
+    a multiplier (mean 1) for every stat. How wide: event stats (sacks, TDs, interceptions, tackles...) are
+    known to about 1/sqrt(count so far); volume stats to about 25%/sqrt(games played). Without this a hot start
+    looks like certain talent and the favorites win far too often."""
+    gp = max(player["gp"], 0)
+    out = {}
+    for s in player["rates"]:
+        k = max(4.0, gp * 16.0) if s in VOLUME_STATS else max(1.5, player["stats"].get(s, 0.0) + 1.0)
+        out[s] = rng.gamma(k, 1.0 / k)
+    return out
+
+
+def simulate_player(player: dict, wins: list[bool], rng, talent_noise: bool = True) -> dict:
     """Simulate a player's rest of the season given his team's results in its remaining games.
 
     Returns {"gp": games played in total, "stats": final totals}; current totals plus simulated games."""
     win = np.asarray(wins, dtype=bool)
     plays = rng.random(len(win)) < player["avail"]
-    drawn = simulate_game_stats(player["position"], player["rates"], win[plays], rng) if plays.any() else {}
+    rates = player["rates"]
+    if talent_noise:
+        mult = talent_multipliers(player, rng)
+        rates = {s: r * mult[s] for s, r in rates.items()}
+    drawn = simulate_game_stats(player["position"], rates, win[plays], rng) if plays.any() else {}
     stats = {s: player["stats"][s] + float(drawn[s].sum()) if s in drawn else player["stats"][s] for s in player["stats"]}
     return {"gp": player["gp"] + int(plays.sum()), "stats": stats}

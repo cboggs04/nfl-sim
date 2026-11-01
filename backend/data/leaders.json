@@ -1,6 +1,6 @@
 {
  "season": 2026,
- "generated_at": "2026-11-01T20:19:37+00:00",
+ "generated_at": "2026-11-01T20:26:26+00:00",
  "n_sims": 500,
  "leaders": {
   "passing_yards": [
@@ -12,7 +12,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/thz8stjkbjwddxqnozi5",
     "current": 2246.0,
     "projected": 4902.5,
-    "p_lead": 0.344
+    "p_lead": 0.246
    },
    {
     "id": "00-0033106",
@@ -22,7 +22,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/kaicbot8qhzrvddilbtp",
     "current": 1788.0,
     "projected": 4878.5,
-    "p_lead": 0.372
+    "p_lead": 0.316
    },
    {
     "id": "00-0026498",
@@ -32,7 +32,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/jwpkjfrkzufdyh8u1mg7",
     "current": 1989.0,
     "projected": 4746.0,
-    "p_lead": 0.202
+    "p_lead": 0.176
    },
    {
     "id": "00-0039150",
@@ -42,7 +42,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/vcvhmxvxw2a3armle0af",
     "current": 1921.0,
     "projected": 4655.1,
-    "p_lead": 0.042
+    "p_lead": 0.114
    },
    {
     "id": "00-0033077",
@@ -52,7 +52,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/yvscmqq1qki8zfsemmcd",
     "current": 1851.0,
     "projected": 4446.3,
-    "p_lead": 0.01
+    "p_lead": 0.022
    },
    {
     "id": "00-0036442",
@@ -62,7 +62,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/gnnvcgui1cijybukk2w7",
     "current": 1653.0,
     "projected": 4431.2,
-    "p_lead": 0.016
+    "p_lead": 0.06
    },
    {
     "id": "00-0039163",
@@ -72,7 +72,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/tt4zrtxlhifaljhj0rn7",
     "current": 1867.0,
     "projected": 4329.7,
-    "p_lead": 0.004
+    "p_lead": 0.016
    },
    {
     "id": "00-0039851",
@@ -82,7 +82,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/mkauzrg7vo8lfziigsbg",
     "current": 1784.0,
     "projected": 4286.5,
-    "p_lead": 0.006
+    "p_lead": 0.014
    },
    {
     "id": "00-0029604",
@@ -92,7 +92,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/za7cynvpwlsro1tsaijk",
     "current": 1877.0,
     "projected": 4217.1,
-    "p_lead": 0.0
+    "p_lead": 0.01
    },
    {
     "id": "00-0037834",
@@ -102,7 +102,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xs2fyj1sqdgwvt9ihbri",
     "current": 1748.0,
     "projected": 4163.4,
-    "p_lead": 0.0
+    "p_lead": 0.004
    }
   ],
   "passing_tds": [
@@ -114,7 +114,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/gnnvcgui1cijybukk2w7",
     "current": 15.0,
     "projected": 40.5,
-    "p_lead": 0.404
+    "p_lead": 0.252
    },
    {
     "id": "00-0033106",
@@ -124,7 +124,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/kaicbot8qhzrvddilbtp",
     "current": 14.0,
     "projected": 37.8,
-    "p_lead": 0.168
+    "p_lead": 0.156
    },
    {
     "id": "00-0036971",
@@ -134,7 +134,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/k9uzdernqkx7oquy7dkg",
     "current": 14.0,
     "projected": 36.8,
-    "p_lead": 0.148
+    "p_lead": 0.134
    },
    {
     "id": "00-0037834",
@@ -144,7 +144,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xs2fyj1sqdgwvt9ihbri",
     "current": 15.0,
     "projected": 36.2,
-    "p_lead": 0.106
+    "p_lead": 0.11
    },
    {
     "id": "00-0026498",
@@ -154,7 +154,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/jwpkjfrkzufdyh8u1mg7",
     "current": 14.0,
     "projected": 35.6,
-    "p_lead": 0.08
+    "p_lead": 0.106
    },
    {
     "id": "00-0036264",
@@ -164,7 +164,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/thz8stjkbjwddxqnozi5",
     "current": 16.0,
     "projected": 34.7,
-    "p_lead": 0.038
+    "p_lead": 0.06
    },
    {
     "id": "00-0029604",
@@ -174,7 +174,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/za7cynvpwlsro1tsaijk",
     "current": 16.0,
     "projected": 34.6,
-    "p_lead": 0.034
+    "p_lead": 0.026
    },
    {
     "id": "00-0039150",
@@ -184,7 +184,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/vcvhmxvxw2a3armle0af",
     "current": 13.0,
     "projected": 32.0,
-    "p_lead": 0.006
+    "p_lead": 0.026
    },
    {
     "id": "00-0039851",
@@ -194,7 +194,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/mkauzrg7vo8lfziigsbg",
     "current": 13.0,
     "projected": 31.1,
-    "p_lead": 0.008
+    "p_lead": 0.036
    },
    {
     "id": "00-0033077",
@@ -204,7 +204,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/yvscmqq1qki8zfsemmcd",
     "current": 13.0,
     "projected": 30.9,
-    "p_lead": 0.004
+    "p_lead": 0.018
    }
   ],
   "receiving_yards": [
@@ -216,7 +216,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/yx1xjrupbqdknnjaq4a6",
     "current": 867.0,
     "projected": 2024.1,
-    "p_lead": 0.932
+    "p_lead": 0.892
    },
    {
     "id": "00-0038124",
@@ -226,7 +226,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/tumeg4d32sirkab2xzu5",
     "current": 708.0,
     "projected": 1518.3,
-    "p_lead": 0.018
+    "p_lead": 0.012
    },
    {
     "id": "00-0036358",
@@ -236,7 +236,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/mbblzwtynxr15ovzkevi",
     "current": 651.0,
     "projected": 1513.2,
-    "p_lead": 0.008
+    "p_lead": 0.02
    },
    {
     "id": "00-0037239",
@@ -256,7 +256,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/gpwtyv3viwy9q4ewderl",
     "current": 571.0,
     "projected": 1453.1,
-    "p_lead": 0.012
+    "p_lead": 0.02
    },
    {
     "id": "00-0036963",
@@ -266,7 +266,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/fd8nwhm6pvxfyzphzl6i",
     "current": 525.0,
     "projected": 1445.2,
-    "p_lead": 0.002
+    "p_lead": 0.008
    },
    {
     "id": "00-0037238",
@@ -276,7 +276,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/y5mkxrljhsglpwl3ky94",
     "current": 616.0,
     "projected": 1443.0,
-    "p_lead": 0.008
+    "p_lead": 0.016
    },
    {
     "id": "00-0039064",
@@ -306,7 +306,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/gilgvjemumd6kpc9eiku",
     "current": 569.0,
     "projected": 1391.7,
-    "p_lead": 0.002
+    "p_lead": 0.01
    }
   ],
   "receiving_tds": [
@@ -318,7 +318,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/yx1xjrupbqdknnjaq4a6",
     "current": 8.0,
     "projected": 17.5,
-    "p_lead": 0.574
+    "p_lead": 0.364
    },
    {
     "id": "00-0036963",
@@ -328,7 +328,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/fd8nwhm6pvxfyzphzl6i",
     "current": 5.0,
     "projected": 13.3,
-    "p_lead": 0.08
+    "p_lead": 0.098
    },
    {
     "id": "00-0038124",
@@ -338,7 +338,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/tumeg4d32sirkab2xzu5",
     "current": 6.0,
     "projected": 13.1,
-    "p_lead": 0.07
+    "p_lead": 0.056
    },
    {
     "id": "00-0036900",
@@ -348,7 +348,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/qya3dtjb5kgofcuj2tuw",
     "current": 5.0,
     "projected": 12.7,
-    "p_lead": 0.094
+    "p_lead": 0.09
    },
    {
     "id": "00-0036358",
@@ -358,7 +358,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/mbblzwtynxr15ovzkevi",
     "current": 6.0,
     "projected": 12.5,
-    "p_lead": 0.038
+    "p_lead": 0.048
    },
    {
     "id": "00-0033288",
@@ -368,7 +368,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/vkicdglglkyukgyxtmpx",
     "current": 5.0,
     "projected": 11.8,
-    "p_lead": 0.026
+    "p_lead": 0.054
    },
    {
     "id": "00-0034829",
@@ -378,7 +378,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/dykckg6we3cnw9yhpggi",
     "current": 5.0,
     "projected": 11.5,
-    "p_lead": 0.054
+    "p_lead": 0.07
    },
    {
     "id": "00-0037240",
@@ -388,7 +388,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/byiptqggtglvy5qrw5wp",
     "current": 4.0,
     "projected": 10.2,
-    "p_lead": 0.01
+    "p_lead": 0.032
    },
    {
     "id": "00-0037838",
@@ -398,7 +398,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/b1pahldt9ixp9lssxi2d",
     "current": 5.0,
     "projected": 10.1,
-    "p_lead": 0.008
+    "p_lead": 0.0
    },
    {
     "id": "00-0038606",
@@ -408,7 +408,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/yn0hc5xrz5nqeccg8two",
     "current": 4.0,
     "projected": 9.9,
-    "p_lead": 0.02
+    "p_lead": 0.03
    }
   ],
   "rushing_yards": [
@@ -420,7 +420,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/vk6nruaqdewdglofcwwg",
     "current": 701.0,
     "projected": 1752.3,
-    "p_lead": 0.424
+    "p_lead": 0.342
    },
    {
     "id": "00-0037248",
@@ -430,7 +430,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/anjbznqb9i21wzcgrtbs",
     "current": 627.0,
     "projected": 1715.1,
-    "p_lead": 0.386
+    "p_lead": 0.404
    },
    {
     "id": "00-0038542",
@@ -440,7 +440,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/zaxetgy0p0ul6evlsf63",
     "current": 704.0,
     "projected": 1647.4,
-    "p_lead": 0.104
+    "p_lead": 0.124
    },
    {
     "id": "00-0039139",
@@ -450,7 +450,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/cursejnmmp1i9hnxihkj",
     "current": 620.0,
     "projected": 1616.0,
-    "p_lead": 0.082
+    "p_lead": 0.118
    },
    {
     "id": "00-0036223",
@@ -460,7 +460,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/d7pmatz5wylijbsplnkg",
     "current": 587.0,
     "projected": 1434.4,
-    "p_lead": 0.002
+    "p_lead": 0.004
    },
    {
     "id": "00-0032764",
@@ -470,7 +470,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/tm79x0iknqg6hms3ypyt",
     "current": 579.0,
     "projected": 1420.3,
-    "p_lead": 0.002
+    "p_lead": 0.004
    },
    {
     "id": "00-0037228",
@@ -480,7 +480,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/dkiteytgnxar1mpaxcxv",
     "current": 561.0,
     "projected": 1285.2,
-    "p_lead": 0.0
+    "p_lead": 0.002
    },
    {
     "id": "00-0039361",
@@ -490,7 +490,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/vkc00rvnix3f2b96vkwo",
     "current": 558.0,
     "projected": 1276.1,
-    "p_lead": 0.0
+    "p_lead": 0.002
    },
    {
     "id": "00-0036555",
@@ -522,7 +522,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ynrhq9iv30ysjpwmrfdv",
     "current": 8.0,
     "projected": 20.5,
-    "p_lead": 0.458
+    "p_lead": 0.326
    },
    {
     "id": "00-0036223",
@@ -532,7 +532,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/d7pmatz5wylijbsplnkg",
     "current": 8.0,
     "projected": 18.9,
-    "p_lead": 0.082
+    "p_lead": 0.094
    },
    {
     "id": "00-0039139",
@@ -542,7 +542,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/cursejnmmp1i9hnxihkj",
     "current": 7.0,
     "projected": 18.1,
-    "p_lead": 0.094
+    "p_lead": 0.122
    },
    {
     "id": "00-0036997",
@@ -552,7 +552,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xvwroirev2kie6oiphtz",
     "current": 8.0,
     "projected": 17.8,
-    "p_lead": 0.088
+    "p_lead": 0.106
    },
    {
     "id": "00-0033280",
@@ -562,7 +562,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/st82s2ytyzanatcmkqck",
     "current": 8.0,
     "projected": 17.5,
-    "p_lead": 0.118
+    "p_lead": 0.11
    },
    {
     "id": "00-0032764",
@@ -572,7 +572,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/tm79x0iknqg6hms3ypyt",
     "current": 7.0,
     "projected": 16.6,
-    "p_lead": 0.054
+    "p_lead": 0.07
    },
    {
     "id": "00-0037248",
@@ -582,7 +582,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/anjbznqb9i21wzcgrtbs",
     "current": 6.0,
     "projected": 15.7,
-    "p_lead": 0.068
+    "p_lead": 0.076
    },
    {
     "id": "00-0036275",
@@ -592,7 +592,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/owpmwzoilitcodc6cmxo",
     "current": 7.0,
     "projected": 15.5,
-    "p_lead": 0.03
+    "p_lead": 0.058
    },
    {
     "id": "00-0038134",
@@ -602,7 +602,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/vk6nruaqdewdglofcwwg",
     "current": 6.0,
     "projected": 14.2,
-    "p_lead": 0.008
+    "p_lead": 0.018
    },
    {
     "id": "00-0037840",
@@ -612,7 +612,7 @@
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xti3pek6rmojqchakxpy",
     "current": 5.0,
     "projected": 11.6,
-    "p_lead": 0.0
+    "p_lead": 0.014
    }
   ]
  },
@@ -625,7 +625,7 @@
     "position": "QB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ynrhq9iv30ysjpwmrfdv",
     "rookie": false,
-    "prob": 0.606,
+    "prob": 0.568,
     "proj": {
      "completions": 316.9,
      "attempts": 471.5,
@@ -643,7 +643,7 @@
     "position": "QB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xs2fyj1sqdgwvt9ihbri",
     "rookie": false,
-    "prob": 0.09,
+    "prob": 0.08,
     "proj": {
      "completions": 353.0,
      "attempts": 509.9,
@@ -655,30 +655,13 @@
     }
    },
    {
-    "id": "00-0039139",
-    "name": "Jahmyr Gibbs",
-    "team": "DET",
-    "position": "RB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/cursejnmmp1i9hnxihkj",
-    "rookie": false,
-    "prob": 0.07,
-    "proj": {
-     "carries": 344.8,
-     "rushing_yards": 1616.0,
-     "rushing_tds": 18.1,
-     "receptions": 86.3,
-     "receiving_yards": 721.3,
-     "receiving_tds": 5.4
-    }
-   },
-   {
     "id": "00-0036442",
     "name": "Joe Burrow",
     "team": "CIN",
     "position": "QB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/gnnvcgui1cijybukk2w7",
     "rookie": false,
-    "prob": 0.058,
+    "prob": 0.064,
     "proj": {
      "completions": 421.4,
      "attempts": 595.7,
@@ -690,39 +673,53 @@
     }
    },
    {
-    "id": "00-0036971",
-    "name": "Trevor Lawrence",
-    "team": "JAX",
-    "position": "QB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/k9uzdernqkx7oquy7dkg",
+    "id": "00-0039139",
+    "name": "Jahmyr Gibbs",
+    "team": "DET",
+    "position": "RB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/cursejnmmp1i9hnxihkj",
     "rookie": false,
-    "prob": 0.04,
+    "prob": 0.058,
     "proj": {
-     "completions": 334.7,
-     "attempts": 521.0,
-     "passing_yards": 4086.3,
-     "passing_tds": 36.8,
-     "passing_interceptions": 11.3,
-     "rushing_yards": 228.9,
-     "rushing_tds": 1.9
+     "carries": 344.8,
+     "rushing_yards": 1616.0,
+     "rushing_tds": 18.1,
+     "receptions": 86.3,
+     "receiving_yards": 721.3,
+     "receiving_tds": 5.4
     }
    },
    {
-    "id": "00-0033106",
-    "name": "Jared Goff",
-    "team": "DET",
+    "id": "00-0039851",
+    "name": "Drake Maye",
+    "team": "NE",
     "position": "QB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/kaicbot8qhzrvddilbtp",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/mkauzrg7vo8lfziigsbg",
     "rookie": false,
-    "prob": 0.038,
+    "prob": 0.056,
     "proj": {
-     "completions": 411.4,
-     "attempts": 610.3,
-     "passing_yards": 4878.5,
-     "passing_tds": 37.8,
-     "passing_interceptions": 1.7,
-     "rushing_yards": 42.3,
-     "rushing_tds": 2.2
+     "completions": 339.9,
+     "attempts": 508.1,
+     "passing_yards": 4286.5,
+     "passing_tds": 31.1,
+     "passing_interceptions": 17.2,
+     "rushing_yards": 495.0,
+     "rushing_tds": 4.6
+    }
+   },
+   {
+    "id": "00-0038543",
+    "name": "Jaxon Smith-Njigba",
+    "team": "SEA",
+    "position": "WR",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/yx1xjrupbqdknnjaq4a6",
+    "rookie": false,
+    "prob": 0.048,
+    "proj": {
+     "targets": 182.4,
+     "receptions": 135.2,
+     "receiving_yards": 2024.1,
+     "receiving_tds": 17.5
     }
    }
   ],
@@ -734,7 +731,7 @@
     "position": "RB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/cursejnmmp1i9hnxihkj",
     "rookie": false,
-    "prob": 0.472,
+    "prob": 0.552,
     "proj": {
      "carries": 344.8,
      "rushing_yards": 1616.0,
@@ -745,31 +742,13 @@
     }
    },
    {
-    "id": "00-0034857",
-    "name": "Josh Allen",
-    "team": "BUF",
-    "position": "QB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ynrhq9iv30ysjpwmrfdv",
-    "rookie": false,
-    "prob": 0.198,
-    "proj": {
-     "completions": 316.9,
-     "attempts": 471.5,
-     "passing_yards": 4067.6,
-     "passing_tds": 25.0,
-     "passing_interceptions": 10.9,
-     "rushing_yards": 647.8,
-     "rushing_tds": 20.5
-    }
-   },
-   {
     "id": "00-0038543",
     "name": "Jaxon Smith-Njigba",
     "team": "SEA",
     "position": "WR",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/yx1xjrupbqdknnjaq4a6",
     "rookie": false,
-    "prob": 0.11,
+    "prob": 0.24,
     "proj": {
      "targets": 182.4,
      "receptions": 135.2,
@@ -778,125 +757,75 @@
     }
    },
    {
-    "id": "00-0033106",
-    "name": "Jared Goff",
-    "team": "DET",
-    "position": "QB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/kaicbot8qhzrvddilbtp",
+    "id": "00-0038134",
+    "name": "Kenneth Walker III",
+    "team": "KC",
+    "position": "RB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/vk6nruaqdewdglofcwwg",
     "rookie": false,
-    "prob": 0.054,
+    "prob": 0.072,
     "proj": {
-     "completions": 411.4,
-     "attempts": 610.3,
-     "passing_yards": 4878.5,
-     "passing_tds": 37.8,
-     "passing_interceptions": 1.7,
-     "rushing_yards": 42.3,
-     "rushing_tds": 2.2
+     "carries": 309.5,
+     "rushing_yards": 1752.3,
+     "rushing_tds": 14.2,
+     "receptions": 46.0,
+     "receiving_yards": 313.5,
+     "receiving_tds": 4.4
     }
    },
    {
-    "id": "00-0036442",
-    "name": "Joe Burrow",
-    "team": "CIN",
-    "position": "QB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/gnnvcgui1cijybukk2w7",
-    "rookie": false,
-    "prob": 0.032,
-    "proj": {
-     "completions": 421.4,
-     "attempts": 595.7,
-     "passing_yards": 4431.2,
-     "passing_tds": 40.5,
-     "passing_interceptions": 8.8,
-     "rushing_yards": 149.8,
-     "rushing_tds": 2.2
-    }
-   },
-   {
-    "id": "00-0037834",
-    "name": "Brock Purdy",
+    "id": "00-0033280",
+    "name": "Christian McCaffrey",
     "team": "SF",
-    "position": "QB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xs2fyj1sqdgwvt9ihbri",
+    "position": "RB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/st82s2ytyzanatcmkqck",
     "rookie": false,
-    "prob": 0.03,
+    "prob": 0.044,
     "proj": {
-     "completions": 353.0,
-     "attempts": 509.9,
-     "passing_yards": 4163.4,
-     "passing_tds": 36.2,
-     "passing_interceptions": 11.2,
-     "rushing_yards": 366.3,
-     "rushing_tds": 3.0
+     "carries": 219.8,
+     "rushing_yards": 976.8,
+     "rushing_tds": 17.5,
+     "receptions": 84.8,
+     "receiving_yards": 655.9,
+     "receiving_tds": 1.2
+    }
+   },
+   {
+    "id": "00-0037248",
+    "name": "James Cook",
+    "team": "BUF",
+    "position": "RB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/anjbznqb9i21wzcgrtbs",
+    "rookie": false,
+    "prob": 0.024,
+    "proj": {
+     "carries": 321.4,
+     "rushing_yards": 1715.1,
+     "rushing_tds": 15.7,
+     "receptions": 28.9,
+     "receiving_yards": 256.3,
+     "receiving_tds": 0.4
+    }
+   },
+   {
+    "id": "00-0036223",
+    "name": "Jonathan Taylor",
+    "team": "IND",
+    "position": "RB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/d7pmatz5wylijbsplnkg",
+    "rookie": false,
+    "prob": 0.02,
+    "proj": {
+     "carries": 332.6,
+     "rushing_yards": 1434.4,
+     "rushing_tds": 18.9,
+     "receptions": 41.6,
+     "receiving_yards": 417.3,
+     "receiving_tds": 0.3
     }
    }
   ],
   "dpoty": [
-   {
-    "id": "00-0035276",
-    "name": "Blake Cashman",
-    "team": "MIN",
-    "position": "LB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/mvui8tjkoewkupyncbok",
-    "rookie": false,
-    "prob": 0.446,
-    "proj": {
-     "tackles": 153.3,
-     "def_tackles_for_loss": 14.2,
-     "def_sacks": 10.4,
-     "def_interceptions": 0.0,
-     "def_pass_defended": 11.5
-    }
-   },
-   {
-    "id": "00-0036994",
-    "name": "Ernest Jones",
-    "team": "SEA",
-    "position": "LB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/zn0pz6okty7vbj5ryryt",
-    "rookie": false,
-    "prob": 0.168,
-    "proj": {
-     "tackles": 158.7,
-     "def_tackles_for_loss": 6.7,
-     "def_sacks": 6.0,
-     "def_interceptions": 3.0,
-     "def_pass_defended": 7.3
-    }
-   },
-   {
-    "id": "00-0039108",
-    "name": "Will Anderson Jr.",
-    "team": "HOU",
-    "position": "DL",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ar9k2r2btzzb10zc0xja",
-    "rookie": false,
-    "prob": 0.146,
-    "proj": {
-     "tackles": 69.9,
-     "def_tackles_for_loss": 23.2,
-     "def_sacks": 16.9,
-     "def_interceptions": 0.0,
-     "def_pass_defended": 2.5
-    }
-   },
-   {
-    "id": "00-0037244",
-    "name": "Devin Lloyd",
-    "team": "CAR",
-    "position": "LB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/hbva85h6axjaiiiiwjfv",
-    "rookie": false,
-    "prob": 0.058,
-    "proj": {
-     "tackles": 117.5,
-     "def_tackles_for_loss": 10.2,
-     "def_sacks": 4.7,
-     "def_interceptions": 5.6,
-     "def_pass_defended": 8.2
-    }
-   },
    {
     "id": "00-0036914",
     "name": "Greg Rousseau",
@@ -904,7 +833,7 @@
     "position": "LB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/cyhqf4lgtizbm9j7lged",
     "rookie": false,
-    "prob": 0.038,
+    "prob": 0.218,
     "proj": {
      "tackles": 56.1,
      "def_tackles_for_loss": 18.9,
@@ -914,38 +843,87 @@
     }
    },
    {
-    "id": "00-0039813",
-    "name": "Evan Williams",
-    "team": "GB",
-    "position": "DB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/g3utgsouys3kewppbnb5",
+    "id": "00-0039108",
+    "name": "Will Anderson Jr.",
+    "team": "HOU",
+    "position": "DL",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ar9k2r2btzzb10zc0xja",
     "rookie": false,
-    "prob": 0.028,
+    "prob": 0.19,
     "proj": {
-     "tackles": 150.3,
-     "def_tackles_for_loss": 4.5,
-     "def_sacks": 1.9,
-     "def_interceptions": 4.3,
-     "def_pass_defended": 12.3
+     "tackles": 69.9,
+     "def_tackles_for_loss": 23.2,
+     "def_sacks": 16.9,
+     "def_interceptions": 0.0,
+     "def_pass_defended": 2.5
+    }
+   },
+   {
+    "id": "00-0036321",
+    "name": "Chase Young",
+    "team": "NO",
+    "position": "LB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/o8igbkzsei4fzpxkg3q4",
+    "rookie": false,
+    "prob": 0.08,
+    "proj": {
+     "tackles": 36.7,
+     "def_tackles_for_loss": 10.6,
+     "def_sacks": 16.3,
+     "def_interceptions": 0.0,
+     "def_pass_defended": 6.9
+    }
+   },
+   {
+    "id": "00-0033886",
+    "name": "T.J. Watt",
+    "team": "PIT",
+    "position": "LB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/aywegy4gpj1d32vrl67u",
+    "rookie": false,
+    "prob": 0.08,
+    "proj": {
+     "tackles": 44.7,
+     "def_tackles_for_loss": 15.9,
+     "def_sacks": 12.3,
+     "def_interceptions": 2.4,
+     "def_pass_defended": 5.6
+    }
+   },
+   {
+    "id": "00-0035276",
+    "name": "Blake Cashman",
+    "team": "MIN",
+    "position": "LB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/mvui8tjkoewkupyncbok",
+    "rookie": false,
+    "prob": 0.064,
+    "proj": {
+     "tackles": 153.3,
+     "def_tackles_for_loss": 14.2,
+     "def_sacks": 10.4,
+     "def_interceptions": 0.0,
+     "def_pass_defended": 11.5
+    }
+   },
+   {
+    "id": "00-0035272",
+    "name": "Andrew Van Ginkel",
+    "team": "MIN",
+    "position": "LB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/vbpdlib647tcpzz59wyt",
+    "rookie": false,
+    "prob": 0.062,
+    "proj": {
+     "tackles": 52.5,
+     "def_tackles_for_loss": 14.2,
+     "def_sacks": 10.9,
+     "def_interceptions": 2.5,
+     "def_pass_defended": 5.2
     }
    }
   ],
   "oroy": [
-   {
-    "id": "00-0041438",
-    "name": "Carnell Tate",
-    "team": "TEN",
-    "position": "WR",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xlva68qwhtm0n36pwyad",
-    "rookie": true,
-    "prob": 0.404,
-    "proj": {
-     "targets": 122.2,
-     "receptions": 81.5,
-     "receiving_yards": 989.9,
-     "receiving_tds": 2.4
-    }
-   },
    {
     "id": "00-0041037",
     "name": "Denzel Boston",
@@ -953,12 +931,27 @@
     "position": "WR",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ybkny6eh5eegq3bqmony",
     "rookie": true,
-    "prob": 0.378,
+    "prob": 0.38,
     "proj": {
      "targets": 100.7,
      "receptions": 47.9,
      "receiving_yards": 891.6,
      "receiving_tds": 7.2
+    }
+   },
+   {
+    "id": "00-0041438",
+    "name": "Carnell Tate",
+    "team": "TEN",
+    "position": "WR",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/xlva68qwhtm0n36pwyad",
+    "rookie": true,
+    "prob": 0.374,
+    "proj": {
+     "targets": 122.2,
+     "receptions": 81.5,
+     "receiving_yards": 989.9,
+     "receiving_tds": 2.4
     }
    },
    {
@@ -968,7 +961,7 @@
     "position": "WR",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/lmua2lbg0m77ibvydvaq",
     "rookie": true,
-    "prob": 0.09,
+    "prob": 0.08,
     "proj": {
      "targets": 36.1,
      "receptions": 33.3,
@@ -983,7 +976,7 @@
     "position": "WR",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/h0ds6lir4svszjcpc3hr",
     "rookie": true,
-    "prob": 0.076,
+    "prob": 0.064,
     "proj": {
      "targets": 41.6,
      "receptions": 28.8,
@@ -998,7 +991,7 @@
     "position": "RB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/b12gtjsylmql5v7iyyla",
     "rookie": true,
-    "prob": 0.028,
+    "prob": 0.038,
     "proj": {
      "carries": 168.2,
      "rushing_yards": 615.2,
@@ -1009,70 +1002,22 @@
     }
    },
    {
-    "id": "00-0041547",
-    "name": "KC Concepcion",
-    "team": "CLE",
+    "id": "00-0041489",
+    "name": "Germie Bernard",
+    "team": "PIT",
     "position": "WR",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/evzxqxsyr1m3ohchqcan",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/rsbtypbsvxux94vokb5q",
     "rookie": true,
-    "prob": 0.008,
+    "prob": 0.014,
     "proj": {
-     "targets": 107.9,
-     "receptions": 71.9,
-     "receiving_yards": 755.0,
-     "receiving_tds": 0.0
+     "targets": 88.7,
+     "receptions": 64.7,
+     "receiving_yards": 608.8,
+     "receiving_tds": 2.4
     }
    }
   ],
   "droy": [
-   {
-    "id": "00-0041502",
-    "name": "Josiah Trotter",
-    "team": "TB",
-    "position": "LB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/sqikte2lgczxdun64akq",
-    "rookie": true,
-    "prob": 0.23,
-    "proj": {
-     "tackles": 149.1,
-     "def_tackles_for_loss": 7.3,
-     "def_sacks": 2.4,
-     "def_interceptions": 2.4,
-     "def_pass_defended": 7.3
-    }
-   },
-   {
-    "id": "00-0041509",
-    "name": "Arvell Reese",
-    "team": "NYG",
-    "position": "LB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/tvhqfy34evkal6zpu9to",
-    "rookie": true,
-    "prob": 0.226,
-    "proj": {
-     "tackles": 131.8,
-     "def_tackles_for_loss": 12.0,
-     "def_sacks": 3.6,
-     "def_interceptions": 2.4,
-     "def_pass_defended": 9.6
-    }
-   },
-   {
-    "id": "00-0041522",
-    "name": "Jacob Rodriguez",
-    "team": "MIA",
-    "position": "LB",
-    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ew3ilkxo5ub3bnzisc2t",
-    "rookie": true,
-    "prob": 0.202,
-    "proj": {
-     "tackles": 167.2,
-     "def_tackles_for_loss": 8.4,
-     "def_sacks": 0.0,
-     "def_interceptions": 2.8,
-     "def_pass_defended": 2.8
-    }
-   },
    {
     "id": "00-0041026",
     "name": "David Bailey",
@@ -1080,7 +1025,7 @@
     "position": "LB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/bzanl4jdvmkvsdmsyxwg",
     "rookie": true,
-    "prob": 0.194,
+    "prob": 0.482,
     "proj": {
      "tackles": 81.5,
      "def_tackles_for_loss": 16.8,
@@ -1090,13 +1035,29 @@
     }
    },
    {
+    "id": "00-0041509",
+    "name": "Arvell Reese",
+    "team": "NYG",
+    "position": "LB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/tvhqfy34evkal6zpu9to",
+    "rookie": true,
+    "prob": 0.098,
+    "proj": {
+     "tackles": 131.8,
+     "def_tackles_for_loss": 12.0,
+     "def_sacks": 3.6,
+     "def_interceptions": 2.4,
+     "def_pass_defended": 9.6
+    }
+   },
+   {
     "id": "00-0041028",
     "name": "Sonny Styles",
     "team": "WAS",
     "position": "LB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/wxufyrsnbie0gyq9piyf",
     "rookie": true,
-    "prob": 0.088,
+    "prob": 0.086,
     "proj": {
      "tackles": 122.6,
      "def_tackles_for_loss": 8.4,
@@ -1106,19 +1067,51 @@
     }
    },
    {
+    "id": "00-0040889",
+    "name": "Hezekiah Masses",
+    "team": "LV",
+    "position": "DB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/ba2rfnspviherhdlsxml",
+    "rookie": true,
+    "prob": 0.084,
+    "proj": {
+     "tackles": 62.3,
+     "def_tackles_for_loss": 2.4,
+     "def_sacks": 0.0,
+     "def_interceptions": 7.2,
+     "def_pass_defended": 14.4
+    }
+   },
+   {
     "id": "00-0041538",
     "name": "Dillon Thieneman",
     "team": "CHI",
     "position": "DB",
     "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/lkqxlsmgrd6zfnxvwfph",
     "rookie": true,
-    "prob": 0.044,
+    "prob": 0.052,
     "proj": {
      "tackles": 110.3,
      "def_tackles_for_loss": 4.8,
      "def_sacks": 3.6,
      "def_interceptions": 2.4,
      "def_pass_defended": 12.0
+    }
+   },
+   {
+    "id": "00-0041470",
+    "name": "Brandon Cisse",
+    "team": "GB",
+    "position": "DB",
+    "headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/jvhlu2ghhxoitpve7ccj",
+    "rookie": true,
+    "prob": 0.038,
+    "proj": {
+     "tackles": 74.2,
+     "def_tackles_for_loss": 4.5,
+     "def_sacks": 3.4,
+     "def_interceptions": 2.2,
+     "def_pass_defended": 18.0
     }
    }
   ]

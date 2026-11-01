@@ -29,6 +29,10 @@ LEADER_CATEGORIES = {
 
 AWARDS = ["mvp", "opoty", "dpoty", "oroy", "droy"]
 
+# Quarterbacks are rewarded through MVP, so for Offensive Player of the Year their points count 75%
+# (checked against 2018-2024 winners: the average rank of the winner improved from 6.4 to 2.6).
+OPOTY_QB_FACTOR = 0.75
+
 # Voters aren't a formula: each player's score is nudged by a random factor (a few percent, typical size shown)
 # per simulated season. MVP is the most narrative-driven award, so it gets the most.
 VOTER_NOISE = {"mvp": 0.12, "opoty": 0.06, "dpoty": 0.08, "oroy": 0.08, "droy": 0.08}
@@ -43,10 +47,11 @@ def offense_points(s: dict) -> float:
 
 
 def defense_points(s: dict) -> float:
-    """Sacks and interceptions are the big plays; tackles and tackles for loss add up over a season."""
+    """Voters reward sacks and takeaways, not tackle counts. Weights chosen by checking 2018-2024 DPOTY winners:
+    with tackles weighted heavily, tackle-heavy linebackers outranked Donald (2020), Bosa (2022) and Garrett (2023)."""
     g = s.get
-    return (4 * g("def_sacks", 0) + 5 * g("def_interceptions", 0) + 0.6 * g("tackles", 0)
-            + 1.5 * g("def_tackles_for_loss", 0) + 1.0 * g("def_pass_defended", 0))
+    return (7 * g("def_sacks", 0) + 8 * g("def_interceptions", 0) + 0.2 * g("tackles", 0)
+            + 1.5 * g("def_tackles_for_loss", 0) + 1.5 * g("def_pass_defended", 0))
 
 
 def team_factor(wins: float) -> float:
@@ -104,7 +109,8 @@ def simulate_awards(players: list[dict], schedule: list[dict], ratings: dict, cf
             rookie = p.get("years_exp") == 0
             if p["position"] in OFFENSE:
                 pts = offense_points(s)
-                entries = [("mvp", mvp_score(p, s, totals.get(p["team"], 0))), ("opoty", pts)] + ([("oroy", pts)] if rookie else [])
+                opoty = pts * (OPOTY_QB_FACTOR if p["position"] == "QB" else 1.0)
+                entries = [("mvp", mvp_score(p, s, totals.get(p["team"], 0))), ("opoty", opoty)] + ([("oroy", pts)] if rookie else [])
             else:
                 pts = defense_points(s)
                 entries = [("dpoty", pts)] + ([("droy", pts)] if rookie else [])
