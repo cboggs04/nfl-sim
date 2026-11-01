@@ -25,7 +25,9 @@ app = FastAPI(title="NFL Season Simulator API")
 # The Next.js frontend runs on a different origin, so the browser needs CORS permission.
 # Set CORS_ORIGINS="https://your-app.vercel.app,http://localhost:3000" in production.
 origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
+# CORS_ORIGIN_REGEX (optional) also allows e.g. every Vercel preview URL: "https://.*\\.vercel\\.app"
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_origin_regex=os.environ.get("CORS_ORIGIN_REGEX") or None,
+                   allow_methods=["*"], allow_headers=["*"])
 app.include_router(sim_router)
 app.include_router(rosters_router)
 app.include_router(leaders_router)
@@ -55,6 +57,13 @@ def _load_teams_cached(stamp: tuple) -> dict[str, TeamDetail]:
 
 def _load_teams() -> dict[str, TeamDetail]:
     return _load_teams_cached(file_stamp("teams.json"))
+
+
+@app.get("/api/health")
+def health():
+    """Cheap check for the host (and for waking a sleeping server): are the data files there, and how fresh?"""
+    stamps = file_stamp("season.json", "rosters.json", "leaders.json", "sim_state.json")
+    return {"status": "ok" if all(stamps) else "missing data", "season_generated_at": _load(SeasonResponse, "season.json").generated_at}
 
 
 @app.get("/api/season", response_model=SeasonResponse)

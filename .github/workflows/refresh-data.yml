@@ -1,0 +1,46 @@
+# Refreshes the precomputed data every Tuesday (after Monday Night Football) and commits it. The commit triggers a
+# redeploy on Render, so the live site stays current. Run it by hand any time from the Actions tab.
+name: Refresh data
+
+on:
+  schedule:
+    - cron: "0 12 * * 2"   # Tuesdays, 12:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+
+      # The downloaded play-by-play summaries are big; keep them between runs so only the current season is fetched.
+      - uses: actions/cache@v4
+        with:
+          path: backend/data/*.parquet
+          key: nfl-data-${{ github.run_id }}
+          restore-keys: nfl-data-
+
+      - name: Rebuild ratings, simulations, rosters and awards
+        working-directory: backend
+        run: python -m scripts.precompute --refresh
+
+      - name: Run the tests against the new data
+        working-directory: backend
+        run: python -m pytest -q
+
+      - name: Commit the new data
+        run: |
+          git config user.name "data-refresh[bot]"
+          git config user.email "actions@users.noreply.github.com"
+          git add backend/data/*.json
+          git diff --cached --quiet && echo "No changes" || (git commit -m "Refresh data $(date -u +%Y-%m-%d)" && git push)

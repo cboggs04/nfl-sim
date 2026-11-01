@@ -142,3 +142,28 @@ def test_sim_team_full_season_mode_replays_every_game():
     assert all(g["actual_win"] is None for g in d["games"] if not g["played"])
     assert {p["id"] for p in d["players"]} == {p["id"] for p in roster["players"]}
     assert client.post("/api/sim/team", json={"team": "KC", "mode": "weird"}).status_code == 422
+
+
+@needs_data
+def test_health_endpoint_reports_data_freshness():
+    r = client.get("/api/health")
+    assert r.status_code == 200 and r.json()["status"] == "ok" and r.json()["season_generated_at"]
+
+
+def test_cors_regex_allows_preview_origins(monkeypatch):
+    # CORS_ORIGIN_REGEX is read when the app is created, so build a fresh app to test it.
+    import importlib
+
+    import app.main as main
+
+    monkeypatch.setenv("CORS_ORIGIN_REGEX", r"https://.*\.vercel\.app")
+    fresh = importlib.reload(main)
+    try:
+        c = TestClient(fresh.app)
+        ok = c.options("/api/health", headers={"Origin": "https://nfl-sim-git-main-me.vercel.app", "Access-Control-Request-Method": "GET"})
+        assert ok.headers.get("access-control-allow-origin") == "https://nfl-sim-git-main-me.vercel.app"
+        bad = c.options("/api/health", headers={"Origin": "https://evil.example.com", "Access-Control-Request-Method": "GET"})
+        assert "access-control-allow-origin" not in bad.headers
+    finally:
+        monkeypatch.delenv("CORS_ORIGIN_REGEX")
+        importlib.reload(main)
