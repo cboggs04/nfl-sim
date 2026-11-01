@@ -1,3 +1,4 @@
+import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import CalibrationChart from "@/components/CalibrationChart";
 import ColumnChart from "@/components/ColumnChart";
@@ -250,14 +251,16 @@ async function Backtest() {
 export default function BacktestPage() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
-      <h1 className="font-display text-6xl text-strong sm:text-8xl">
-        Model <span className="text-accent-ink">Accuracy</span>
-      </h1>
-      <div className="mt-3">
-        <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
-          <Backtest />
-        </Suspense>
-      </div>
+      <ResetOnLeave>
+        <h1 className="font-display text-6xl text-strong sm:text-8xl">
+          Model <span className="text-accent-ink">Accuracy</span>
+        </h1>
+        <div className="mt-3">
+          <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
+            <Backtest />
+          </Suspense>
+        </div>
+      </ResetOnLeave>
     </main>
   );
 }
