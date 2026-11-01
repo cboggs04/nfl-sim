@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import ColumnChart from "@/components/ColumnChart";
 import ProbCell, { pct } from "@/components/ProbCell";
+import ResetOnLeave from "@/components/ResetOnLeave";
 import SeasonSimulator from "@/components/SeasonSimulator";
 import TeamTabs from "@/components/TeamTabs";
 import TeamLogo from "@/components/TeamLogo";
@@ -142,6 +143,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
       </header>
 
       
+        <ResetOnLeave>
         <TeamTabs
           key={odds.team} // a fresh page every time: always opens on Overview
           overview={
@@ -223,6 +225,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
             )
           }
         />
+        </ResetOnLeave>
     </>
   );
 }
