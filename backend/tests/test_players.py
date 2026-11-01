@@ -109,3 +109,41 @@ def test_full_season_replay_can_use_an_injured_player():
     assert p["avail"] == 0 and p["avail_full"] > 0.5
     full = simulate_player(p, [True] * 17, np.random.default_rng(6), full_season=True)
     assert full["gp"] > 5 and full["stats"]["passing_yards"] > 0
+
+
+def test_touchdown_rates_regress_toward_what_yardage_implies():
+    # A running back with a hot TD start on ordinary yardage: 8 TDs in 7 games on 400 yards (a normal pace is ~3).
+    cur = {"carries": 100.0, "rushing_yards": 400.0, "rushing_tds": 8.0, "receptions": 10.0, "receiving_yards": 80.0, "receiving_tds": 0.0}
+    rb = build_player({"id": "r", "name": "Hot RB", "position": "RB", "status": "ACT"}, cur, None, 7, 0, 7, 10)
+    raw_rate = 8.0 / 7
+    implied = (400.0 / 7) * 0.0074
+    assert implied < rb["rates"]["rushing_tds"] < raw_rate          # pulled toward the yardage-implied rate, not all the way
+    assert rb["rates"]["rushing_yards"] == pytest.approx(400.0 / 7)  # yardage itself is not regressed this way
+
+
+def test_quarterback_touchdown_pace_stays_plausible(monkeypatch):
+    import engine.players as players
+
+    cur = {**QB_CUR, "rushing_tds": 8.0, "rushing_yards": 260.0}   # 8 rushing TDs in 6 games on 260 yards
+
+    def season_mean():
+        p = qb(cur=cur, cur_games=6, played=6)
+        rng = np.random.default_rng(11)
+        totals = np.array([simulate_player(p, [True, False] * 5 + [True], rng)["stats"]["rushing_tds"] for _ in range(3000)])
+        return totals
+
+    regressed = season_mean()
+    monkeypatch.setattr(players, "TD_FROM_YARDS", {})                 # what the projection used to do: take the hot start at face value
+    raw = season_mean()
+    assert regressed.mean() < raw.mean() * 0.95                        # regression lowers the projection
+    assert (regressed >= 30).mean() < (raw >= 30).mean() * 0.6         # and the record-shattering tail (30+ rushing TDs by a QB) shrinks a lot
+    assert regressed.max() < 45
+
+
+def test_negative_yardage_never_breaks_the_simulation():
+    # A QB whose kneel-downs leave his rushing yards below zero.
+    cur = {**QB_CUR, "rushing_yards": -6.0, "rushing_tds": 0.0}
+    p = qb(cur=cur)
+    assert all(v >= 0 for v in p["rates"].values()) and all(v >= p["stats"][k] for k, v in p["proj"].items() if k != "rushing_yards")
+    sim = simulate_player(p, [True, False] * 5, np.random.default_rng(0))
+    assert sim["stats"]["rushing_tds"] >= 0

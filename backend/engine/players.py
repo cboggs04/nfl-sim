@@ -32,6 +32,31 @@ POSITION_STATS: dict[str, list[str]] = {
     "LS": [],
 }
 
+# Touchdowns are mostly luck: a player's yardage predicts his future TDs better than his TD count does. So each TD rate
+# is blended with the rate his yardage implies. (stat -> (yardage stat, league TDs per yard, weight on the yardage-implied
+# rate). Per-yard values are 2019-2025 league averages; weights are the ones that minimized the error of weeks 8+ forecasts
+# made from weeks 1-7 in 2019-2025: see scripts/check_td_regression.py.)
+TD_FROM_YARDS: dict[tuple[str, str], tuple[str, float, float]] = {
+    ("QB", "passing_tds"): ("passing_yards", 0.0065, 0.75),
+    ("QB", "rushing_tds"): ("rushing_yards", 0.0110, 0.40),
+    ("RB", "rushing_tds"): ("rushing_yards", 0.0074, 0.75),
+    ("RB", "receiving_tds"): ("receiving_yards", 0.0053, 0.75),
+    ("WR", "receiving_tds"): ("receiving_yards", 0.0061, 0.75),
+    ("TE", "receiving_tds"): ("receiving_yards", 0.0073, 0.75),
+}
+
+# How uncertain a player's true TD rate is after the regression above, as a fraction of the rate. Measured by the same
+# backtest (scripts/check_td_regression.py): forecast error beyond what pure chance (Poisson) explains was 19% of the
+# forecast for QB passing TDs, 33% for RB rushing TDs and 29% for receiving TDs. For QB rushing TDs it was 47%, but that
+# is dominated by low-volume QBs, so 35% is used.
+TD_TALENT_CV = {("QB", "passing_tds"): 0.20, ("QB", "rushing_tds"): 0.35, ("RB", "rushing_tds"): 0.33,
+                ("RB", "receiving_tds"): 0.33, ("WR", "receiving_tds"): 0.29, ("TE", "receiving_tds"): 0.29}
+
+# Guard against absurd draws: a player's true rate is never more than this multiple of the estimate (touchdowns / other
+# stats). Touchdown rates are the most tightly bounded by how often a team can score.
+TD_STATS = {"passing_tds", "rushing_tds", "receiving_tds"}
+MAX_TALENT_MULTIPLIER = {True: 1.7, False: 2.0}
+
 PRIOR_GAMES = 3.0        # last season's rate counts as this many games of evidence
 AVAIL_PRIOR = 0.9        # assumed chance a player suits up, blended in with his record this season
 AVAIL_GAMES = 2.0        # ...worth this many games
@@ -67,6 +92,10 @@ def build_player(roster: dict, cur: dict | None, prev: dict | None, cur_games: i
             rates[s] = (tot + stats_prev[s] / prev_games * PRIOR_GAMES) / (cur_games + PRIOR_GAMES)
         else:                                          # rookie or newcomer: nothing to blend with
             rates[s] = tot / cur_games if cur_games > 0 else 0.0
+    for s_, (yard_stat, td_per_yard, weight) in ((k[1], v) for k, v in TD_FROM_YARDS.items() if k[0] == pos):
+        if s_ in rates and yard_stat in rates:
+            rates[s_] = weight * rates[yard_stat] * td_per_yard + (1 - weight) * rates[s_]
+    rates = {k: max(0.0, v) for k, v in rates.items()}     # a QB's kneel-downs can make his rushing yards negative; rates can't be
     base = (cur_games + AVAIL_PRIOR * AVAIL_GAMES) / (team_games_played + AVAIL_GAMES) if team_games_played else AVAIL_PRIOR
     base = min(1.0, base)
     if cur_games == 0 and prev_games == 0:
@@ -163,8 +192,13 @@ def talent_multipliers(player: dict, rng) -> dict[str, float]:
     gp = max(player["gp"], 0)
     out = {}
     for s in player["rates"]:
-        k = max(4.0, gp * 16.0) if s in VOLUME_STATS else max(1.5, player["stats"].get(s, 0.0) + 1.0)
-        out[s] = rng.gamma(k, 1.0 / k)
+        if (player["position"], s) in TD_TALENT_CV:
+            k = 1.0 / TD_TALENT_CV[(player["position"], s)] ** 2
+        elif s in VOLUME_STATS:
+            k = max(4.0, gp * 16.0)
+        else:
+            k = max(1.5, player["stats"].get(s, 0.0) + 1.0)
+        out[s] = min(rng.gamma(k, 1.0 / k), MAX_TALENT_MULTIPLIER[s in TD_STATS])
     return out
 
 
