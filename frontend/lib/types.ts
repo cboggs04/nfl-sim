@@ -84,3 +84,9 @@ export interface PlayoffGameResponse {
   p_home: number;
   winner: string | null; // null when only the odds were requested
 }
+
+export interface WhatIfRequest {
+  rating_adjustments: Record<string, number>; // team -> Elo points added (negative = subtracted)
+  game_overrides: { game_id: string; home_win: boolean }[]; // forced results for unplayed games
+  n_sims: number;
+}

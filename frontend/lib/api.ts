@@ -1,5 +1,5 @@
 // The ONLY place the frontend talks to the backend. Components import from here.
-import type { PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail } from "./types";
+import type { PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, WhatIfRequest } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Set NEXT_PUBLIC_USE_MOCK=1 to build the UI without the API running.
@@ -46,3 +46,6 @@ export const simulateSeason = () => post<SimulatedSeason>("/api/sim/season");
 /** Roll one playoff game. With play=false it only returns the win probability. */
 export const rollGame = (home: string, away: string, neutral: boolean, play = true) =>
   post<PlayoffGameResponse>("/api/sim/game", { home, away, neutral, play });
+
+/** Re-run the season simulation with changed team ratings and/or forced game results (~1 second). */
+export const runWhatIf = (req: WhatIfRequest) => post<SeasonResponse>("/api/whatif", req);
