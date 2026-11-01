@@ -3,7 +3,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import TeamLogo from "@/components/TeamLogo";
 import { pct } from "@/components/ProbCell";
-import { rollGame, simulateSeason } from "@/lib/api";
+import { usePlayoffSim } from "@/components/PlayoffSim";
+import { rollGame } from "@/lib/api";
 import { allMatchups, buildBracket, readyMatchups, type Bracket, type Matchup } from "@/lib/bracket";
 import { teamInfo } from "@/lib/teams";
 import type { Conference, SimulatedSeason } from "@/lib/types";
@@ -294,16 +295,32 @@ function BracketView({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx;
   );
 }
 
+/** The bracket tab: uses the season simulated in the shared PlayoffSim context (also shown on the Standings tab). */
 export default function BracketSim() {
-  const [sim, setSim] = useState<SimulatedSeason | null>(null);
+  const { sim, runs, loading, error, newSeason } = usePlayoffSim();
+  // Keyed by `runs`, so a new simulated season starts the playoffs fresh without any reset code.
+  return <BracketBoard key={runs} sim={sim} runs={runs} loading={loading} loadError={error} onNewSeason={newSeason} />;
+}
+
+function BracketBoard({
+  sim,
+  runs,
+  loading,
+  loadError,
+  onNewSeason,
+}: {
+  sim: SimulatedSeason | null;
+  runs: number;
+  loading: boolean;
+  loadError: string | null;
+  onNewSeason: () => Promise<void>;
+}) {
   const [winners, setWinners] = useState<Record<string, string>>({});
   const [probs, setProbs] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [runs, setRuns] = useState(0);
+  const [playError, setPlayError] = useState<string | null>(null);
+  const error = loadError ?? playError;
   const requested = useRef(new Set<string>());
-  const generation = useRef(0); // bumped on every new season so stale responses are ignored
 
   const bracket = useMemo(() => (sim ? buildBracket(sim.seeds, winners) : null), [sim, winners]);
   const records = useMemo(() => {
@@ -315,38 +332,17 @@ export default function BracketSim() {
   // Whenever a matchup becomes known, fetch its pre-game win probability.
   useEffect(() => {
     if (!bracket) return;
-    const gen = generation.current;
     for (const m of allMatchups(bracket)) {
       if (!m.home || !m.away || probs[m.id] !== undefined || requested.current.has(m.id)) continue;
       requested.current.add(m.id);
       rollGame(m.home, m.away, m.neutral, false)
-        .then((r) => gen === generation.current && setProbs((p) => ({ ...p, [m.id]: r.p_home })))
+        .then((r) => setProbs((p) => ({ ...p, [m.id]: r.p_home })))
         .catch(() => requested.current.delete(m.id));
     }
   }, [bracket, probs]);
 
-  async function newSeason() {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await simulateSeason();
-      generation.current += 1;
-      requested.current.clear();
-      setWinners({});
-      setProbs({});
-      setSim(result);
-      setRuns((n) => n + 1);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function play(games: Matchup[]) {
-    const gen = generation.current;
     const results = await Promise.all(games.map((m) => rollGame(m.home!, m.away!, m.neutral, true)));
-    if (gen !== generation.current) return null;
     const next: Record<string, string> = {};
     games.forEach((m, i) => (next[m.id] = results[i].winner!));
     setProbs((p) => ({ ...p, ...Object.fromEntries(games.map((m, i) => [m.id, results[i].p_home])) }));
@@ -356,21 +352,20 @@ export default function BracketSim() {
   async function run(mode: "game" | "round" | "all", game?: Matchup) {
     if (!sim || busy) return;
     setBusy(true);
-    setError(null);
+    setPlayError(null);
     try {
       let current = { ...winners };
       do {
         const ready = game ? [game] : readyMatchups(buildBracket(sim.seeds, current), current);
         if (!ready.length) break;
         const next = await play(ready);
-        if (!next) return;
         current = { ...current, ...next };
         setWinners(current);
         game = undefined;
         if (mode === "all") await wait(700); // a beat between rounds so it's watchable
       } while (mode === "all");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      setPlayError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setBusy(false);
     }
@@ -383,7 +378,7 @@ export default function BracketSim() {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-4">
-        <button onClick={newSeason} disabled={loading || busy} className="btn btn-primary text-xl">
+        <button onClick={() => void onNewSeason()} disabled={loading || busy} className="btn btn-primary text-xl">
           {loading ? "Simulating…" : sim ? "Simulate a new season" : "Simulate the rest of the season"}
         </button>
         {sim && (

@@ -217,3 +217,19 @@ export interface LeadersResponse {
   leaders: Record<string, LeaderRow[]>; // category -> top players by projected total
   awards: Record<string, AwardRow[]>; // mvp, opoty, dpoty, oroy, droy -> most likely winners
 }
+
+export interface SeedProb {
+  team: string;
+  prob: number;
+}
+
+export interface SeedSlot {
+  seed: number; // 1-7
+  teams: SeedProb[]; // most likely holders, best first
+}
+
+export interface BracketResponse {
+  season: number;
+  n_sims: number;
+  conferences: { conference: Conference; slots: SeedSlot[] }[];
+}
