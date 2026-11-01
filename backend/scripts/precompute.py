@@ -20,8 +20,9 @@ from app.schemas import (BacktestResponse, BracketConference, BracketResponse, G
                          TeamAdvancement, TeamDetail, TeamOdds)
 from datetime import date
 
-from app.schemas import RosterPlayer, TeamRoster
+from app.schemas import AwardRow, LeaderRow, LeadersResponse, RosterPlayer, TeamRoster
 from engine.data import DATA_DIR, load_games, load_player_totals, load_qb_game_epa, load_roster, load_snap_games
+from engine.awards import AWARDS, LEADER_CATEGORIES, simulate_awards
 from engine.players import POSITION_STATS, build_player
 from engine.elo import EloConfig, game_probability, walk_games
 from engine.qb import QbConfig, QbTracker, projected_starters, stats_by_game
@@ -42,7 +43,7 @@ def live_settings() -> tuple[EloConfig, QbConfig | None]:
     return EloConfig(), None
 
 
-def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False):
+def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False, award_sims: int = 500):
     """Run the simulation and build every cached response. Returns a dict of pydantic models."""
     cfg, qb_cfg = live_settings()
     seasons = list(range(FIRST_SEASON, season + 1))
@@ -126,8 +127,9 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False):
         games=[StateGame(game_id=g["game_id"], week=g["week"], home_team=g["home_team"],
                          away_team=g["away_team"], neutral=g["neutral"],
                          result=None if g["result"] is None else int(g["result"])) for g in schedule])
-    return {"season": season_resp, "teams": teams, "bracket": bracket, "state": state,
-            "rosters": build_rosters(season, schedule, refresh)}
+    rosters = build_rosters(season, schedule, refresh)
+    return {"season": season_resp, "teams": teams, "bracket": bracket, "state": state, "rosters": rosters,
+            "leaders": build_leaders(rosters, schedule, ratings, cfg, award_sims)}
 
 
 def build_rosters(season: int, schedule: list[dict], refresh: bool = False) -> dict[str, TeamRoster]:
@@ -168,26 +170,51 @@ def build_rosters(season: int, schedule: list[dict], refresh: bool = False) -> d
     return out
 
 
+def build_leaders(rosters: dict[str, TeamRoster], schedule: list[dict], ratings: dict, cfg: EloConfig, n_sims: int,
+                  top_leaders: int = 10, top_awards: int = 6) -> LeadersResponse:
+    """League stat leaders (by projected total) and the most likely award winners, via engine.awards."""
+    players = [{**p.model_dump(), "team": t} for t, r in rosters.items() for p in r.players]
+    by_id = {p["id"]: p for p in players}
+    mc = simulate_awards(players, schedule, ratings, cfg, n_sims)
+
+    leaders = {}
+    for cat, key in LEADER_CATEGORIES.items():
+        pool = sorted((p for p in players if key in p["stats"]), key=lambda p: -p["proj"][key])[:top_leaders]
+        leaders[cat] = [LeaderRow(id=p["id"], name=p["name"], team=p["team"], position=p["position"], headshot=p["headshot"],
+                                  current=p["stats"][key], projected=p["proj"][key], p_lead=mc["leaders"][cat].get(p["id"], 0.0))
+                        for p in pool]
+    awards = {}
+    for a in AWARDS:
+        ranked = sorted(mc["awards"][a].items(), key=lambda kv: -kv[1])[:top_awards]
+        awards[a] = [AwardRow(id=pid, name=by_id[pid]["name"], team=by_id[pid]["team"], position=by_id[pid]["position"],
+                              headshot=by_id[pid]["headshot"], rookie=by_id[pid]["years_exp"] == 0, prob=prob,
+                              proj=by_id[pid]["proj"]) for pid, prob in ranked]
+    return LeadersResponse(season=next(iter(rosters.values())).season, n_sims=n_sims,
+                           generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"), leaders=leaders, awards=awards)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--season", type=int, default=2026)
     ap.add_argument("--sims", type=int, default=20_000)
+    ap.add_argument("--award-sims", type=int, default=500, help="simulated seasons for award odds")
     ap.add_argument("--refresh", action="store_true", help="re-download game data first")
     args = ap.parse_args()
 
-    out = build_all(args.season, args.sims, refresh=args.refresh)
+    out = build_all(args.season, args.sims, refresh=args.refresh, award_sims=args.award_sims)
     DATA_DIR.mkdir(exist_ok=True)
     (DATA_DIR / "season.json").write_text(out["season"].model_dump_json(indent=1))
     (DATA_DIR / "teams.json").write_text(json.dumps({t: json.loads(d.model_dump_json()) for t, d in out["teams"].items()}))
     (DATA_DIR / "bracket.json").write_text(out["bracket"].model_dump_json(indent=1))
     (DATA_DIR / "sim_state.json").write_text(out["state"].model_dump_json())
+    (DATA_DIR / "leaders.json").write_text(out["leaders"].model_dump_json(indent=1))
     (DATA_DIR / "rosters.json").write_text(json.dumps({t: json.loads(r.model_dump_json()) for t, r in out["rosters"].items()}))
 
     bt = DATA_DIR / "backtest.json"
     if bt.exists():
         BacktestResponse.model_validate_json(bt.read_text())  # fail loudly if the shape drifts
     s = out["season"]
-    print(f"Wrote season.json, teams.json, bracket.json, sim_state.json, rosters.json to {DATA_DIR}")
+    print(f"Wrote season.json, teams.json, bracket.json, sim_state.json, rosters.json, leaders.json to {DATA_DIR}")
     print(f"{s.season}: {s.games_played}/{s.games_total} games played, {s.n_sims:,} sims")
     for o in s.teams[:5]:
         print(f"  {o.team:<4}{o.name:<24}Super Bowl {o.p_super_bowl:.1%}")

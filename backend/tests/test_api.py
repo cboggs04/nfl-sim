@@ -113,3 +113,18 @@ def test_sim_team_endpoint_drives_players_with_results():
     by_id = {p["id"]: p for p in roster["players"]}
     assert all(sp["stats"][k] >= by_id[sp["id"]]["stats"][k] - 0.2 for sp in d["players"] for k in sp["stats"])
     assert client.post("/api/sim/team", json={"team": "XXX"}).status_code == 422
+
+
+@needs_data
+def test_leaders_endpoint():
+    r = client.get("/api/leaders")
+    assert r.status_code == 200
+    d = r.json()
+    assert set(d["awards"]) == {"mvp", "opoty", "dpoty", "oroy", "droy"}
+    assert all(0 < sum(a["prob"] for a in rows) <= 1.0001 for rows in d["awards"].values())
+    assert all(a["rookie"] for a in d["awards"]["oroy"] + d["awards"]["droy"])
+    py = d["leaders"]["passing_yards"]
+    assert len(py) == 10 and py == sorted(py, key=lambda x: -x["projected"])
+    assert all(p["projected"] >= p["current"] - 0.2 for rows in d["leaders"].values() for p in rows)
+    qb = next(p for p in client.get("/api/teams/KC/roster").json()["players"] if p["position"] == "QB" and p["gp"] > 0)
+    assert "rushing_tds" in qb["stats"]

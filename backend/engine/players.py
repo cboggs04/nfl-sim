@@ -19,7 +19,7 @@ GAME_FLOW: dict[str, dict[str, float]] = json.loads(_FLOW_FILE.read_text()) if _
 
 # Stats shown for each position, in column order.
 POSITION_STATS: dict[str, list[str]] = {
-    "QB": ["completions", "attempts", "passing_yards", "passing_tds", "passing_interceptions", "rushing_yards"],
+    "QB": ["completions", "attempts", "passing_yards", "passing_tds", "passing_interceptions", "rushing_yards", "rushing_tds"],
     "RB": ["carries", "rushing_yards", "rushing_tds", "receptions", "receiving_yards", "receiving_tds"],
     "WR": ["targets", "receptions", "receiving_yards", "receiving_tds"],
     "TE": ["targets", "receptions", "receiving_yards", "receiving_tds"],
@@ -116,6 +116,7 @@ def simulate_game_stats(position: str, rates: dict[str, float], win: np.ndarray,
         out["passing_tds"] = rng.poisson(att * _ratio(m["passing_tds"], m["attempts"]))
         out["passing_interceptions"] = rng.poisson(att * _ratio(m["passing_interceptions"], m["attempts"]))
         out["rushing_yards"] = _gamma(rng, m["rushing_yards"], np.full(n, 0.8))
+        out["rushing_tds"] = rng.poisson(m["rushing_tds"])
     elif position == "RB":
         car = rng.poisson(m["carries"])
         out["carries"] = car

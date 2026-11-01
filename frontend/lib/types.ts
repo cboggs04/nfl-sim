@@ -184,3 +184,33 @@ export interface SimTeamResult {
   games: SimTeamGame[];
   players: { id: string; gp: number; stats: Record<string, number> }[]; // final simulated totals
 }
+
+export interface LeaderRow {
+  id: string;
+  name: string;
+  team: string;
+  position: string;
+  headshot: string | null;
+  current: number; // season total so far
+  projected: number; // projected final total
+  p_lead: number; // chance he finishes first in the league
+}
+
+export interface AwardRow {
+  id: string;
+  name: string;
+  team: string;
+  position: string;
+  headshot: string | null;
+  rookie: boolean;
+  prob: number; // chance he wins the award across the simulated seasons
+  proj: Record<string, number>; // projected final stat line
+}
+
+export interface LeadersResponse {
+  season: number;
+  generated_at: string;
+  n_sims: number;
+  leaders: Record<string, LeaderRow[]>; // category -> top players by projected total
+  awards: Record<string, AwardRow[]>; // mvp, opoty, dpoty, oroy, droy -> most likely winners
+}

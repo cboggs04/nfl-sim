@@ -67,3 +67,14 @@ export function formatStat(stat: string, value: number): string {
   if (DECIMAL_STATS.has(stat)) return value.toFixed(1);
   return Math.round(value).toLocaleString("en-US");
 }
+
+/** The three stats that best summarize a player in an award card. */
+export const SUMMARY_STATS: Record<string, string[]> = {
+  QB: ["passing_yards", "passing_tds", "passing_interceptions"],
+  RB: ["rushing_yards", "rushing_tds", "receiving_yards"],
+  WR: ["receptions", "receiving_yards", "receiving_tds"],
+  TE: ["receptions", "receiving_yards", "receiving_tds"],
+  DL: ["tackles", "def_sacks", "def_interceptions"],
+  LB: ["tackles", "def_sacks", "def_interceptions"],
+  DB: ["tackles", "def_interceptions", "def_pass_defended"],
+};

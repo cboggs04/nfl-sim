@@ -281,3 +281,36 @@ class SimTeamResult(BaseModel):
     team: str
     games: list[SimTeamGame]
     players: list[SimPlayerResult]
+
+
+# ---- League leaders and awards ----
+
+class LeaderRow(BaseModel):
+    id: str
+    name: str
+    team: str
+    position: str
+    headshot: str | None
+    current: float                   # season total so far
+    projected: float                 # projected final total
+    p_lead: float                    # chance he finishes first in the league (from the simulations)
+
+
+class AwardRow(BaseModel):
+    id: str
+    name: str
+    team: str
+    position: str
+    headshot: str | None
+    rookie: bool
+    prob: float                      # chance he wins the award across the simulated seasons
+    proj: dict[str, float]           # his projected final stat line
+
+
+class LeadersResponse(BaseModel):
+    """GET /api/leaders."""
+    season: int
+    generated_at: str
+    n_sims: int
+    leaders: dict[str, list[LeaderRow]]   # category -> top players by projected total
+    awards: dict[str, list[AwardRow]]     # mvp, opoty, dpoty, oroy, droy -> most likely winners
