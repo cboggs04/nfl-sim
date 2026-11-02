@@ -52,10 +52,12 @@ Push to `main`. Render and Vercel redeploy automatically.
 ## Vercel: skip rebuilds when only the data changed (optional)
 
 The weekly refresh only changes `backend/data/*.json`, which the website reads from the API, so rebuilding the site is
-wasted work. In Vercel > Project > **Settings > Git > Ignored Build Step**, choose **Custom** and enter:
+wasted work. In Vercel > Project > **Settings > Build and Deployment > Ignored Build Step** (search the page for "Ignored" if it has moved), choose **Custom** and enter:
 
 ```
 git diff --quiet HEAD^ HEAD -- .
 ```
 
 Vercel then skips any deploy where nothing inside `frontend/` changed.
+
+Also keep **Settings > Git > Require Verified Commits** switched off, or the data-refresh commits will be rejected.
