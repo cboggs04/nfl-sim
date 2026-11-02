@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import SuperBowlAnimation, { makeGame, type SuperBowlResult } from "@/components/SuperBowlAnimation";
+import SuperBowlAnimation, { type SuperBowlResult } from "@/components/SuperBowlAnimation";
+import { makeGame } from "@/lib/superBowlGame";
 import TeamLogo from "@/components/TeamLogo";
 import { pct } from "@/components/ProbCell";
 import { usePlayoffSim } from "@/components/PlayoffSim";
@@ -434,7 +435,7 @@ function BracketBoard({
         const sbGame = ready.find((m) => m.id === "SB");
         if (sbGame?.home && sbGame.away && next["SB"]) {
           // The pop-up retells the result the model already produced; the score in it is just for show.
-          setSbResult({ home: sbGame.home, away: sbGame.away, winner: next["SB"], ...makeGame(), winnerRecord: records[next["SB"]], winnerSeed: seedLabel(sim.seeds, next["SB"]) });
+          setSbResult({ home: sbGame.home, away: sbGame.away, winner: next["SB"], events: makeGame(), winnerRecord: records[next["SB"]], winnerSeed: seedLabel(sim.seeds, next["SB"]) });
           setSbOpen(true);
         }
         game = undefined;

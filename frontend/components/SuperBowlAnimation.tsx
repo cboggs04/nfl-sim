@@ -3,48 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import TeamLogo from "@/components/TeamLogo";
+import { pointsFor, type GameEvent, type Kind } from "@/lib/superBowlGame";
 import { teamInfo } from "@/lib/teams";
 
 export interface SuperBowlResult {
   home: string;
   away: string;
   winner: string;
-  winnerTds: number; // cosmetic: the model picks winners, not scores. Every score in the animation is a touchdown (7 points).
-  loserTds: number;
+  events: GameEvent[]; // the drives, from makeGame(): the model picks the winner, everything else is for show
   winnerRecord?: string;
   winnerSeed?: number | null;
-}
-
-/** How many touchdowns each team scores in the animation. The winner always scores more. */
-export function makeGame(): { winnerTds: number; loserTds: number } {
-  const winnerTds = 3 + Math.floor(Math.random() * 3); // 3-5
-  const loserTds = 2 + Math.floor(Math.random() * (winnerTds - 2)); // 2 .. winnerTds-1, so the teams really trade scores
-  return { winnerTds, loserTds };
-}
-
-/** The order the touchdowns happen in: the teams trade scores, and the winner scores last. "W" = winner, "L" = loser. */
-function driveOrder(winnerTds: number, loserTds: number): ("W" | "L")[] {
-  const out: ("W" | "L")[] = [];
-  let w = winnerTds;
-  let l = loserTds;
-  let next: "W" | "L" = "W"; // built from the end, so the last score is the winner's
-  while (w + l > 0) {
-    if (next === "W" && w > 0) {
-      out.push("W");
-      w--;
-    } else if (next === "L" && l > 0) {
-      out.push("L");
-      l--;
-    } else if (w > 0) {
-      out.push("W");
-      w--;
-    } else {
-      out.push("L");
-      l--;
-    }
-    next = next === "W" ? "L" : "W";
-  }
-  return out.reverse();
 }
 
 // ---------- the scene ----------
@@ -53,10 +21,10 @@ const H = 180;
 const FIELD_TOP = 40;
 const GOAL_X = 290; // right end zone starts here
 const LOS = 120; // line of scrimmage
-const SCRIPT_END = 6.0; // each play script runs 0 to 6 "script seconds" and ends with the score
-const PLAY = 3.6; // real seconds the play takes
-const CELEBRATE = 1.7; // real seconds of touchdown graphic and celebration before the next kickoff
-const DRIVE = PLAY + CELEBRATE;
+const SCRIPT_END = 6.0; // each play script runs 0 to 6 "script seconds"
+// Real seconds each kind of drive takes to play out, and to celebrate (a punt barely pauses).
+const PLAY_BY: Record<Kind, number> = { TD: 2.5, FG: 2.0, PUNT: 1.6 };
+const CELEBRATE_BY: Record<Kind, number> = { TD: 1.1, FG: 0.8, PUNT: 0.25 };
 
 type Key = [number, number, number]; // [seconds, x, y]
 
@@ -80,6 +48,8 @@ interface Script {
   def: Record<string, Key[]>;
   /** Where the ball is at script-time t. */
   ball: (t: number) => { x: number; y: number };
+  /** Who ends up holding the ball (spiked in the end zone after a touchdown). Kicks have none. */
+  carrier?: string;
 }
 const at2 = (keys: Key[], t: number) => at(keys, t);
 
@@ -157,8 +127,97 @@ const RUN: Script = {
     return { x: rb.x + 4, y: rb.y - 6 };
   },
 };
-const SCRIPTS = [PASS, RUN];
-const CARRIER = ["wr1", "rb"]; // who ends up with the ball in each script
+PASS.carrier = "wr1";
+RUN.carrier = "rb";
+
+// Play 3: a field goal from 56 yards-ish out. Kicker and holder behind the line, ball sails through the posts.
+const FX = 234;
+const FG_OFF: Record<string, Key[]> = {
+  ol1: [[0, FX - 70, 96], [1.0, FX - 4, 96], [99, FX - 4, 96]],
+  ol2: [[0, FX - 70, 104], [1.0, FX - 4, 104], [99, FX - 4, 104]],
+  ol3: [[0, FX - 70, 112], [1.0, FX - 4, 112], [99, FX - 4, 112]],
+  wr1: [[0, FX - 70, 88], [1.0, FX - 4, 88], [99, FX - 4, 88]],
+  wr2: [[0, FX - 70, 120], [1.0, FX - 4, 120], [99, FX - 4, 120]],
+  rb: [[0, FX - 80, 100], [1.0, FX - 12, 124], [99, FX - 12, 124]],
+  holder: [[0, FX - 90, 112], [1.0, FX - 17, 112], [99, FX - 17, 112]],
+  kicker: [[0, FX - 100, 106], [1.0, FX - 32, 106], [2.0, FX - 32, 106], [2.5, FX - 24, 106], [99, FX - 24, 106]],
+};
+const FG_DEF: Record<string, Key[]> = {
+  dl1: [[0, FX + 110, 96], [1.0, FX + 6, 96], [2.2, FX + 6, 96], [2.7, FX - 6, 100], [99, FX - 6, 100]],
+  dl2: [[0, FX + 110, 104], [1.0, FX + 6, 104], [2.2, FX + 6, 104], [2.7, FX - 6, 106], [99, FX - 6, 106]],
+  dl3: [[0, FX + 110, 112], [1.0, FX + 6, 112], [2.2, FX + 6, 112], [2.7, FX - 6, 112], [99, FX - 6, 112]],
+  lb: [[0, FX + 120, 88], [1.0, FX + 8, 88], [2.4, FX - 2, 92], [99, FX - 2, 92]],
+  cb1: [[0, FX + 130, 124], [1.0, FX + 8, 124], [2.4, FX - 2, 120], [99, FX - 2, 120]],
+  s: [[0, FX + 150, 106], [1.0, FX + 40, 106], [99, FX + 40, 106]],
+};
+const GOAL_POST_X = W - 8;
+const FG: Script = {
+  off: FG_OFF,
+  def: FG_DEF,
+  ball: (t) => {
+    const holder = at2(FG_OFF.holder, t);
+    if (t < 1.0) return { x: FX - 3, y: 104 };
+    if (t < 1.5) {
+      const u = (t - 1.0) / 0.5; // the snap
+      return { x: FX - 3 + (holder.x + 1 - (FX - 3)) * u, y: 104 + (109 - 104) * u };
+    }
+    if (t < 2.4) return { x: holder.x + 1, y: 109 };
+    if (t < 4.6) {
+      const u = (t - 2.4) / 2.2; // the kick
+      const x0 = FX - 19;
+      return { x: x0 + (GOAL_POST_X - x0) * u, y: 109 + (106 - 109) * u - Math.sin(Math.PI * u) * 38 };
+    }
+    return { x: GOAL_POST_X, y: 106 + Math.min(1, (t - 4.6) / 1.2) * 10 };
+  },
+};
+
+// Play 4: a punt. The ball sails downfield to a returner, who is run down.
+const PX = 120;
+const PUNT_OFF: Record<string, Key[]> = {
+  punter: [[0, PX - 110, 106], [1.0, PX - 34, 106], [2.2, PX - 34, 106], [2.6, PX - 30, 106], [99, PX - 30, 106]],
+  ol1: [[0, PX - 70, 98], [1.0, PX - 4, 98], [2.4, PX - 4, 98], [5.0, PX + 60, 100], [99, PX + 60, 100]],
+  ol2: [[0, PX - 70, 106], [1.0, PX - 4, 106], [2.4, PX - 4, 106], [5.0, PX + 56, 108], [99, PX + 56, 108]],
+  ol3: [[0, PX - 70, 114], [1.0, PX - 4, 114], [2.4, PX - 4, 114], [5.0, PX + 60, 116], [99, PX + 60, 116]],
+  wr1: [[0, PX - 70, 66], [1.0, PX - 4, 66], [2.4, PX - 4, 66], [4.4, 236, 72], [5.3, 252, 92], [99, 252, 92]],
+  wr2: [[0, PX - 70, 148], [1.0, PX - 4, 148], [2.4, PX - 4, 148], [4.4, 236, 140], [5.3, 254, 122], [99, 254, 122]],
+  rb: [[0, PX - 80, 112], [1.0, PX - 24, 122], [99, PX - 24, 122]],
+};
+const PUNT_DEF: Record<string, Key[]> = {
+  returner: [[0, 340, 106], [1.0, 270, 106], [3.0, 270, 106], [4.3, 262, 108], [5.4, 250, 110], [99, 250, 110]],
+  dl1: [[0, PX + 130, 98], [1.0, PX + 6, 98], [2.4, PX + 6, 98], [3.2, PX - 16, 100], [99, PX - 16, 100]],
+  dl2: [[0, PX + 130, 106], [1.0, PX + 6, 106], [2.4, PX + 6, 106], [3.2, PX - 18, 106], [99, PX - 18, 106]],
+  dl3: [[0, PX + 130, 114], [1.0, PX + 6, 114], [2.4, PX + 6, 114], [3.2, PX - 16, 112], [99, PX - 16, 112]],
+  cb1: [[0, 340, 66], [1.0, PX + 12, 66], [2.4, PX + 12, 66], [4.4, 228, 72], [5.4, 238, 86], [99, 238, 86]],
+  cb2: [[0, 340, 148], [1.0, PX + 12, 148], [2.4, PX + 12, 148], [4.4, 228, 140], [5.4, 240, 124], [99, 240, 124]],
+};
+const PUNT: Script = {
+  off: PUNT_OFF,
+  def: PUNT_DEF,
+  ball: (t) => {
+    const punter = at2(PUNT_OFF.punter, t);
+    const ret = at2(PUNT_DEF.returner, t);
+    if (t < 1.0) return { x: PX - 3, y: 104 };
+    if (t < 1.6) {
+      const u = (t - 1.0) / 0.6; // the snap
+      return { x: PX - 3 + (punter.x + 5 - (PX - 3)) * u, y: 104 - 4 * u };
+    }
+    if (t < 2.4) return { x: punter.x + 5, y: punter.y - 6 };
+    if (t < 4.4) {
+      const u = (t - 2.4) / 2.0; // the punt
+      const x0 = PX - 26;
+      const x1 = 264;
+      return { x: x0 + (x1 - x0) * u, y: 100 + (104 - 100) * u - Math.sin(Math.PI * u) * 64 };
+    }
+    return { x: ret.x + 4, y: ret.y - 6 };
+  },
+};
+
+/** Which play to show for a drive: touchdowns are a pass or a run, mixed up from drive to drive. */
+function scriptFor(kind: Kind, index: number): Script {
+  if (kind === "FG") return FG;
+  if (kind === "PUNT") return PUNT;
+  return (index * 7 + 3) % 3 === 1 ? RUN : PASS;
+}
 
 // 8 pixels wide. h helmet, k skin, j jersey, n numbers, p pants, b boots
 const TORSO = ["..hhhh..", ".hhhhhh.", ".hhhhkk.", "..jjjj..", ".jjnnjj.", "jjjnnjjj", ".jjjjjj."];
@@ -236,6 +295,13 @@ function buildField(winnerColor: string, loserColor: string): HTMLCanvasElement 
   for (let x = 40; x < GOAL_X; x += 20) for (const y of [90, 120]) g.fillRect(x, y, 1, 3); // hash marks
   g.fillStyle = "rgba(255,255,255,0.18)";
   g.fillRect(0, H - 6, W, 6);
+  // goal posts at the back of each end zone: a yellow crossbar seen from above, with an upright at each end
+  g.fillStyle = "#fde047";
+  for (const px of [GOAL_POST_X - 1, 6]) {
+    g.fillRect(px, 92, 2, 30);
+    g.fillRect(px - 1, 90, 4, 3);
+    g.fillRect(px - 1, 121, 4, 3);
+  }
   return c;
 }
 
@@ -253,15 +319,24 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
   const loser = result.winner === result.home ? result.away : result.home;
   const win = teamInfo(result.winner);
   const lose = teamInfo(loser);
+  const events = result.events;
 
-  const drives = useMemo(() => driveOrder(result.winnerTds, result.loserTds), [result.winnerTds, result.loserTds]);
-  const total = drives.length * DRIVE; // seconds until the last touchdown celebration ends
+  // When each drive starts, and when the whole game ends.
+  const { starts, total } = useMemo(() => {
+    const starts: number[] = [];
+    let at = 0;
+    for (const e of events) {
+      starts.push(at);
+      at += PLAY_BY[e.kind] + CELEBRATE_BY[e.kind];
+    }
+    return { starts, total: at };
+  }, [events]);
   const FINAL_AT = total + 0.3;
 
   const [run, setRun] = useState(0); // bumped by Replay
-  const [phase, setPhase] = useState<"play" | "td" | "final">("play");
-  const [tds, setTds] = useState({ W: 0, L: 0 }); // touchdowns scored so far
-  const [scorer, setScorer] = useState<"W" | "L" | null>(null); // who just scored (for the touchdown graphic)
+  const [phase, setPhase] = useState<"play" | "result" | "final">("play");
+  const [points, setPoints] = useState({ W: 0, L: 0 });
+  const [shown, setShown] = useState<GameEvent | null>(null); // the drive whose result graphic is showing
   const sceneRef = useRef<HTMLCanvasElement>(null);
   const confettiRef = useRef<HTMLCanvasElement>(null);
   const startRef = useRef(0);
@@ -298,13 +373,12 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
     const palette = [win.primary, win.secondary, "#ffffff", "#fbbf24"];
     let raf = 0;
     let last = performance.now();
-    let shown: "play" | "td" | "final" = "play";
-    let scoredW = 0;
-    let scoredL = 0;
+    let phaseNow: "play" | "result" | "final" = "play";
+    let lastIdx = -1;
+    let pW = 0;
+    let pL = 0;
     let finalAt = 0;
     let emitted = 0;
-    // which play each drive uses: mostly passes, with runs mixed in
-    const plays = drives.map((_, i) => ((i * 7 + result.winnerTds) % 3 === 1 ? 1 : 0));
 
     const sizeConfetti = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -341,32 +415,33 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
 
       // ---- which drive, and how far into it ----
       const done = t >= total;
-      const idx = Math.min(Math.floor(t / DRIVE), drives.length - 1);
-      const tl = done ? DRIVE : t - idx * DRIVE;
-      const celebrate = tl >= PLAY;
-      const st = celebrate ? SCRIPT_END : (tl / PLAY) * SCRIPT_END; // time inside the play script
-      const who = drives[idx]; // "W" or "L": the team with the ball
-      const mirror = who === "L"; // the loser drives right-to-left
-      const script = SCRIPTS[plays[idx]];
+      let idx = 0;
+      while (idx < events.length - 1 && t >= starts[idx + 1]) idx++;
+      const ev = events[idx];
+      const play = PLAY_BY[ev.kind];
+      const tl = done ? play + CELEBRATE_BY[ev.kind] : t - starts[idx];
+      const celebrate = tl >= play;
+      const st = celebrate ? SCRIPT_END : (tl / play) * SCRIPT_END; // time inside the play script
+      const mirror = ev.team === "L"; // the loser drives right-to-left
+      const script = scriptFor(ev.kind, idx);
       const mx = (x: number) => (mirror ? W - x : x);
       const step = Math.floor(now / 110) % 2 ? "run1" : "run2";
-      const offFacing = mirror ? "L" : "R";
-      const defFacing = mirror ? "R" : "L";
-      const offSet = sprites[who][offFacing];
-      const defSet = sprites[who === "W" ? "L" : "W"][defFacing];
+      const offSet = sprites[ev.team][mirror ? "L" : "R"];
+      const defSet = sprites[ev.team === "W" ? "L" : "W"][mirror ? "R" : "L"];
+      const cheering = celebrate && ev.kind !== "PUNT";
 
       // ---- score as of now ----
       let w = 0;
       let l = 0;
-      for (let j = 0; j < drives.length; j++) {
-        if (t < j * DRIVE + PLAY) continue;
-        if (drives[j] === "W") w++;
-        else l++;
+      for (let j = 0; j < events.length; j++) {
+        if (t < starts[j] + PLAY_BY[events[j].kind]) continue;
+        if (events[j].team === "W") w += events[j].pts;
+        else l += events[j].pts;
       }
-      if (w !== scoredW || l !== scoredL) {
-        scoredW = w;
-        scoredL = l;
-        setTds({ W: w, L: l });
+      if (w !== pW || l !== pL) {
+        pW = w;
+        pL = l;
+        setPoints({ W: w, L: l });
       }
 
       // ---- draw the game ----
@@ -375,12 +450,12 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
       const items: Item[] = [];
       for (const keys of Object.values(script.off)) {
         const p = at(keys, st);
-        const bob = celebrate ? -Math.abs(Math.sin(now / 110)) * 5 : 0;
-        items.push({ x: mx(p.x), y: p.y + bob, sprite: celebrate ? offSet.cheer : p.moving ? offSet[step] : offSet.stand });
+        const bob = cheering ? -Math.abs(Math.sin(now / 110)) * 5 : 0;
+        items.push({ x: mx(p.x), y: p.y + bob, sprite: cheering ? offSet.cheer : p.moving ? offSet[step] : offSet.stand });
       }
       for (const keys of Object.values(script.def)) {
         const p = at(keys, st);
-        items.push({ x: mx(p.x), y: p.y, sprite: p.moving && !celebrate ? defSet[step] : defSet.stand });
+        items.push({ x: mx(p.x), y: p.y, sprite: p.moving ? defSet[step] : defSet.stand });
       }
       items.sort((a, b) => a.y - b.y);
       for (const it of items) {
@@ -388,13 +463,13 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
         g.fillRect(Math.round(it.x) - 3, Math.round(it.y) + 5, 7, 2);
         g.drawImage(it.sprite, Math.round(it.x) - 4, Math.round(it.y) - it.sprite.height + 6);
       }
-      // the ball
+      // the ball (spiked in the end zone after a touchdown)
       const b = script.ball(st);
-      const carrier = at(script.off[CARRIER[plays[idx]]], st);
       let bx = mx(b.x);
       let by = b.y;
-      if (celebrate) {
-        const u = Math.min(1, (tl - PLAY) / 0.5); // spiked in the end zone
+      if (script.carrier && celebrate) {
+        const carrier = at(script.off[script.carrier], st);
+        const u = Math.min(1, (tl - play) / 0.45);
         bx = mx(carrier.x + 4) + (mirror ? -u * 6 : u * 6);
         by = carrier.y - 6 + (u < 0.6 ? u * 14 : 8 - Math.abs(Math.sin(u * 9)) * 3);
       }
@@ -402,20 +477,21 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
       g.fillRect(Math.round(bx) - 2, Math.round(by) - 1, 4, 2);
       g.fillStyle = "#e5e7eb";
       g.fillRect(Math.round(bx), Math.round(by) - 1, 1, 1);
-      if (celebrate && tl < PLAY + 0.25 && !done) {
-        g.fillStyle = `rgba(255,255,255,${0.7 * (1 - (tl - PLAY) / 0.25)})`; // flash on the score
+      if (celebrate && ev.kind === "TD" && tl < play + 0.25 && !done) {
+        g.fillStyle = `rgba(255,255,255,${0.7 * (1 - (tl - play) / 0.25)})`; // flash on a touchdown
         g.fillRect(0, 0, W, H);
       }
 
       // ---- phases ----
-      const next = t >= FINAL_AT ? "final" : celebrate ? "td" : "play";
-      if (next !== shown) {
-        shown = next;
+      const next = t >= FINAL_AT ? "final" : celebrate ? "result" : "play";
+      if (next !== phaseNow || (next === "result" && idx !== lastIdx)) {
+        phaseNow = next;
         setPhase(next);
-        if (next === "td") {
-          setScorer(who);
-          if (who === "W") burst(26, true, 0.7); // a small burst for every score the winner makes
-          else burst(10, false, 0.5);
+        if (next === "result") {
+          lastIdx = idx;
+          setShown(ev);
+          if (ev.kind === "TD") burst(ev.team === "W" ? 26 : 10, ev.team === "W", ev.team === "W" ? 0.7 : 0.5);
+          else if (ev.kind === "FG") burst(ev.team === "W" ? 12 : 5, ev.team === "W", 0.6);
         }
         if (next === "final") {
           finalAt = now;
@@ -429,7 +505,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
 
       // ---- confetti from the bottom of the screen ----
       cg.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      if (shown === "final" && !reduceMotion.current && emitted < 4.5 && now > finalAt) {
+      if (phaseNow === "final" && !reduceMotion.current && emitted < 4.5 && now > finalAt) {
         emitted += dt;
         const n = Math.round(90 * dt);
         for (let i = 0; i < n; i++) {
@@ -464,20 +540,21 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
       window.removeEventListener("resize", sizeConfetti);
     };
     // `run` restarts the whole thing (Replay)
-  }, [run, drives, total, FINAL_AT, result.winnerTds, win.primary, win.secondary, lose.primary, lose.secondary]);
+  }, [run, events, starts, total, FINAL_AT, win.primary, win.secondary, lose.primary, lose.secondary]);
 
   const skip = () => {
     startRef.current = Math.min(startRef.current, performance.now() - FINAL_AT * 1000);
   };
   const replay = () => {
     setPhase("play");
-    setScorer(null);
-    setTds({ W: 0, L: 0 });
+    setShown(null);
+    setPoints({ W: 0, L: 0 });
     setRun((r) => r + 1);
   };
 
-  const pointsOf = (team: string) => (team === result.winner ? tds.W : tds.L) * 7;
-  const scorerTeam = scorer === "W" ? result.winner : scorer === "L" ? loser : null;
+  const pointsOf = (team: string) => (team === result.winner ? points.W : points.L);
+  const shownTeam = shown ? (shown.team === "W" ? result.winner : loser) : null;
+  const finalW = pointsFor(events, "W");
 
   return createPortal(
     <div role="dialog" aria-modal="true" aria-label="Super Bowl animation" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6">
@@ -497,12 +574,12 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
         </div>
 
         <div className="overflow-hidden rounded-lg border-4 border-white/80 bg-black shadow-2xl shadow-black">
-          {/* scoreboard: updates with every touchdown */}
+          {/* scoreboard: updates with every score */}
           <div className="font-pixel flex items-stretch justify-between bg-[#111827] text-white">
             {[result.away, result.home].map((team) => (
               <div key={team} className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2" style={{ borderColor: teamInfo(team).primary }}>
                 <span className="text-[10px] sm:text-sm">{team}</span>
-                <span className={`text-lg tabular-nums sm:text-3xl ${phase === "td" && scorerTeam === team ? "animate-pulse text-white" : "text-yellow-300"}`}>
+                <span className={`text-lg tabular-nums sm:text-3xl ${phase === "result" && shown && shown.pts > 0 && shownTeam === team ? "animate-pulse text-white" : "text-yellow-300"}`}>
                   {String(pointsOf(team)).padStart(2, "0")}
                 </span>
               </div>
@@ -510,15 +587,17 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
           </div>
           <div className="relative">
             <canvas ref={sceneRef} width={W} height={H} className="block w-full" style={{ imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }} />
-            {phase === "td" && scorerTeam && (
+            {phase === "result" && shown && shownTeam && shown.kind !== "PUNT" && (
               <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 sm:gap-2">
-                <span className="animate-pulse text-2xl text-yellow-300 [text-shadow:3px_3px_0_#000] sm:text-5xl">TOUCHDOWN!</span>
-                <span
-                  className="rounded px-2 py-1 text-[9px] text-white [text-shadow:1px_1px_0_#000] sm:text-sm"
-                  style={{ backgroundColor: teamInfo(scorerTeam).primary }}
-                >
-                  {teamInfo(scorerTeam).name.toUpperCase()} +7
+                <span className="animate-pulse text-2xl text-yellow-300 [text-shadow:3px_3px_0_#000] sm:text-5xl">{shown.kind === "TD" ? "TOUCHDOWN!" : "FIELD GOAL!"}</span>
+                <span className="rounded px-2 py-1 text-[9px] text-white [text-shadow:1px_1px_0_#000] sm:text-sm" style={{ backgroundColor: teamInfo(shownTeam).primary }}>
+                  {teamInfo(shownTeam).name.toUpperCase()} +{shown.pts}
                 </span>
+              </div>
+            )}
+            {phase === "result" && shown?.kind === "PUNT" && shownTeam && (
+              <div className="font-pixel pointer-events-none absolute inset-x-0 top-2 flex justify-center">
+                <span className="rounded bg-black/60 px-2 py-1 text-[9px] text-white sm:text-sm">{shownTeam} PUNTS</span>
               </div>
             )}
             {phase === "final" && (
@@ -537,6 +616,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
                     {result.winnerRecord} IN THE REGULAR SEASON{result.winnerSeed ? ` · #${result.winnerSeed} SEED` : ""}
                   </div>
                 )}
+                <div className="font-pixel text-[8px] text-white/80 sm:text-xs">FINAL: {finalW}-{pointsFor(events, "L")}</div>
                 <div className="mt-1 flex gap-2">
                   <button onClick={replay} className="font-pixel rounded bg-yellow-300 px-2 py-1.5 text-[8px] text-black hover:bg-yellow-200 sm:px-3 sm:py-2 sm:text-[10px]">
                     REPLAY
