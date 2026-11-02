@@ -40,7 +40,9 @@ jobs:
 
       - name: Commit the new data
         run: |
-          git config user.name "data-refresh[bot]"
-          git config user.email "actions@users.noreply.github.com"
+          # Commit as the repo owner: Vercel's free plan only deploys commits made by the account owner, and refuses
+          # (and emails about) commits from a bot account.
+          git config user.name "cboggs04"
+          git config user.email "cboggs04@users.noreply.github.com"
           git add backend/data/*.json
           git diff --cached --quiet && echo "No changes" || (git commit -m "Refresh data $(date -u +%Y-%m-%d)" && git push)

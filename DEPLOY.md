@@ -48,3 +48,14 @@ play-by-play and can take 10-20 minutes; later runs only fetch the current seaso
 ## Updating after a change
 
 Push to `main`. Render and Vercel redeploy automatically.
+
+## Vercel: skip rebuilds when only the data changed (optional)
+
+The weekly refresh only changes `backend/data/*.json`, which the website reads from the API, so rebuilding the site is
+wasted work. In Vercel > Project > **Settings > Git > Ignored Build Step**, choose **Custom** and enter:
+
+```
+git diff --quiet HEAD^ HEAD -- .
+```
+
+Vercel then skips any deploy where nothing inside `frontend/` changed.
