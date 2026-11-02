@@ -10,10 +10,10 @@ function subscribe(cb: () => void) {
   mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   return () => mo.disconnect();
 }
-const current = (): Theme => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
+const current = (): Theme => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
 
 export default function ThemeToggle() {
-  const theme = useSyncExternalStore(subscribe, current, () => "dark" as Theme);
+  const theme = useSyncExternalStore(subscribe, current, () => "light" as Theme);
   const next: Theme = theme === "dark" ? "light" : "dark";
 
   function toggle() {
