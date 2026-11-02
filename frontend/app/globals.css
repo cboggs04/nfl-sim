@@ -120,6 +120,12 @@ body {
   line-height: 0.95;
 }
 
+/* 8-bit lettering for the Super Bowl animation. */
+.font-pixel {
+  font-family: var(--font-pixel), monospace;
+  letter-spacing: 0;
+}
+
 /* Panel with two cut corners. */
 .panel {
   background: linear-gradient(180deg, var(--panel-2), var(--panel));

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, Geist, Geist_Mono } from "next/font/google";
+import { Barlow_Condensed, Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -24,6 +24,13 @@ const display = Barlow_Condensed({
   style: ["normal"],
 });
 
+// The retro font for the Super Bowl pop-up.
+const pixel = Press_Start_2P({
+  variable: "--font-pixel",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "NFL Season Simulator",
   description: "Monte Carlo projections of every team's record, playoff odds, and Super Bowl odds.",
@@ -31,7 +38,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${display.variable} ${pixel.variable} h-full antialiased`}>
       <head>
         {/* Set the saved theme before first paint so there's no flash. Light is the default; a saved choice of dark wins. */}
         <script

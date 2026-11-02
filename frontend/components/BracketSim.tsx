@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import SuperBowlAnimation, { makeGame, type SuperBowlResult } from "@/components/SuperBowlAnimation";
 import TeamLogo from "@/components/TeamLogo";
 import { pct } from "@/components/ProbCell";
 import { usePlayoffSim } from "@/components/PlayoffSim";
@@ -385,6 +386,9 @@ function BracketBoard({
   const [busy, setBusy] = useState(false);
   const [playError, setPlayError] = useState<string | null>(null);
   const narrow = useNarrowScreen();
+  const [sbResult, setSbResult] = useState<SuperBowlResult | null>(null); // the Super Bowl just played, for the animation
+  const [sbOpen, setSbOpen] = useState(false);
+  const closeSb = useCallback(() => setSbOpen(false), []);
   const error = loadError ?? playError;
   const requested = useRef(new Set<string>());
 
@@ -427,6 +431,12 @@ function BracketBoard({
         const next = await play(ready);
         current = { ...current, ...next };
         setWinners(current);
+        const sbGame = ready.find((m) => m.id === "SB");
+        if (sbGame?.home && sbGame.away && next["SB"]) {
+          // The pop-up retells the result the model already produced; the score in it is just for show.
+          setSbResult({ home: sbGame.home, away: sbGame.away, winner: next["SB"], ...makeGame(), winnerRecord: records[next["SB"]], winnerSeed: seedLabel(sim.seeds, next["SB"]) });
+          setSbOpen(true);
+        }
         game = undefined;
         if (mode === "all") await wait(700); // a beat between rounds so it's watchable
       } while (mode === "all");
@@ -455,6 +465,11 @@ function BracketBoard({
             <button onClick={() => run("all")} disabled={!anyReady || busy} className="btn btn-ghost text-xl">
               Play to the Super Bowl
             </button>
+            {winners["SB"] && sbResult && (
+              <button onClick={() => setSbOpen(true)} className="btn btn-ghost text-xl">
+                ▶ Watch the Super Bowl
+              </button>
+            )}
             <span className="text-sm text-muted">
               Season #{runs} · {sim.games.filter((g) => !g.played).length} games simulated
             </span>
@@ -485,6 +500,7 @@ function BracketBoard({
           </div>
         </div>
       )}
+      {sbOpen && sbResult && <SuperBowlAnimation result={sbResult} onClose={closeSb} />}
     </div>
   );
 }
