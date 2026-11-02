@@ -52,7 +52,7 @@ function ResultCell({ g }: { g: GameView }) {
     );
   }
   const t = tier(g.p_win ?? 0.5);
-  return <span className={`inline-block rounded px-3 py-1.5 text-sm font-semibold ${t.style}`}>{t.label}</span>;
+  return <span className={`inline-block rounded px-2 py-1 text-xs font-semibold md:px-3 md:py-1.5 md:text-sm ${t.style}`}>{t.label}</span>;
 }
 
 /** Smallest win total at which the cumulative probability reaches q. */
@@ -109,10 +109,15 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
         />
         <div className="relative flex flex-col gap-8 p-6 sm:p-10 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-            <TeamLogo abbr={odds.team} size={176} />
+            <div className="sm:hidden">
+              <TeamLogo abbr={odds.team} size={104} />
+            </div>
+            <div className="hidden sm:block">
+              <TeamLogo abbr={odds.team} size={176} />
+            </div>
             <div>
               <div className="text-sm font-semibold tracking-[0.25em] text-white/80 uppercase">{odds.division}</div>
-              <h1 className="font-display mt-1 text-6xl text-white [text-shadow:0_3px_14px_rgba(0,0,0,.55)] sm:text-7xl">{odds.name}</h1>
+              <h1 className="font-display mt-1 text-5xl text-white [text-shadow:0_3px_14px_rgba(0,0,0,.55)] sm:text-7xl">{odds.name}</h1>
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <span className="font-display bg-black/45 px-4 py-1 text-4xl text-white tabular-nums">
                   {rec(odds.record.wins, odds.record.losses, odds.record.ties)}
@@ -167,33 +172,34 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
           </p>
         </div>
         <div className="panel-flat overflow-x-auto">
-          <table className="w-full min-w-[680px] text-sm">
+          <table className="w-full text-sm md:min-w-[680px]">
             <thead className="border-b border-line bg-head text-xs tracking-widest text-muted uppercase">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold">Week</th>
-                <th className="px-3 py-3 text-left font-semibold">Opponent</th>
-                <th className="px-3 py-3 text-left font-semibold">Result / outlook</th>
-                <th className="px-3 py-3 text-right font-semibold">Win probability</th>
+                <th className="px-2 py-3 text-left font-semibold md:px-4">Wk</th>
+                <th className="px-1.5 py-3 text-left font-semibold md:px-3">Opponent</th>
+                <th className="px-1.5 py-3 text-left font-semibold md:px-3">Result</th>
+                <th className="px-1.5 py-3 text-right font-semibold md:px-3">Win %</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line/60">
               {games.map((g) => (
                 <tr key={g.game_id} className={`transition-colors hover:bg-hover ${g.played ? "" : "bg-rowtint"}`}>
-                  <td className="font-display px-4 py-2 text-2xl text-muted tabular-nums">{g.week}</td>
-                  <td className="px-3 py-2">
-                    <Link href={`/teams/${g.opponent}`} className="group flex items-center gap-4">
-                      <TeamLogo abbr={g.opponent} size={48} />
-                      <span className="text-base font-semibold text-strong group-hover:text-accent-ink">
-                        <span className="mr-2 text-sm font-normal text-muted">{g.neutral || g.home ? "vs" : "@"}</span>
-                        {teamInfo(g.opponent).name}
+                  <td className="font-display px-2 py-2 text-xl text-muted tabular-nums md:px-4 md:text-2xl">{g.week}</td>
+                  <td className="px-1.5 py-2 md:px-3">
+                    <Link href={`/teams/${g.opponent}`} className="group flex items-center gap-2 md:gap-4">
+                      <TeamLogo abbr={g.opponent} size={36} />
+                      <span className="text-sm font-semibold text-strong group-hover:text-accent-ink md:text-base">
+                        <span className="mr-1 text-xs font-normal text-muted md:mr-2 md:text-sm">{g.neutral || g.home ? "vs" : "@"}</span>
+                        <span className="md:hidden">{teamInfo(g.opponent).name.split(" ").pop()}</span>
+                        <span className="hidden md:inline">{teamInfo(g.opponent).name}</span>
                         {g.neutral && <span className="ml-2 text-xs font-normal text-muted">neutral site</span>}
                       </span>
                     </Link>
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-1.5 py-2 md:px-3">
                     <ResultCell g={g} />
                   </td>
-                  {g.p_win != null ? <ProbCell p={g.p_win} /> : <td className="px-3 py-2 text-right text-muted">—</td>}
+                  {g.p_win != null ? <ProbCell p={g.p_win} /> : <td className="px-1.5 py-2 text-right text-muted md:px-3">—</td>}
                 </tr>
               ))}
             </tbody>

@@ -136,13 +136,13 @@ async function Backtest() {
           small, real gain.
         </p>
         <div className="overflow-x-auto">
-          <table className="mt-3 w-full min-w-[560px] text-sm">
+          <table className="mt-3 w-full text-sm md:min-w-[560px]">
             <thead className="text-xs tracking-widest text-muted uppercase">
               <tr>
                 <th className="py-1 text-left font-medium">Model</th>
                 <th className="py-1 text-right font-medium">Brier</th>
                 <th className="py-1 text-right font-medium">Change</th>
-                <th className="py-1 text-right font-medium">Picked winner</th>
+                <th className="hidden py-1 text-right font-medium sm:table-cell">Picked winner</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line/60">
@@ -160,7 +160,7 @@ async function Backtest() {
                     <td className={`py-2 text-right tabular-nums ${d < 0 ? "text-good-ink" : "text-muted"}`}>
                       {prev ? `${d < 0 ? "▼" : "▲"} ${Math.abs(d).toFixed(4)}` : "—"}
                     </td>
-                    <td className="py-2 text-right tabular-nums">{pct(mm.accuracy)}</td>
+                    <td className="hidden py-2 text-right tabular-nums sm:table-cell">{pct(mm.accuracy)}</td>
                   </tr>
                 );
               })}
@@ -252,7 +252,7 @@ export default function BacktestPage() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
       <ResetOnLeave>
-        <h1 className="font-display text-6xl text-strong sm:text-8xl">
+        <h1 className="font-display text-5xl text-strong sm:text-8xl">
           Model <span className="text-accent-ink">Accuracy</span>
         </h1>
         <div className="mt-3">

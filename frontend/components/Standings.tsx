@@ -47,15 +47,15 @@ function DivisionTable({ name, teams, sim }: { name: string; teams: TeamOdds[]; 
     <section className="panel-flat overflow-hidden">
       <h4 className="font-display border-b border-line bg-head px-4 py-2 text-2xl text-strong">{name}</h4>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[460px] text-sm">
+        <table className="w-full text-sm md:min-w-[460px]">
           <thead className="border-b border-line text-[11px] tracking-widest text-muted uppercase">
             <tr>
               <th className="px-4 py-2 text-left font-semibold">Team</th>
               <th className="px-2 py-2 text-right font-semibold">{sim ? "Final" : "W-L"}</th>
-              <th className="px-2 py-2 text-right font-semibold">PCT</th>
+              <th className="hidden px-2 py-2 text-right font-semibold sm:table-cell">PCT</th>
               {sim ? (
                 <>
-                  <th className="px-2 py-2 text-right font-semibold" title="Record before the simulated games">
+                  <th className="hidden px-2 py-2 text-right font-semibold sm:table-cell" title="Record before the simulated games">
                     Now
                   </th>
                   <th className="px-2 py-2 text-right font-semibold">Seed</th>
@@ -63,7 +63,7 @@ function DivisionTable({ name, teams, sim }: { name: string; teams: TeamOdds[]; 
                 </>
               ) : (
                 <>
-                  <th className="px-2 py-2 text-right font-semibold" title="Average wins across the simulated seasons">
+                  <th className="hidden px-2 py-2 text-right font-semibold sm:table-cell" title="Average wins across the simulated seasons">
                     Proj. W
                   </th>
                   <th className="px-2 py-2 text-right font-semibold">Win div.</th>
@@ -78,20 +78,20 @@ function DivisionTable({ name, teams, sim }: { name: string; teams: TeamOdds[]; 
               const seed = sim?.seed.get(t.team);
               return (
                 <tr key={t.team} className="hover:bg-hover" style={{ boxShadow: `inset 4px 0 0 ${teamInfo(t.team).primary}` }}>
-                  <td className="px-4 py-2">
-                    <Link href={`/teams/${t.team}`} className="group flex items-center gap-3">
+                  <td className="px-2 py-2 md:px-4">
+                    <Link href={`/teams/${t.team}`} className="group flex items-center gap-2 md:gap-3">
                       <TeamLogo abbr={t.team} size={36} />
                       <span>
-                        <span className="block text-base font-semibold text-strong group-hover:text-accent-ink">{teamInfo(t.team).name}</span>
+                        <span className="block text-sm font-semibold text-strong group-hover:text-accent-ink md:text-base">{teamInfo(t.team).name}</span>
                         {(sim ? sim.winners.has(t.team) : i === 0) && <span className="text-[10px] font-bold tracking-wider text-muted">DIVISION {sim ? "CHAMPION" : "LEADER"}</span>}
                       </span>
                     </Link>
                   </td>
-                  <td className="px-2 py-2 text-right text-base font-semibold tabular-nums">{r ? `${r.w}-${r.l}${r.t ? `-${r.t}` : ""}` : recordText(t)}</td>
-                  <td className="px-2 py-2 text-right tabular-nums text-muted">{(r ? simPct(r) : winPct(t)).toFixed(3).replace(/^0/, "")}</td>
+                  <td className="px-2 py-2 text-right text-base font-semibold whitespace-nowrap tabular-nums">{r ? `${r.w}-${r.l}${r.t ? `-${r.t}` : ""}` : recordText(t)}</td>
+                  <td className="hidden px-2 py-2 text-right tabular-nums text-muted sm:table-cell">{(r ? simPct(r) : winPct(t)).toFixed(3).replace(/^0/, "")}</td>
                   {sim ? (
                     <>
-                      <td className="px-2 py-2 text-right tabular-nums text-muted">{recordText(t)}</td>
+                      <td className="hidden px-2 py-2 text-right tabular-nums text-muted sm:table-cell">{recordText(t)}</td>
                       <td className="px-2 py-2 text-right font-display text-xl tabular-nums">{seed ?? "—"}</td>
                       <td className="px-3 py-2 text-right text-xs font-semibold">
                         {seed ? (
@@ -103,7 +103,7 @@ function DivisionTable({ name, teams, sim }: { name: string; teams: TeamOdds[]; 
                     </>
                   ) : (
                     <>
-                      <td className="px-2 py-2 text-right tabular-nums">{t.exp_wins.toFixed(1)}</td>
+                      <td className="hidden px-2 py-2 text-right tabular-nums sm:table-cell">{t.exp_wins.toFixed(1)}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{pct(t.p_division)}</td>
                       <td className="px-3 py-2 text-right font-semibold tabular-nums">{pct(t.p_playoffs)}</td>
                     </>
@@ -153,7 +153,7 @@ function SeedPicture({ conference, slots }: { conference: Conference; slots: Bra
                   </div>
                 )}
               </div>
-              <div className="w-24">
+              <div className="hidden w-24 sm:block">
                 <div className="h-1.5 overflow-hidden rounded-full bg-gauge" aria-hidden>
                   <div className="h-full rounded-full bg-blue" style={{ width: `${pick.prob * 100}%` }} />
                 </div>
@@ -238,8 +238,8 @@ export default function Standings({ teams, bracket }: { teams: TeamOdds[]; brack
 
       <div className="mt-6 grid gap-8 xl:grid-cols-2">
         {(["AFC", "NFC"] as const).map((conf) => (
-          <div key={conf}>
-            <h3 className="font-display text-6xl text-strong">{conf}</h3>
+          <div key={conf} className="min-w-0">
+            <h3 className="font-display text-5xl text-strong sm:text-6xl">{conf}</h3>
             <div className="mt-3 space-y-4">
               {info && sim ? (
                 <SimSeeds conference={conf} sim={sim} />

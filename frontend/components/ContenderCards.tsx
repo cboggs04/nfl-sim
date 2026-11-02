@@ -7,12 +7,13 @@ import type { TeamOdds } from "@/lib/types";
 /** The top Super Bowl favorites as big team cards. */
 export default function ContenderCards({ teams }: { teams: TeamOdds[] }) {
   const top = [...teams].sort((a, b) => b.p_super_bowl - a.p_super_bowl).slice(0, 5);
+  // On phones the five cards are a swipeable row; from tablet width up they sit in a grid.
   return (
-    <ol className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <ol className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5">
       {top.map((t, i) => {
         const info = teamInfo(t.team);
         return (
-          <li key={t.team} className="rise" style={{ animationDelay: `${i * 70}ms` }}>
+          <li key={t.team} className="rise w-[72%] shrink-0 snap-center sm:w-auto" style={{ animationDelay: `${i * 70}ms` }}>
             <Link
               href={`/teams/${t.team}`}
               className="panel group relative block h-full overflow-hidden p-4 transition-transform hover:-translate-y-1"

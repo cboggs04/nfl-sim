@@ -17,7 +17,7 @@ async function Dashboard() {
     <>
       <header className="rise">
         <div className="text-sm font-semibold tracking-[0.25em] text-accent-ink uppercase">{season.season} season</div>
-        <h1 className="font-display mt-1 text-6xl text-strong sm:text-8xl">
+        <h1 className="font-display mt-1 text-5xl text-strong sm:text-8xl">
           Super Bowl <span className="text-accent-ink">Odds</span>
         </h1>
         <div className="mt-4 flex max-w-xl items-center gap-3 text-sm text-muted">

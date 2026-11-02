@@ -14,7 +14,7 @@ export default function WhatIfPage() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
       <ResetOnLeave>
-        <h1 className="font-display text-6xl text-strong sm:text-8xl">
+        <h1 className="font-display text-5xl text-strong sm:text-8xl">
           What-if <span className="text-accent-ink">Sandbox</span>
         </h1>
         <p className="mt-3 max-w-2xl text-sm text-muted">

@@ -64,7 +64,7 @@ export default function CalibrationChart({ bins }: { bins: CalibrationBin[] }) {
                 tick={{ fill: "var(--chart-text)", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
-                label={{ value: "What the model said (chance the home team wins)", position: "insideBottom", offset: -18, fill: "var(--chart-text)", fontSize: 12 }}
+                label={{ value: "Model's chance the home team wins", position: "insideBottom", offset: -18, fill: "var(--chart-text)", fontSize: 12 }}
               />
               <YAxis
                 type="number"

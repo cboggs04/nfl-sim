@@ -14,7 +14,7 @@ const STATUS_BADGE: Record<string, { label: string; style: string; title: string
 function Cell({ stat, value, base, view, showDelta }: { stat: string; value: number; base: number; view: View; showDelta: boolean }) {
   const added = value - base;
   return (
-    <td className="px-3 py-2 text-right tabular-nums">
+    <td className="px-2 py-2 text-right tabular-nums md:px-3">
       <div className="text-base font-semibold">{formatStat(stat, value)}</div>
       {view !== "current" && showDelta && Math.round(added * 2) > 0 && <div className="text-[10px] text-muted">+{formatStat(stat, added)}</div>}
     </td>
@@ -59,11 +59,11 @@ export function PositionTable({
         {POSITION_NAMES[position] ?? position} <span className="text-base text-muted">{players.length}</span>
       </h3>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full text-sm md:min-w-[640px]">
           {columns.length > 0 && (
             <thead className="border-b border-line text-[11px] tracking-widest text-muted uppercase">
               <tr>
-                <th className="px-4 py-2 text-left font-semibold">Player</th>
+                <th className="sticky left-0 z-10 bg-panel px-3 py-2 text-left font-semibold md:px-4">Player</th>
                 <th className="px-3 py-2 text-right font-semibold" title="Games played">
                   GP
                 </th>
@@ -80,12 +80,17 @@ export function PositionTable({
               const badge = STATUS_BADGE[p.status];
               return (
                 <tr key={p.id} className={`hover:bg-hover ${p.status === "RES" ? "opacity-60" : ""}`}>
-                  <td className="px-4 py-2">
-                    <div className="flex items-center gap-3">
-                      <Headshot src={p.headshot} name={p.name} color={color} size={48} />
+                  <td className="sticky left-0 z-10 bg-panel px-3 py-2 md:px-4">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <span className="md:hidden">
+                        <Headshot src={p.headshot} name={p.name} color={color} size={36} />
+                      </span>
+                      <span className="hidden md:block">
+                        <Headshot src={p.headshot} name={p.name} color={color} size={48} />
+                      </span>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="truncate text-base font-semibold text-strong">{p.name}</span>
+                          <span className="text-sm font-semibold text-strong md:truncate md:text-base">{p.name}</span>
                           {badge && (
                             <span title={badge.title} className={`rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wider ring-1 ${badge.style}`}>
                               {badge.label}
@@ -95,8 +100,8 @@ export function PositionTable({
                         <div className="text-xs text-muted">
                           {p.jersey != null && <span>#{p.jersey} · </span>}
                           {p.position}
-                          {p.age != null && <span> · {p.age} yrs old</span>}
-                          {p.years_exp != null && <span> · {p.years_exp === 0 ? "rookie" : `${p.years_exp} yr${p.years_exp === 1 ? "" : "s"} exp`}</span>}
+                          {p.age != null && <span className="hidden md:inline"> · {p.age} yrs old</span>}
+                          {p.years_exp != null && <span className="hidden md:inline"> · {p.years_exp === 0 ? "rookie" : `${p.years_exp} yr${p.years_exp === 1 ? "" : "s"} exp`}</span>}
                         </div>
                       </div>
                     </div>

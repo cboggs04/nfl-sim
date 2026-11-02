@@ -155,7 +155,7 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
-      <div className="space-y-5">
+      <div className="min-w-0 space-y-5">
         <section className="panel p-5">
           <h2 className="font-display text-3xl text-strong">1 · Change a team</h2>
           <p className="mt-1 text-xs text-muted">Adjust a team&apos;s Elo rating, the model&apos;s measure of strength.</p>
@@ -291,7 +291,7 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
         )}
       </div>
 
-      <section aria-live="polite">
+      <section aria-live="polite" className="min-w-0">
         {!result ? (
           <div className="panel flex h-full min-h-72 items-center justify-center p-10 text-center text-lg text-muted">
             Make a change on the left and click Run what-if. You&apos;ll see how every team&apos;s odds shift compared with the normal projection.
@@ -351,13 +351,13 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
               </p>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm">
+              <table className="w-full text-sm md:min-w-[640px]">
                 <thead className="border-b border-line bg-head text-xs tracking-widest text-muted uppercase">
                   <tr>
-                    <th className="px-3 py-2 text-left font-semibold">Team</th>
+                    <th className="px-2 py-2 text-left font-semibold md:px-3">Team</th>
                     <th className="px-3 py-2 text-right font-semibold">Super Bowl</th>
                     <th className="px-3 py-2 text-right font-semibold">Playoffs</th>
-                    <th className="px-3 py-2 text-right font-semibold">Exp. wins</th>
+                    <th className="hidden px-3 py-2 text-right font-semibold sm:table-cell">Exp. wins</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line/60">
@@ -366,10 +366,10 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
                     const changed = t.team in adjust;
                     return (
                       <tr key={t.team} className="hover:bg-hover">
-                        <td className="px-3 py-2" style={{ boxShadow: `inset 4px 0 0 ${teamInfo(t.team).primary}` }}>
-                          <div className="flex items-center gap-3 pl-1">
-                            <TeamLogo abbr={t.team} size={38} />
-                            <span className="font-semibold text-strong">{t.name}</span>
+                        <td className="px-2 py-2 md:px-3" style={{ boxShadow: `inset 4px 0 0 ${teamInfo(t.team).primary}` }}>
+                          <div className="flex items-center gap-2 pl-1 md:gap-3">
+                            <TeamLogo abbr={t.team} size={34} />
+                            <span className="text-sm font-semibold text-strong md:text-base"><span className="md:hidden">{t.name.split(" ").pop()}</span><span className="hidden md:inline">{t.name}</span></span>
                             {changed && <span className="rounded bg-accent px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-on-accent">CHANGED</span>}
                           </div>
                         </td>
@@ -387,7 +387,7 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
                           </div>
                           <Delta value={dPo} />
                         </td>
-                        <td className="px-3 py-2 text-right tabular-nums">
+                        <td className="hidden px-3 py-2 text-right tabular-nums sm:table-cell">
                           <div className="text-base font-semibold">
                             <span className="font-normal text-muted">{b.exp_wins.toFixed(1)} → </span>
                             {t.exp_wins.toFixed(1)}

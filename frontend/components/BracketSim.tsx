@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import TeamLogo from "@/components/TeamLogo";
 import { pct } from "@/components/ProbCell";
 import { usePlayoffSim } from "@/components/PlayoffSim";
@@ -295,6 +295,71 @@ function BracketView({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx;
   );
 }
 
+/** True on phones and small tablets, where the side-by-side bracket is too wide. (Only used after a season is simulated, so no server/browser mismatch.) */
+function useNarrowScreen(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      const m = window.matchMedia("(max-width: 1023px)");
+      m.addEventListener("change", onChange);
+      return () => m.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia("(max-width: 1023px)").matches,
+    () => false,
+  );
+}
+
+/** The same bracket as a simple top-to-bottom list for small screens: each conference round by round, then the Super Bowl. */
+function MobileBracket({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx; champ: string | undefined; sim: SimulatedSeason }) {
+  const round = (title: string, children: React.ReactNode) => (
+    <div className="mt-5">
+      <h4 className="font-display mb-2 text-2xl text-accent-ink">{title}</h4>
+      <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">{children}</div>
+    </div>
+  );
+  return (
+    <div>
+      {(["AFC", "NFC"] as const).map((conf) => {
+        const cb = bracket[conf];
+        return (
+          <section key={conf} className="mb-8">
+            <h3 className="font-display text-5xl text-strong">{conf}</h3>
+            {round(
+              "Wild card",
+              <>
+                <ByeCard conf={conf} ctx={ctx} />
+                {cb.wc.map((m) => (
+                  <MatchupCard key={m.id} m={m} ctx={ctx} />
+                ))}
+              </>,
+            )}
+            {round(
+              "Divisional",
+              cb.div.map((m) => <MatchupCard key={m.id} m={m} ctx={ctx} />),
+            )}
+            {round("Conference final", <MatchupCard m={cb.conf} ctx={ctx} />)}
+          </section>
+        );
+      })}
+      <section>
+        <h3 className="font-display text-5xl text-strong">Super Bowl</h3>
+        <div className="mt-3 max-w-md">
+          <MatchupCard m={bracket.sb} ctx={ctx} label="Neutral site" />
+        </div>
+        {champ && (
+          <div className="rise mt-5 flex flex-col items-center text-center" aria-live="polite">
+            <TeamLogo abbr={champ} size={140} />
+            <div className="font-display mt-3 text-xl text-gold">Champions</div>
+            <div className="font-display text-4xl text-strong">{nickname(champ)}</div>
+            <div className="text-xs text-muted">
+              {ctx.records[champ]} · #{seedLabel(sim.seeds, champ)} seed
+            </div>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
 /** The bracket tab: uses the season simulated in the shared PlayoffSim context (also shown on the Standings tab). */
 export default function BracketSim() {
   const { sim, runs, loading, error, newSeason } = usePlayoffSim();
@@ -319,6 +384,7 @@ function BracketBoard({
   const [probs, setProbs] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const [playError, setPlayError] = useState<string | null>(null);
+  const narrow = useNarrowScreen();
   const error = loadError ?? playError;
   const requested = useRef(new Set<string>());
 
@@ -410,8 +476,8 @@ function BracketBoard({
 
       {sim && bracket && (
         <div className="mt-8 space-y-8">
-          <div className="panel rise p-5 sm:p-6">
-            <BracketView bracket={bracket} ctx={ctx} champ={champ} sim={sim} />
+          <div className="panel rise p-3 sm:p-6">
+            {narrow ? <MobileBracket bracket={bracket} ctx={ctx} champ={champ} sim={sim} /> : <BracketView bracket={bracket} ctx={ctx} champ={champ} sim={sim} />}
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             <SeedList conf="AFC" sim={sim} ctx={ctx} />
