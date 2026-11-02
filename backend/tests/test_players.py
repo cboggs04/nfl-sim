@@ -147,3 +147,61 @@ def test_negative_yardage_never_breaks_the_simulation():
     assert all(v >= 0 for v in p["rates"].values()) and all(v >= p["stats"][k] for k, v in p["proj"].items() if k != "rushing_yards")
     sim = simulate_player(p, [True, False] * 5, np.random.default_rng(0))
     assert sim["stats"]["rushing_tds"] >= 0
+
+
+def team_qbs(statuses=("ACT", "ACT", "ACT"), games=(4, 3, 1), remaining=10):
+    """A team's three quarterbacks, the first the projected starter, the others who filled in earlier."""
+    out = []
+    for i, (status, gp) in enumerate(zip(statuses, games)):
+        cur = {k: v * gp / 7 for k, v in QB_CUR.items()}
+        out.append(build_player({"id": f"qb{i}", "name": f"QB{i}", "position": "QB", "status": status}, cur, None, gp, 0, 7, remaining))
+    return out
+
+
+def test_only_one_quarterback_plays_at_a_time():
+    from engine.players import apply_depth_chart
+
+    qbs = team_qbs()
+    assert sum(p["avail"] for p in qbs) > 1.3            # the old per-player numbers: far more than one QB's worth of games
+    apply_depth_chart(qbs, 10, {"QB": "qb0"})
+    assert sum(p["avail"] for p in qbs) <= 1.0 + 1e-9    # now they share the games
+    assert sum(p["proj_gp"] - p["gp"] for p in qbs) <= 10 + 1e-9
+    starter, backup1, backup2 = qbs
+    assert starter["avail"] > 0.9 and backup1["avail"] < 0.1 and backup2["avail"] < 0.01
+    assert starter["proj_gp"] - starter["gp"] > 9            # the starter plays nearly every remaining game
+
+
+def test_injured_starter_hands_the_job_to_the_next_quarterback():
+    from engine.players import apply_depth_chart
+
+    qbs = team_qbs(statuses=("RES", "ACT", "ACT"))
+    apply_depth_chart(qbs, 10, {"QB": "qb0"})
+    assert qbs[0]["avail"] == 0 and qbs[0]["proj"] == qbs[0]["stats"]
+    assert qbs[1]["avail"] > 0.9
+
+
+def test_starter_is_the_listed_quarterback_not_just_who_played_most():
+    from engine.players import apply_depth_chart
+
+    qbs = team_qbs(games=(3, 6, 1))                       # qb1 has played the most...
+    apply_depth_chart(qbs, 10, {"QB": "qb0"})             # ...but the listed starter for the next game is qb0
+    assert qbs[0]["avail"] > qbs[1]["avail"] > qbs[2]["avail"]
+    apply_depth_chart(qbs, 10, {})                        # with nobody listed, whoever has thrown the most is the starter
+    assert qbs[1]["avail"] > qbs[0]["avail"]
+
+
+def test_depth_chart_leaves_other_positions_alone():
+    from engine.players import apply_depth_chart
+
+    wr = build_player({"id": "w", "name": "WR", "position": "WR", "status": "ACT"}, {"targets": 60.0, "receptions": 40.0, "receiving_yards": 500.0, "receiving_tds": 3.0}, None, 7, 0, 7, 10)
+    before = dict(wr)
+    apply_depth_chart([wr, *team_qbs()], 10, {})
+    assert wr["avail"] == before["avail"] and wr["proj"] == before["proj"]
+
+
+def test_full_season_replay_also_shares_quarterback_games():
+    from engine.players import apply_depth_chart
+
+    qbs = team_qbs()
+    apply_depth_chart(qbs, 10, {"QB": "qb0"})
+    assert sum(p["avail_full"] for p in qbs) <= 1.0 + 1e-9 and qbs[0]["avail_full"] > 0.9

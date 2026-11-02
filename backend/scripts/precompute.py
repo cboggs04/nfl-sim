@@ -23,7 +23,7 @@ from datetime import date
 from app.schemas import AwardRow, LeaderRow, LeadersResponse, RosterPlayer, TeamRoster
 from engine.data import DATA_DIR, load_games, load_player_totals, load_qb_game_epa, load_roster, load_snap_games
 from engine.awards import AWARDS, LEADER_CATEGORIES, simulate_awards
-from engine.players import POSITION_STATS, build_player
+from engine.players import POSITION_STATS, apply_depth_chart, build_player
 from engine.elo import EloConfig, game_probability, walk_games
 from engine.qb import QbConfig, QbTracker, projected_starters, stats_by_game
 from engine.simulate import simulate_league
@@ -147,19 +147,24 @@ def build_rosters(season: int, schedule: list[dict], refresh: bool = False) -> d
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     today = date.today()
 
+    starters = projected_starters(schedule)
     out: dict[str, TeamRoster] = {}
     for t in TEAMS:
-        players = []
+        built = []
         for r in roster.filter(pl.col("team") == t).to_dicts():
             pid, pfr = r["gsis_id"], r["pfr_id"]
             cur, prev = totals.get((pid, season)), totals.get((pid, season - 1))
             cur_games = max(snaps[season].get(pfr, 0), int(cur["weeks"]) if cur else 0)
             prev_games = max(snaps[season - 1].get(pfr, 0), int(prev["weeks"]) if prev else 0)
             roster_row = {"id": pid, "name": r["full_name"], "position": r["position"], "status": r["status"]}
-            p = build_player(roster_row, cur, prev, cur_games, prev_games, played[t], remaining[t])
+            built.append((r, build_player(roster_row, cur, prev, cur_games, prev_games, played[t], remaining[t])))
+        # Only one quarterback (kicker, punter) plays at a time: share the games rather than give each his own.
+        apply_depth_chart([p for _, p in built], remaining[t], {"QB": starters[t][0]} if t in starters else {})
+        players = []
+        for r, p in built:
             born = r["birth_date"]
             players.append(RosterPlayer(
-                id=pid, name=r["full_name"], position=r["position"], jersey=r["jersey_number"], status=r["status"],
+                id=r["gsis_id"], name=r["full_name"], position=r["position"], jersey=r["jersey_number"], status=r["status"],
                 headshot=r["headshot_url"], years_exp=r["years_exp"],
                 age=None if born is None else today.year - born.year - ((today.month, today.day) < (born.month, born.day)),
                 gp=p["gp"], proj_gp=round(p["proj_gp"], 2), avail=round(p["avail"], 3), avail_full=round(p["avail_full"], 3),

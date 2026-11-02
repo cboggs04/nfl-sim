@@ -101,17 +101,52 @@ def build_player(roster: dict, cur: dict | None, prev: dict | None, cur_games: i
     if cur_games == 0 and prev_games == 0:
         base *= 0.3     # no track record: likely a reserve who rarely plays
     availability = base * STATUS_AVAIL.get(roster["status"], 0.0)
-    exp_games = availability * remaining_games
-    return {
+    player = {
         **roster,
         "gp": cur_games,
         "stats": stats_cur,
         "rates": rates,
         "avail": availability,
         "avail_full": base,       # availability ignoring current injury status: used to replay a whole season
-        "proj_gp": cur_games + exp_games,
-        "proj": {s: stats_cur[s] + rates[s] * exp_games for s in stats_cur},
     }
+    return project(player, remaining_games)
+
+
+def project(player: dict, remaining_games: int) -> dict:
+    """Fill in a player's projected games and final totals from his availability and per-game rates."""
+    exp_games = player["avail"] * remaining_games
+    player["proj_gp"] = player["gp"] + exp_games
+    player["proj"] = {s: player["stats"][s] + player["rates"][s] * exp_games for s in player["stats"]}
+    return player
+
+
+# Positions where only one player is on the field at a time. For these the players' chances of playing must add up to
+# one game's worth, not one each: a backup quarterback plays only when the starter doesn't. Value = the chance a healthy
+# player is available for any given game (quarterbacks get hurt; kickers rarely do).
+ONE_AT_A_TIME = {"QB": 0.93, "K": 0.97, "P": 0.97, "LS": 0.97}
+
+
+def apply_depth_chart(players: list[dict], remaining_games: int, starter_ids: dict[str, str] | None = None) -> None:
+    """Split games among a team's players at one-at-a-time positions (updates `players` in place).
+
+    Players are ranked: the projected starter (`starter_ids`, e.g. the quarterback listed for the next game) first,
+    then whoever has played the most. The first plays unless he's out, the second only if the first is out, and so on,
+    so a backup who filled in earlier this season gets only the games the starter is likely to miss.
+    """
+    starter_ids = starter_ids or {}
+    for pos, healthy in ONE_AT_A_TIME.items():
+        group = [p for p in players if p["position"] == pos]
+        if not group:
+            continue
+        group.sort(key=lambda p: (p["id"] == starter_ids.get(pos), p["stats"].get("attempts", p["gp"]), p["gp"]), reverse=True)
+        for field, chance in (("avail", lambda p: healthy * STATUS_AVAIL.get(p["status"], 0.0)), ("avail_full", lambda p: healthy)):
+            nobody_ahead_plays = 1.0
+            for p in group:
+                h = chance(p)
+                p[field] = nobody_ahead_plays * h
+                nobody_ahead_plays *= 1 - h
+        for p in group:
+            project(p, remaining_games)
 
 
 def _flow(stat: str, win: np.ndarray) -> np.ndarray:
