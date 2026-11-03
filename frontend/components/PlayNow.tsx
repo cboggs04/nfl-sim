@@ -196,6 +196,59 @@ function enterTouchMode() {
     .catch(() => {});
 }
 
+/** Phones: the play picker is a strip over the top of the field. Tap a play and it tucks away; tap SNAP to run it. */
+function TouchPlayPicker({ hud, open, onOpen, onClose, onAction }: { hud: Hud; open: boolean; onOpen: () => void; onClose: () => void; onAction: (a: Parameters<FootballGame["press"]>[0]) => void }) {
+  if (!open) {
+    return (
+      <div className="absolute inset-x-0 top-1 flex justify-center">
+        <button onClick={onOpen} className="font-pixel pointer-events-auto rounded bg-black/70 px-3 py-1.5 text-[8px] text-white ring-1 ring-white/40">
+          {hud.selected === "pass" ? "PASS" : "RUN"}: {hud.plays[hud.choice].name.toUpperCase()} ▾
+        </button>
+      </div>
+    );
+  }
+  const chip = (active: boolean) => `font-pixel pointer-events-auto rounded px-3 py-1 text-[8px] ring-1 ring-white/30 ${active ? "bg-yellow-300 text-black" : "bg-black/70 text-white"}`;
+  return (
+    <div className="pointer-events-none absolute inset-x-1 top-1 flex touch-none flex-col items-center gap-1">
+      <div className="flex flex-wrap items-center justify-center gap-1.5">
+        <button onClick={() => onAction("selectPass")} className={chip(hud.selected === "pass")}>
+          ← PASS
+        </button>
+        <button onClick={() => onAction("selectRun")} className={chip(hud.selected === "run")}>
+          RUN →
+        </button>
+        {hud.down >= 4 && (
+          <>
+            <button onClick={() => onAction("fieldGoal")} disabled={!hud.canKick} className={`${chip(false)} disabled:opacity-40`}>
+              FIELD GOAL {hud.canKick ? `${hud.fgDistance} YD` : "TOO FAR"}
+            </button>
+            <button onClick={() => onAction("punt")} className={chip(false)}>
+              PUNT
+            </button>
+          </>
+        )}
+      </div>
+      <div className="flex w-full max-w-xl justify-center gap-1.5">
+        {hud.plays.map((p, i) => (
+          <button
+            key={p.id}
+            onClick={() => {
+              onAction(`play${i + 1}` as "play1" | "play2" | "play3");
+              onClose();
+            }}
+            className={`pointer-events-auto flex min-w-0 flex-1 flex-col overflow-hidden rounded text-left ring-2 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-black/75 text-white ring-white/25"}`}
+          >
+            <span className="block h-10 w-full px-1 pt-0.5">
+              <PlayArt play={p} />
+            </span>
+            <span className="font-pixel block truncate px-1.5 pb-1 text-[7px]">{p.name.toUpperCase()}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** A thumb pad on the left (8 directions) and the buttons on the right: snap / sprint, and throws to receivers A, S, D. */
 function TouchControls({ hud, onDirs, onAction }: { hud: Hud; onDirs: (dirs: Set<string>) => void; onAction: (a: Parameters<FootballGame["press"]>[0]) => void }) {
   const padRef = useRef<HTMLDivElement>(null);
@@ -649,6 +702,12 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
   const pausedRef = useRef(stopped);
   const [game, setGame] = useState(() => new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo }, Math.random, level));
   const [hud, setHud] = useState<Hud>(() => snapshot(game));
+  const [pickerOpen, setPickerOpen] = useState(true); // phones: the play strip over the field, tucked away after you pick
+  const prevPhase = useRef(hud.phase);
+  useEffect(() => {
+    if (hud.phase === "presnap" && prevPhase.current !== "presnap") setPickerOpen(true); // every new snap starts with the strip open
+    prevPhase.current = hud.phase;
+  }, [hud.phase]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keys = useRef(new Set<string>());
   const uInfo = jerseyColors(user.team, userJersey); // the colors on the field: jersey and trim
@@ -979,7 +1038,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
       {/* the game is as wide as the screen's height allows, so the whole field stays on screen (without scrolling) */}
       <div
         className="mx-auto w-full"
-        style={{ maxWidth: touch ? "calc((100dvh - 4.6rem) * 16 / 9 + 11.5rem)" : fullscreen ? "calc((100vh - 11rem) * 16 / 9 + 16rem)" : "min(78rem, max(46rem, calc((100vh - 17.5rem) * 16 / 9 + 16rem)))" }}
+        style={{ maxWidth: touch ? "calc((100dvh - 4.6rem) * 16 / 9)" : fullscreen ? "calc((100vh - 11rem) * 16 / 9 + 16rem)" : "min(78rem, max(46rem, calc((100vh - 17.5rem) * 16 / 9 + 16rem)))" }}
       >
         <div className={`flex items-center justify-between gap-2 ${touch ? "mb-1" : "mb-2"}`}>
           <div className={`font-pixel text-muted ${touch ? "text-[8px]" : "text-[10px] sm:text-xs"}`}>
@@ -1012,7 +1071,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
             </button>
           </div>
         </div>
-        <div className={`grid items-stretch ${touch ? "gap-2" : "gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]"}`} style={touch ? { gridTemplateColumns: "minmax(0, 1fr) 10.5rem" } : undefined}>
+        <div className={`grid items-stretch ${touch ? "gap-2" : "gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]"}`} style={touch ? { gridTemplateColumns: "minmax(0, 1fr)" } : undefined}>
         <div className="overflow-hidden rounded-lg border-4 border-white/70 bg-black shadow-2xl shadow-black/40">
           <div className="font-pixel flex items-stretch justify-between bg-[#111827] text-white">
             <div className={`flex flex-1 items-center justify-between gap-2 border-b-4 ${touch ? "px-2 py-0.5" : "px-3 py-2"}`} style={{ borderColor: uInfo.primary }}>
@@ -1038,6 +1097,9 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
           <div className="relative">
             <canvas ref={canvasRef} width={W} height={H} className="block w-full" style={{ imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }} />
             {touch && !manualPause && !rotate && <TouchControls hud={hud} onDirs={setDirs} onAction={touchAct} />}
+            {touch && !manualPause && !rotate && hud.phase === "presnap" && (
+              <TouchPlayPicker hud={hud} open={pickerOpen} onOpen={() => setPickerOpen(true)} onClose={() => setPickerOpen(false)} onAction={touchAct} />
+            )}
 
             {(hud.phase === "result" || hud.phase === "kick") && (hud.message || hud.phase === "kick") && (
               <div className="font-pixel pointer-events-none absolute inset-x-0 top-[28%] flex justify-center px-2">
@@ -1127,7 +1189,8 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
 
         </div>
         {/* the play picker and snap controls: a column beside the field, so the whole field stays on screen */}
-        <aside className={`relative ${touch ? "" : "min-h-[26rem] lg:min-h-0"}`}>
+        {!touch && (
+        <aside className="relative min-h-[26rem] lg:min-h-0">
           <div className={`flex flex-col rounded-lg bg-[#111827] text-white ${touch ? "absolute inset-0 p-1.5" : "p-2.5 lg:absolute lg:inset-0"}`}>
             {/* the pre-snap controls and the live hints share one spot, so nothing moves when the play starts */}
             <div className={`flex min-h-0 flex-1 flex-col gap-2 ${hud.phase === "presnap" ? "" : "invisible"}`} aria-hidden={hud.phase !== "presnap"}>
@@ -1208,6 +1271,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
             </div>
           </div>
         </aside>
+        )}
         </div>
         {!touch && <p className="mt-2 text-center text-xs text-muted">The other team&apos;s drives are simulated from the two teams&apos; ratings. You play every snap of yours.</p>}
       </div>

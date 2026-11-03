@@ -101,8 +101,8 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
           <h3 className="font-display text-2xl text-accent-ink">On a phone or tablet</h3>
           <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
             <li>Turn the phone sideways: the game plays in landscape and pauses if you turn it upright.</li>
-            <li>The round pad on the left moves the player (and, before the snap, picks pass or run with ← → and a play with ↑ ↓). You can also tap a play card.</li>
-            <li>The big button on the right snaps the ball, then sprints. During a pass the A, S and D buttons throw to the receivers with those letters.</li>
+            <li>Before the snap, a strip across the top of the field shows PASS / RUN and three plays. Tap a play and the strip tucks away; tap the small play name at the top to reopen it. The round pad on the left moves the player.</li>
+            <li>The big button on the right snaps the ball (tap it after choosing your play), then sprints. During a pass the A, S and D buttons throw to the receivers with those letters.</li>
           </ul>
         </section>
 
