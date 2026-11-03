@@ -583,9 +583,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         simulated from the two teams&apos; ratings, so a stronger team has a real edge. Four short quarters, about a minute each. Flip through the teams with the arrows
         (or click a card and use the arrow keys), and click the <b className="text-strong">?</b> for the controls.
       </p>
-      <p className="mt-1 text-sm text-muted md:hidden">
-        Run the offense and score on four short quarters. Tap the arrows to change teams. Turn your phone sideways to play. To hide Safari&apos;s address bar, tap Share, then Add to Home Screen.
-      </p>
+      <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">On a phone? Turn it sideways: the game plays in landscape with on-screen controls. To hide the Safari address bar on an iPhone, tap Share, then Add to Home Screen, and open the game from there. A keyboard works on a computer.</p>
       <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
         <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} jersey={userJersey} onJersey={setUserJersey} />
         <div className="flex items-center justify-center" aria-hidden>
