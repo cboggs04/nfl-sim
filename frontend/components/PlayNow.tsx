@@ -421,6 +421,8 @@ function PlayArt({ play }: { play: PlayDef }) {
 // ---------- the game ----------
 function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user: TeamOdds; opp: TeamOdds; teams: TeamOdds[]; level: Difficulty; onExit: () => void; paused: boolean; onHelp: () => void }) {
   void teams;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [fullscreen, setFullscreen] = useState(false);
   const [manualPause, setManualPause] = useState(false); // the Pause button (or Esc)
   const stopped = paused || manualPause; // paused by the help panel or by the player
   const pausedRef = useRef(stopped);
@@ -447,6 +449,21 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
       game.setMove(0, 0);
     }
   }, [stopped, game]);
+
+  // Full screen: the browser's own mode (Esc leaves it), so keep our flag in step with it.
+  useEffect(() => {
+    const onChange = () => setFullscreen(document.fullscreenElement === rootRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onChange);
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    };
+  }, []);
+  const toggleFullscreen = () => {
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    else void rootRef.current?.requestFullscreen?.().catch(() => {});
+  };
 
   // Leaving the tab pauses the game so a play isn't lost.
   useEffect(() => {
@@ -700,13 +717,27 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
   const winText = hud.user > hud.opp ? "YOU WIN!" : hud.user < hud.opp ? "YOU LOSE" : "TIE GAME";
 
   return (
-    <div data-phase={hud.phase} data-half={hud.half}>
-      <div className="mx-auto max-w-4xl">
+    <div
+      ref={rootRef}
+      data-phase={hud.phase}
+      data-half={hud.half}
+      className={fullscreen ? "flex h-screen w-screen flex-col items-center justify-center overflow-auto p-3" : ""}
+      style={fullscreen ? { background: "var(--background)" } : undefined}
+    >
+      {/* in full screen the game is as wide as the screen's height allows, so everything fits without scrolling */}
+      <div className="mx-auto w-full max-w-4xl" style={fullscreen ? { maxWidth: "min(100%, calc((100vh - 24.5rem) * 16 / 9))" } : undefined}>
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="font-pixel text-[10px] text-muted sm:text-xs">
             {hud.half === 1 ? "1ST HALF" : "2ND HALF"} · {LEVELS.find((l) => l.id === level)!.label.toUpperCase()}
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={toggleFullscreen}
+              aria-pressed={fullscreen}
+              className="font-pixel rounded bg-head px-3 py-2 text-[10px] text-strong ring-1 ring-line hover:bg-hover"
+            >
+              {fullscreen ? "EXIT FULL SCREEN" : "FULL SCREEN"}
+            </button>
             {!final && (
               <button
                 onClick={() => {
@@ -835,84 +866,85 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             )}
           </div>
 
-          {/* controls for the moment you're in */}
-          <div className="grid bg-[#111827] px-3 py-3 text-white">
-            {/* the pre-snap controls and the live hints share one spot, so the box never changes size when the play starts */}
-            <div className={`col-start-1 row-start-1 ${hud.phase === "presnap" ? "" : "invisible"}`} aria-hidden={hud.phase !== "presnap"}>
-              <div className="mb-3">
-                <div className="font-pixel mb-1.5 text-center text-[7px] text-white/70 sm:text-[9px]">
-                  {hud.down >= 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3 OR ← →), THEN SNAP"}
-                </div>
-                <div className="mx-auto flex max-w-3xl justify-center gap-1.5 sm:gap-2">
-                  {hud.plays.map((p, i) => (
-                    <button
-                      key={p.id}
-                      onClick={() => act(`play${i + 1}` as "play1" | "play2" | "play3")}
-                      aria-pressed={hud.choice === i}
-                      className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded text-left ring-2 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-white/10 text-white ring-white/15 hover:bg-white/20"}`}
-                    >
-                      <span className={`block h-12 w-full px-1 pt-1 sm:h-[4.5rem] ${hud.choice === i ? "text-black" : "text-white"}`}>
-                        <PlayArt play={p} />
-                      </span>
-                      <span className="flex items-center gap-1.5 px-1.5 pb-1.5 sm:gap-2 sm:px-2 sm:pb-2">
-                        <span className={`font-pixel flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] sm:h-6 sm:w-6 sm:text-xs ${hud.choice === i ? "bg-black text-yellow-300" : "bg-white/20"}`}>{i + 1}</span>
-                        <span className="min-w-0">
-                          <span className="font-pixel block truncate text-[7px] sm:text-[10px]">{p.name.toUpperCase()}</span>
-                          <span className={`hidden h-[1.9rem] overflow-hidden text-[10px] leading-tight sm:block ${hud.choice === i ? "text-black/70" : "text-white/60"}`}>{p.blurb}</span>
-                        </span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
+        </div>
+        {/* controls for the moment you're in */}
+        <div className={`mt-3 grid rounded-lg px-3 py-3 ${hud.phase === "presnap" ? "bg-[#111827] text-white" : "text-strong"}`}>
+          {/* the pre-snap controls and the live hints share one spot, so the box never changes size when the play starts */}
+          <div className={`col-start-1 row-start-1 ${hud.phase === "presnap" ? "" : "invisible"}`} aria-hidden={hud.phase !== "presnap"}>
+            <div className="mb-3">
+              <div className="font-pixel mb-1.5 text-center text-[7px] text-white/70 sm:text-[9px]">
+                {hud.down >= 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3 OR ← →), THEN SNAP"}
               </div>
-            {hud.down < 4 && (
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {(["pass", "run"] as const).map((k) => (
+              <div className="mx-auto flex max-w-3xl justify-center gap-1.5 sm:gap-2">
+                {hud.plays.map((p, i) => (
                   <button
-                    key={k}
-                    onClick={() => act(k === "pass" ? "selectPass" : "selectRun")}
-                    aria-pressed={hud.selected === k}
-                    className={`font-pixel rounded px-3 py-2 text-[10px] ${hud.selected === k ? "bg-yellow-300 text-black" : "bg-white/15 text-white hover:bg-white/25"}`}
+                    key={p.id}
+                    onClick={() => act(`play${i + 1}` as "play1" | "play2" | "play3")}
+                    aria-pressed={hud.choice === i}
+                    className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded text-left ring-2 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-white/10 text-white ring-white/15 hover:bg-white/20"}`}
                   >
-                    {k === "pass" ? "Q  PASS" : "RUN  E"}
+                    <span className={`block h-12 w-full px-1 pt-1 sm:h-[4.5rem] ${hud.choice === i ? "text-black" : "text-white"}`}>
+                      <PlayArt play={p} />
+                    </span>
+                    <span className="flex items-center gap-1.5 px-1.5 pb-1.5 sm:gap-2 sm:px-2 sm:pb-2">
+                      <span className={`font-pixel flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] sm:h-6 sm:w-6 sm:text-xs ${hud.choice === i ? "bg-black text-yellow-300" : "bg-white/20"}`}>{i + 1}</span>
+                      <span className="min-w-0">
+                        <span className="font-pixel block truncate text-[7px] sm:text-[10px]">{p.name.toUpperCase()}</span>
+                        <span className={`hidden h-[1.9rem] overflow-hidden text-[10px] leading-tight sm:block ${hud.choice === i ? "text-black/70" : "text-white/60"}`}>{p.blurb}</span>
+                      </span>
+                    </span>
                   </button>
                 ))}
-                <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-4 py-2 text-[10px] text-black hover:bg-emerald-300">
-                  SNAP (SPACE)
-                </button>
               </div>
-            )}
-            {hud.down >= 4 && (
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-3 py-2 text-[10px] text-black hover:bg-emerald-300">
-                  GO FOR IT (SPACE)
-                </button>
-                <button
-                  onClick={() => act("fieldGoal")}
-                  disabled={!hud.canKick}
-                  className="font-pixel rounded bg-yellow-300 px-3 py-2 text-[10px] text-black hover:bg-yellow-200 disabled:opacity-40"
-                >
-                  FIELD GOAL (F) {hud.canKick ? `${hud.fgDistance} YD` : "TOO FAR"}
-                </button>
-                <button onClick={() => act("punt")} className="font-pixel rounded bg-white/20 px-3 py-2 text-[10px] text-white hover:bg-white/30">
-                  PUNT (P)
-                </button>
-              </div>
-            )}
             </div>
-            <div className={`col-start-1 row-start-1 flex items-center justify-center ${hud.phase === "live" ? "" : "invisible"}`}>
-              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
-                <span className="font-pixel text-[8px] text-white/80 sm:text-[10px]">ARROWS MOVE · A S D THROW</span>
-                <span className="font-pixel flex items-center gap-2 text-[8px] text-white/80 sm:text-[10px]">
-                  SPRINT (SPACE)
-                  <span className="inline-block h-2 w-16 overflow-hidden rounded bg-white/20">
-                    <span className={`block h-full ${hud.boost >= 1 ? "bg-emerald-400" : "bg-white/50"}`} style={{ width: `${hud.boost * 100}%` }} />
-                  </span>
+          {hud.down < 4 && (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {(["pass", "run"] as const).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => act(k === "pass" ? "selectPass" : "selectRun")}
+                  aria-pressed={hud.selected === k}
+                  className={`font-pixel rounded px-3 py-2 text-[10px] ${hud.selected === k ? "bg-yellow-300 text-black" : "bg-white/15 text-white hover:bg-white/25"}`}
+                >
+                  {k === "pass" ? "Q  PASS" : "RUN  E"}
+                </button>
+              ))}
+              <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-4 py-2 text-[10px] text-black hover:bg-emerald-300">
+                SNAP (SPACE)
+              </button>
+            </div>
+          )}
+          {hud.down >= 4 && (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-3 py-2 text-[10px] text-black hover:bg-emerald-300">
+                GO FOR IT (SPACE)
+              </button>
+              <button
+                onClick={() => act("fieldGoal")}
+                disabled={!hud.canKick}
+                className="font-pixel rounded bg-yellow-300 px-3 py-2 text-[10px] text-black hover:bg-yellow-200 disabled:opacity-40"
+              >
+                FIELD GOAL (F) {hud.canKick ? `${hud.fgDistance} YD` : "TOO FAR"}
+              </button>
+              <button onClick={() => act("punt")} className="font-pixel rounded bg-white/20 px-3 py-2 text-[10px] text-white hover:bg-white/30">
+                PUNT (P)
+              </button>
+            </div>
+          )}
+          </div>
+          <div className={`col-start-1 row-start-1 flex items-start justify-center ${hud.phase === "live" ? "" : "invisible"}`}>
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+              <span className="font-pixel text-[8px] text-muted sm:text-[10px]">ARROWS MOVE · A S D THROW</span>
+              <span className="font-pixel flex items-center gap-2 text-[8px] text-muted sm:text-[10px]">
+                SPRINT (SPACE)
+                <span className="inline-block h-2 w-16 overflow-hidden rounded bg-gauge">
+                  <span className={`block h-full ${hud.boost >= 1 ? "bg-emerald-500" : "bg-muted/60"}`} style={{ width: `${hud.boost * 100}%` }} />
                 </span>
-              </div>
+              </span>
             </div>
           </div>
         </div>
+
         <p className="mt-2 text-center text-xs text-muted">The other team&apos;s drives are simulated from the two teams&apos; ratings. You play every snap of yours.</p>
       </div>
     </div>
