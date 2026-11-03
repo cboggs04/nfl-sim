@@ -202,7 +202,7 @@ function enterTouchMode() {
 function TouchPlayPicker({ hud, open, onOpen, onClose, onAction }: { hud: Hud; open: boolean; onOpen: () => void; onClose: () => void; onAction: (a: Parameters<FootballGame["press"]>[0]) => void }) {
   if (!open) {
     return (
-      <div className="absolute inset-x-0 top-1 flex justify-center">
+      <div className="absolute inset-x-0 top-9 flex justify-center">
         <button onClick={onOpen} className="font-pixel pointer-events-auto rounded bg-black/70 px-3 py-1.5 text-[8px] text-white ring-1 ring-white/40">
           {hud.selected === "pass" ? "PASS" : "RUN"}: {hud.plays[hud.choice].name.toUpperCase()} ▾
         </button>
@@ -211,7 +211,7 @@ function TouchPlayPicker({ hud, open, onOpen, onClose, onAction }: { hud: Hud; o
   }
   const chip = (active: boolean) => `font-pixel pointer-events-auto rounded px-3 py-1 text-[8px] ring-1 ring-white/30 ${active ? "bg-yellow-300 text-black" : "bg-black/70 text-white"}`;
   return (
-    <div className="pointer-events-none absolute inset-x-1 top-1 flex touch-none flex-col items-center gap-1">
+    <div className="pointer-events-none absolute inset-x-1 top-9 flex touch-none flex-col items-center gap-1">
       <div className="flex flex-wrap items-center justify-center gap-1.5">
         <button onClick={() => onAction("selectPass")} className={chip(hud.selected === "pass")}>
           ← PASS
@@ -230,7 +230,7 @@ function TouchPlayPicker({ hud, open, onOpen, onClose, onAction }: { hud: Hud; o
           </>
         )}
       </div>
-      <div className="flex w-full max-w-xl justify-center gap-1.5">
+      <div className="flex w-full max-w-md justify-center gap-1.5">
         {hud.plays.map((p, i) => (
           <button
             key={p.id}
@@ -240,7 +240,7 @@ function TouchPlayPicker({ hud, open, onOpen, onClose, onAction }: { hud: Hud; o
             }}
             className={`pointer-events-auto flex min-w-0 flex-1 flex-col overflow-hidden rounded text-left ring-2 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-black/75 text-white ring-white/25"}`}
           >
-            <span className="block h-10 w-full px-1 pt-0.5">
+            <span className="block h-9 w-full px-1 pt-0.5">
               <PlayArt play={p} />
             </span>
             <span className="font-pixel block truncate px-1.5 pb-1 text-[7px]">{p.name.toUpperCase()}</span>
@@ -1029,7 +1029,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
       className={touch ? "fixed inset-0 z-[70] flex flex-col items-center justify-center overflow-hidden" : fullscreen ? "flex h-screen w-screen flex-col items-center justify-center overflow-auto p-3" : ""}
       style={
         touch
-          ? { background: "var(--background)", height: "100dvh", paddingLeft: "max(0.5rem, env(safe-area-inset-left))", paddingRight: "max(0.5rem, env(safe-area-inset-right))", paddingTop: "max(0.25rem, env(safe-area-inset-top))", paddingBottom: "max(0.25rem, env(safe-area-inset-bottom))" }
+          ? { background: "var(--background)", height: "100dvh", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }
           : fullscreen
             ? { background: "var(--background)" }
             : undefined
@@ -1050,11 +1050,12 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
       )}
       {/* the game is as wide as the screen's height allows, so the whole field stays on screen (without scrolling) */}
       <div
-        className="mx-auto w-full"
-        style={{ maxWidth: touch ? "calc((100dvh - 4.6rem) * 16 / 9)" : fullscreen ? "calc((100vh - 11rem) * 16 / 9 + 16rem)" : "min(78rem, max(46rem, calc((100vh - 17.5rem) * 16 / 9 + 16rem)))" }}
+        className={`mx-auto w-full ${touch ? "h-full" : ""}`}
+        style={{ maxWidth: touch ? "none" : fullscreen ? "calc((100vh - 11rem) * 16 / 9 + 16rem)" : "min(78rem, max(46rem, calc((100vh - 17.5rem) * 16 / 9 + 16rem)))" }}
       >
-        <div className={`flex items-center justify-between gap-2 ${touch ? "mb-1" : "mb-2"}`}>
-          <div className={`font-pixel text-muted ${touch ? "text-[8px]" : "text-[10px] sm:text-xs"}`}>
+        {!touch && (
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="font-pixel text-[10px] text-muted sm:text-xs">
             {["1ST", "2ND", "3RD", "4TH"][hud.quarter - 1]} QUARTER · {LEVELS.find((l) => l.id === level)!.label.toUpperCase()}
           </div>
           <div className="flex gap-2">
@@ -1084,9 +1085,10 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
             </button>
           </div>
         </div>
-        <div className={`grid items-stretch ${touch ? "gap-2" : "gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]"}`} style={touch ? { gridTemplateColumns: "minmax(0, 1fr)" } : undefined}>
-        <div className="overflow-hidden rounded-lg border-4 border-white/70 bg-black shadow-2xl shadow-black/40">
-          <div className="font-pixel flex items-stretch justify-between bg-[#111827] text-white">
+        )}
+        <div className={`grid items-stretch ${touch ? "h-full" : "gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]"}`} style={touch ? { gridTemplateColumns: "minmax(0, 1fr)", gridTemplateRows: "minmax(0, 1fr)" } : undefined}>
+        <div className={touch ? "relative h-full overflow-hidden bg-black" : "overflow-hidden rounded-lg border-4 border-white/70 bg-black shadow-2xl shadow-black/40"}>
+          <div className={`font-pixel flex items-stretch justify-between text-white ${touch ? "absolute inset-x-0 top-0 z-10 bg-[#111827]/85" : "bg-[#111827]"}`}>
             <div className={`flex flex-1 items-center justify-between gap-2 border-b-4 ${touch ? "px-2 py-0.5" : "px-3 py-2"}`} style={{ borderColor: uInfo.primary }}>
               <span className={touch ? "text-[9px]" : "text-[10px] sm:text-sm"}>{user.team}</span>
               <span className={`text-yellow-300 tabular-nums ${touch ? "text-lg" : "text-lg sm:text-3xl"}`} data-testid="score-user">
@@ -1095,7 +1097,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
             </div>
             <div className={`flex flex-col items-center justify-center px-2 text-center ${touch ? "min-w-[6.5rem]" : "min-w-[8.5rem]"}`}>
               <span className={`tabular-nums ${touch ? "text-sm" : "text-sm sm:text-xl"}`} data-testid="clock">
-                {hud.clock}
+                {touch ? `Q${hud.quarter}  ${hud.clock}` : hud.clock}
               </span>
               <span className="text-[7px] text-white/70 sm:text-[9px]">{hud.situation}</span>
             </div>
@@ -1107,8 +1109,33 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
             </div>
           </div>
 
-          <div className="relative">
-            <canvas ref={canvasRef} width={W} height={H} className="block w-full" style={{ imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }} />
+          <div className={touch ? "absolute inset-0" : "relative"}>
+            {/* on a phone the field fills the screen: the picture is scaled to cover it, trimming a little crowd from the top */}
+            <canvas
+              ref={canvasRef}
+              width={W}
+              height={H}
+              className={touch ? "block h-full w-full object-cover" : "block w-full"}
+              style={touch ? { imageRendering: "pixelated", objectPosition: "50% 80%" } : { imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }}
+            />
+            {touch && (
+              <div className="absolute top-9 right-1 z-10 flex gap-1">
+                {!final && (
+                  <button
+                    onClick={() => {
+                      setManualPause((p) => !p);
+                      (document.activeElement as HTMLElement | null)?.blur?.();
+                    }}
+                    className="font-pixel rounded bg-black/60 px-2 py-1 text-[8px] text-white ring-1 ring-white/30"
+                  >
+                    {manualPause ? "RESUME" : "PAUSE"}
+                  </button>
+                )}
+                <button onClick={onExit} className="font-pixel rounded bg-black/60 px-2 py-1 text-[8px] text-white ring-1 ring-white/30">
+                  QUIT
+                </button>
+              </div>
+            )}
             {touch && !manualPause && !rotate && <TouchControls hud={hud} onDirs={setDirs} onAction={touchAct} />}
             {touch && !manualPause && !rotate && hud.phase === "presnap" && (
               <TouchPlayPicker hud={hud} open={pickerOpen} onOpen={() => setPickerOpen(true)} onClose={() => setPickerOpen(false)} onAction={touchAct} />
