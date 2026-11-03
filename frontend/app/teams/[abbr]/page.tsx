@@ -146,6 +146,14 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
                   </span>
                 )}
               </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link href={`/play?team=${odds.team}`} className="font-display bg-white px-4 py-1 text-xl text-black shadow-md hover:bg-white/90">
+                  ▶ Play as {odds.name.split(" ").pop()}
+                </Link>
+                <Link href={`/whatif?team=${odds.team}`} className="font-display bg-black/40 px-4 py-1 text-xl text-white ring-1 ring-white/40 hover:bg-black/55">
+                  What if…
+                </Link>
+              </div>
             </div>
           </div>
           <div className="bg-black/45 px-7 py-5 text-left ring-1 ring-white/15 backdrop-blur lg:text-right">

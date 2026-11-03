@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import Headshot from "@/components/Headshot";
 import { pct } from "@/components/ProbCell";
@@ -71,7 +72,10 @@ function AwardCard({ title, blurb, rows }: { title: string; blurb: string; rows:
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold text-strong">{r.name}</div>
               <div className="text-[11px] text-muted">
-                {r.team} · {r.position}
+                <Link href={`/teams/${r.team}`} className="hover:text-accent-ink hover:underline" title={`${teamInfo(r.team).name} team page`}>
+                  {r.team}
+                </Link>{" "}
+                · {r.position}
               </div>
             </div>
             <div className="w-24">
@@ -100,8 +104,11 @@ function LeaderCard({ title, stat, rows, projected }: { title: string; stat: str
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold text-strong">{r.name}</div>
               <div className="flex items-center gap-1.5 text-[11px] text-muted">
-                <TeamLogo abbr={r.team} size={16} />
-                {r.team} · {r.position}
+                <Link href={`/teams/${r.team}`} className="inline-flex items-center gap-1.5 hover:text-accent-ink hover:underline" title={`${teamInfo(r.team).name} team page`}>
+                  <TeamLogo abbr={r.team} size={16} />
+                  {r.team}
+                </Link>
+                · {r.position}
                 {projected && r.p_lead >= 0.01 && (
                   <span className="rounded bg-accent/15 px-1.5 text-accent-ink" title="Chance he finishes first in the league">
                     {pct(r.p_lead)} to lead

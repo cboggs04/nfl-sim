@@ -553,12 +553,13 @@ function TeamCarousel({
   );
 }
 
-function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: string, opp: string, level: Difficulty, userJersey: Jersey, oppJersey: Jersey) => void }) {
+function TeamSelect({ teams, initialTeam, onStart }: { teams: TeamOdds[]; initialTeam?: string; onStart: (user: string, opp: string, level: Difficulty, userJersey: Jersey, oppJersey: Jersey) => void }) {
   const alphabetical = useMemo(() => [...teams].sort((a, b) => a.name.localeCompare(b.name)), [teams]);
   const byStrength = useMemo(() => [...teams].sort((a, b) => b.elo - a.elo), [teams]);
   const ranks = useMemo(() => Object.fromEntries(byStrength.map((t, i) => [t.team, i + 1])), [byStrength]);
-  const [user, setUser] = useState(byStrength[0].team);
-  const [opp, setOpp] = useState(byStrength[1].team);
+  const start = teams.find((t) => t.team === initialTeam?.toUpperCase())?.team ?? byStrength[0].team; // (a team page can link here with ?team=)
+  const [user, setUser] = useState(start);
+  const [opp, setOpp] = useState(byStrength.find((t) => t.team !== start)!.team);
   const [level, setLevel] = useState<Difficulty>("pro");
   const [userJersey, setUserJersey] = useState<Jersey>("home");
   const [oppJersey, setOppJersey] = useState<Jersey>("away");
@@ -1327,7 +1328,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
   );
 }
 
-export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
+export default function PlayNow({ teams, initialTeam }: { teams: TeamOdds[]; initialTeam?: string }) {
   const [setup, setSetup] = useState<{ user: string; opp: string; level: Difficulty; userJersey: Jersey; oppJersey: Jersey } | null>(null);
   const [help, setHelp] = useState(false);
   const closeHelp = useCallback(() => setHelp(false), []);
@@ -1380,7 +1381,7 @@ export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
       {setup && user && opp ? (
         <GameScreen user={user} opp={opp} teams={teams} level={setup.level} userJersey={setup.userJersey} oppJersey={setup.oppJersey} onExit={() => setSetup(null)} paused={help} onHelp={() => setHelp(true)} />
       ) : (
-        <TeamSelect teams={teams} onStart={(u, o, level, userJersey, oppJersey) => setSetup({ user: u, opp: o, level, userJersey, oppJersey })} />
+        <TeamSelect teams={teams} initialTeam={initialTeam} onStart={(u, o, level, userJersey, oppJersey) => setSetup({ user: u, opp: o, level, userJersey, oppJersey })} />
       )}
       {help && <PlayHelp onClose={closeHelp} />}
     </div>

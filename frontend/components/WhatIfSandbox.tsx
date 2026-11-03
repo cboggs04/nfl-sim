@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { pct } from "@/components/ProbCell";
 import TeamLogo from "@/components/TeamLogo";
@@ -54,15 +55,16 @@ function TeamSelect({ value, onChange, teams }: { value: string; onChange: (t: s
   );
 }
 
-export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
+export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: TeamOdds[]; initialTeam?: string }) {
   const teams = [...baseline].sort((a, b) => a.name.localeCompare(b.name));
   const base = Object.fromEntries(baseline.map((t) => [t.team, t]));
 
-  const [boostTeam, setBoostTeam] = useState(teams[0].team);
+  const startTeam = teams.find((t) => t.team === initialTeam?.toUpperCase())?.team ?? teams[0].team; // (a team page can link here with ?team=)
+  const [boostTeam, setBoostTeam] = useState(startTeam);
   const [delta, setDelta] = useState(50);
   const [adjust, setAdjust] = useState<Record<string, number>>({});
 
-  const [forceTeam, setForceTeam] = useState(teams[0].team);
+  const [forceTeam, setForceTeam] = useState(startTeam);
   const [games, setGames] = useState<GameView[] | null>(null);
   const [forced, setForced] = useState<Record<string, Forced>>({});
 
@@ -86,7 +88,7 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
     }
   }
   // Show the first team's remaining games when the page opens.
-  const firstTeam = teams[0].team;
+  const firstTeam = startTeam;
   useEffect(() => {
     let cancelled = false;
     getTeam(firstTeam)
@@ -369,7 +371,7 @@ export default function WhatIfSandbox({ baseline }: { baseline: TeamOdds[] }) {
                         <td className="px-2 py-2 md:px-3" style={{ boxShadow: `inset 4px 0 0 ${teamInfo(t.team).primary}` }}>
                           <div className="flex items-center gap-2 pl-1 md:gap-3">
                             <TeamLogo abbr={t.team} size={34} />
-                            <span className="text-sm font-semibold text-strong md:text-base"><span className="md:hidden">{t.name.split(" ").pop()}</span><span className="hidden md:inline">{t.name}</span></span>
+                            <Link href={`/teams/${t.team}`} className="text-sm font-semibold text-strong hover:text-accent-ink hover:underline md:text-base"><span className="md:hidden">{t.name.split(" ").pop()}</span><span className="hidden md:inline">{t.name}</span></Link>
                             {changed && <span className="rounded bg-accent px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-on-accent">CHANGED</span>}
                           </div>
                         </td>

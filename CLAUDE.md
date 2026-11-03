@@ -16,6 +16,8 @@ Live on Vercel (site) + Render (API); code at github.com/cboggs04/nfl-sim. Built
 - Play now (/play): a keyboard pixel-art football game (you play offense vs the computer defense; the other team's drives are simulated from team ratings). Engine in `frontend/lib/playNow/engine.ts` (pure TS, bot-tested via `frontend/scripts/playNowBots.js`), screen in `components/PlayNow.tsx`. Touch: on phones (pointer: coarse) the game takes the whole viewport in landscape with an on-screen pad and buttons (`TouchControls`), and asks you to rotate in portrait. Play picker: after choosing pass or run, press 1/2/3 for one of three plays offered each snap (`PLAYS` in the engine: 5 pass and 5 run plays, a random 3 of each offered). Difficulty levels (Rookie/Pro/All-Star, `DIFFICULTY` in the engine; Pro is the baseline; bots win ~97%/85%/50%). Four quarters of 5:00 game clock (20:00 total, halftime after the 2nd; 5x speed while the ball is live, about 45-60 s real time each).
 Not built yet: Claude API chat layer (feature 6).
 
+- Page template: every page uses `components/PageHeader.tsx` (title, subtitle, action slot). In-page view switchers use the pill `TabButtons`; long pages get a sticky `SectionNav`. Team pages link to `/play?team=ABBR` and `/whatif?team=ABBR`.
+
 ## Stack
 - Backend: Python 3.11 + FastAPI (numpy, polars, pydantic). Hosted on Render (`render.yaml`, `backend/requirements-api.txt`).
 - Data: nflverse via `nflreadpy` (the maintained successor of nfl_data_py). Free, no API key.
