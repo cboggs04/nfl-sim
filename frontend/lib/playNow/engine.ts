@@ -1,8 +1,8 @@
 // The rules and physics of the "Play now" game. Pure TypeScript: no DOM, no React, so it can be tested with bots.
 //
 // You play OFFENSE only, driving left to right. Between your drives the other team's possessions are simulated from the two
-// teams' ratings (simulateOppDrive). The game is two short halves; a half is 10:00 of game clock that runs 5x faster than
-// real time while the ball is live, so a half lasts about 90 to 120 real seconds.
+// teams' ratings (simulateOppDrive). The game is four short quarters of 5:00 of game clock, which runs 5x faster than
+// real time while the ball is live, so a quarter lasts about 45 to 60 real seconds (halftime comes after the 2nd).
 
 export const PX_PER_YD = 5;
 export const GOAL_L = 50; // x of the goal line you defend
@@ -11,7 +11,7 @@ export const WORLD_W = 600;
 export const Y_MIN = 64; // the playable lanes of the field
 export const Y_MAX = 164;
 export const Y_MID = 112;
-export const HALF_SECONDS = 600; // game seconds in a half
+export const QUARTER_SECONDS = 300; // game seconds in a quarter: four of them, 20:00 in all (the same total as two 10:00 halves)
 export const TIME_SCALE = 5; // game seconds per real second while a play is live
 const BALL_SPEED = 230; // px/s of a thrown ball
 const CATCH_GRACE = 0.3; // seconds after a catch before a defender can tackle the receiver
@@ -204,8 +204,11 @@ export class FootballGame {
   private tune: Tuning;
   private rng: Rng;
 
-  half = 1;
-  clock = HALF_SECONDS;
+  quarter = 1; // 1..4; halftime comes after the 2nd
+  clock = QUARTER_SECONDS; // game seconds left in this quarter
+  get half() {
+    return this.quarter <= 2 ? 1 : 2;
+  }
   score = { user: 0, opp: 0 };
   yardLine = 25; // yards from your own goal line
   down = 1;
@@ -796,7 +799,7 @@ export class FootballGame {
   }
 
   private afterResult() {
-    if (this.clock <= 0) return this.endHalf();
+    if (this.clockExpired()) return;
     if (this.pending.kind === "opp") return this.startOppDrive(this.pending.oppStart ?? 25);
     this.startPresnap();
   }
@@ -846,7 +849,7 @@ export class FootballGame {
 
   // ---------------------------------------------------------------- the other team's drive
   private startOppDrive(start: number) {
-    this.oppDrive = simulateOppDrive(start, clamp(this.edge + this.tune.oppEdge, -1.25, 1.25), this.rng, this.clock);
+    this.oppDrive = simulateOppDrive(start, clamp(this.edge + this.tune.oppEdge, -1.25, 1.25), this.rng, this.clock + (this.quarter % 2 === 1 ? QUARTER_SECONDS : 0)); // (time left in the half: a drive can run on into the next quarter)
     this.clockBeforeOpp = this.clock;
     this.oppT = 0;
     this.phase = "opp";
@@ -855,27 +858,39 @@ export class FootballGame {
   private finishOppDrive() {
     const d = this.oppDrive!;
     this.score.opp += d.pts;
-    this.clock = Math.max(0, this.clock - d.seconds);
-    if (this.clock <= 0) return this.endHalf();
+    this.clock -= d.seconds; // (may run past the end of the quarter: clockExpired carries the rest over)
+    if (this.clockExpired()) return;
     this.yardLine = d.userStart;
     this.down = 1;
     this.toGo = Math.min(10, 100 - this.yardLine);
     this.startPresnap();
   }
 
-  private endHalf() {
-    this.clock = 0;
+  /**
+   * Called when a play or drive ends. If the quarter is over: the 1st and 3rd just roll into the next quarter (the leftover time
+   * carries over), the 2nd ends in halftime and the 4th ends the game. Returns true when the game stops for halftime or the end.
+   */
+  private clockExpired(): boolean {
+    if (this.clock > 0) return false;
     this.setMove(0, 0);
-    if (this.half === 1) {
-      this.phase = "halftime";
-    } else {
+    if (this.quarter === 4) {
+      this.clock = 0;
       this.phase = "final";
+      return true;
     }
+    if (this.quarter === 2) {
+      this.clock = 0;
+      this.phase = "halftime";
+      return true;
+    }
+    this.clock = QUARTER_SECONDS + Math.min(0, this.clock);
+    this.quarter++;
+    return false;
   }
 
   private startSecondHalf() {
-    this.half = 2;
-    this.clock = HALF_SECONDS;
+    this.quarter = 3;
+    this.clock = QUARTER_SECONDS;
     this.yardLine = 25;
     this.down = 1;
     this.toGo = 10;

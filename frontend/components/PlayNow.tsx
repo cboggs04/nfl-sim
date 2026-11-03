@@ -112,6 +112,7 @@ const clock = (secs: number) => `${Math.floor(secs / 60)}:${String(Math.floor(se
 interface Hud {
   phase: Phase;
   half: number;
+  quarter: number; // 1..4
   clock: string;
   user: number;
   opp: number;
@@ -138,6 +139,7 @@ function snapshot(g: FootballGame): Hud {
   return {
     phase: g.phase,
     half: g.half,
+    quarter: g.quarter,
     clock: clock(g.displayClock),
     user: g.score.user,
     opp: g.score.opp,
@@ -577,7 +579,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
     <div>
       <p className="mt-3 max-w-2xl text-sm text-muted">
         Run the offense. Throw to your receivers, scramble, pick your plays and go for the end zone. Between your drives the other team&apos;s
-        possessions are simulated from the two teams&apos; ratings, so a stronger team has a real edge. Two short halves, about two minutes each.
+        possessions are simulated from the two teams&apos; ratings, so a stronger team has a real edge. Four short quarters, about a minute each.
       </p>
       <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">On a phone? Turn it sideways: the game plays in landscape with on-screen controls. A keyboard works on a computer.</p>
       <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use the arrow keys).</p>
@@ -702,6 +704,17 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
   const pausedRef = useRef(stopped);
   const [game, setGame] = useState(() => new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo }, Math.random, level));
   const [hud, setHud] = useState<Hud>(() => snapshot(game));
+  const [qBanner, setQBanner] = useState<number | null>(null); // "2ND QUARTER" flashes briefly when a new quarter starts
+  const prevQuarter = useRef(1);
+  useEffect(() => {
+    if (hud.quarter !== prevQuarter.current && hud.phase !== "halftime") {
+      setQBanner(hud.quarter);
+      const t = setTimeout(() => setQBanner(null), 1600);
+      prevQuarter.current = hud.quarter;
+      return () => clearTimeout(t);
+    }
+    prevQuarter.current = hud.quarter;
+  }, [hud.quarter, hud.phase]);
   const [pickerOpen, setPickerOpen] = useState(true); // phones: the play strip over the field, tucked away after you pick
   const prevPhase = useRef(hud.phase);
   useEffect(() => {
@@ -1042,7 +1055,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
       >
         <div className={`flex items-center justify-between gap-2 ${touch ? "mb-1" : "mb-2"}`}>
           <div className={`font-pixel text-muted ${touch ? "text-[8px]" : "text-[10px] sm:text-xs"}`}>
-            {hud.half === 1 ? "1ST HALF" : "2ND HALF"} · {LEVELS.find((l) => l.id === level)!.label.toUpperCase()}
+            {["1ST", "2ND", "3RD", "4TH"][hud.quarter - 1]} QUARTER · {LEVELS.find((l) => l.id === level)!.label.toUpperCase()}
           </div>
           <div className="flex gap-2">
             {!touch && (
@@ -1150,6 +1163,12 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
               </div>
             )}
 
+            {qBanner && hud.phase !== "halftime" && !final && (
+              <div className="font-pixel pointer-events-none absolute inset-x-0 top-[38%] flex justify-center">
+                <span className="rise rounded bg-black/70 px-4 py-2 text-xs text-yellow-300 [text-shadow:2px_2px_0_#000] sm:text-2xl">{["1ST", "2ND", "3RD", "4TH"][qBanner - 1]} QUARTER</span>
+              </div>
+            )}
+
             {hud.phase === "halftime" && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 p-3 text-center">
                 <div className="font-pixel text-xs text-yellow-300 sm:text-2xl">HALFTIME</div>
@@ -1157,7 +1176,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
                   {user.team} {hud.user} - {hud.opp} {opp.team}
                 </div>
                 <button onClick={() => act("continue")} className="btn btn-primary mt-2 text-xl">
-                  Start 2nd half
+                  Start 3rd quarter
                 </button>
                 <div className="font-pixel text-[8px] text-white/50">OR PRESS ENTER</div>
               </div>

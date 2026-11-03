@@ -13,7 +13,7 @@ const KEYS: [string, string][] = [
   ["F", "4th down: kick a field goal (shows the distance)"],
   ["P", "4th down: punt"],
   ["Space", "4th down: go for it"],
-  ["Enter", "Skip ahead during the other team's drive, or start the 2nd half"],
+  ["Enter", "Skip ahead during the other team's drive, or start the 3rd quarter"],
   ["Esc", "Pause or resume the game (the clock stops)"],
   ["?", "Open or close this help"],
 ];
@@ -54,8 +54,8 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
           <h3 className="font-display text-2xl text-accent-ink">The goal</h3>
           <p className="mt-1 text-sm text-muted">
             You run the offense. Drive down the field left to right and score: a touchdown is worth 7 and a field goal 3. You have four downs to gain 10
-            yards. Each game has two halves of 10:00 on the game clock, which runs about five times faster than real time while a play is live, so a half
-            takes around two minutes. When your drive ends, the other team&apos;s possession is simulated from the two teams&apos; ratings, and then you get the
+            yards. Each game has four quarters of 5:00 (20:00 in all), with halftime after the 2nd. The game clock runs about five times faster than real time while a play is live, so a quarter
+            takes about a minute. When your drive ends, the other team&apos;s possession is simulated from the two teams&apos; ratings, and then you get the
             ball back. A stronger team has a real edge.
           </p>
         </section>
@@ -114,7 +114,7 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
             <li>Pick a difficulty before kickoff: Rookie (receivers get open, slow pass rush, easy running), Pro, or All-Star (fast defenders and quick pressure).</li>
             <li>Don&apos;t hold the ball too long: if a defender reaches the quarterback it&apos;s a sack.</li>
             <li>Running is safer than passing, but passing gains yards faster.</li>
-            <li>The clock stops between plays, and the other team&apos;s drive uses up time, so a half is only a few possessions each.</li>
+            <li>The clock stops between plays, and the other team&apos;s drive uses up time, so a quarter is only a few possessions.</li>
           </ul>
         </section>
 
