@@ -1,12 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Headshot from "@/components/Headshot";
 import PlayHelp from "@/components/PlayHelp";
 import TeamLogo from "@/components/TeamLogo";
 import { buildSprites, type Sprites } from "@/lib/pixelSprites";
 import { FootballGame, GOAL_L, GOAL_R, WORLD_W, Y_MID, type OppDrive, type Phase } from "@/lib/playNow/engine";
-import { teamInfo } from "@/lib/teams";
+import { logoSrc, teamInfo } from "@/lib/teams";
 import type { TeamOdds } from "@/lib/types";
 
 const W = 320; // the little pixel world, drawn small and scaled up with sharp edges
@@ -186,7 +187,7 @@ function TeamCarousel({
 
   return (
     <section
-      className="panel overflow-hidden outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent"
+      className="panel relative overflow-hidden outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent"
       tabIndex={0}
       aria-label={`${label}: ${t.name}. Use the left and right arrow keys to change team.`}
       onKeyDown={(e) => {
@@ -200,18 +201,33 @@ function TeamCarousel({
       }}
       style={{ backgroundColor: "var(--card-end)", backgroundImage: `linear-gradient(135deg, ${info.primary}ee 0%, ${info.primary}66 48%, var(--card-end) 100%)` }}
     >
-      <div className="flex items-center justify-between px-4 pt-3 text-white">
+      {/* a big, faded copy of the team's logo behind the card */}
+      <Image
+        key={`bg-${t.team}`}
+        src={logoSrc(t.team)}
+        alt=""
+        aria-hidden
+        width={520}
+        height={520}
+        className="pointer-events-none absolute top-1/2 left-1/2 h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2 -rotate-6 opacity-[0.13] sm:h-[500px] sm:w-[500px]"
+      />
+      <div className="relative flex items-center justify-between px-4 pt-3 text-white">
         <span className="text-xs font-semibold tracking-widest text-white/80 uppercase">{label}</span>
         <span className="font-pixel text-[9px] text-white/80 tabular-nums">
           {index + 1} / {teams.length}
         </span>
       </div>
 
-      <div className="flex items-center gap-1 px-2 pb-4 sm:gap-3 sm:px-4">
+      <div className="relative flex items-center gap-1 px-2 pb-4 sm:gap-3 sm:px-4">
         {arrow(-1)}
         <div key={t.team} className="rise min-w-0 flex-1 text-center text-white">
           <div className="flex items-center justify-center gap-4 sm:gap-6">
-            <TeamLogo abbr={t.team} size={120} />
+            <div className="sm:hidden">
+              <TeamLogo abbr={t.team} size={128} />
+            </div>
+            <div className="hidden sm:block">
+              <TeamLogo abbr={t.team} size={184} />
+            </div>
             <div className="flex w-28 flex-col items-center gap-1 sm:w-32">
               <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={96} />
               <div className="text-[9px] font-semibold tracking-widest text-white/70 uppercase">Quarterback</div>
@@ -278,8 +294,16 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
       </p>
       <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">You need a keyboard to play this: open it on a computer.</p>
       <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use ← →).</p>
-      <div className="mt-3 grid gap-4 lg:grid-cols-2">
+      <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-5">
         <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} />
+        <div className="flex items-center justify-center" aria-hidden>
+          <span
+            className="font-display bg-accent px-6 py-2 text-5xl text-on-accent shadow-lg sm:text-6xl lg:px-5 lg:py-8 lg:text-6xl"
+            style={{ clipPath: "polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%)" }}
+          >
+            VS
+          </span>
+        </div>
         <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} />
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-4">
