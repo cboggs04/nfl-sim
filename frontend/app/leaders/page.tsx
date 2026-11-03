@@ -1,4 +1,4 @@
-import PageTitle from "@/components/PageTitle";
+import PageHeader from "@/components/PageHeader";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import LeadersView from "@/components/LeadersView";
@@ -18,13 +18,15 @@ export default function LeadersPage() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
       <ResetOnLeave>
-        <PageTitle>
-          Stat <span className="text-accent-ink">Leaders</span>
-        </PageTitle>
-        <p className="mt-3 max-w-2xl text-sm text-muted">
-          Projected league leaders and award odds for the season, from simulating every remaining game and every player&apos;s stats.
-        </p>
-        <Suspense fallback={<div className="mt-8 h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
+        <PageHeader
+          title={
+            <>
+              Stat <span className="text-accent-ink">Leaders</span>
+            </>
+          }
+          subtitle="Projected league leaders and award odds for the season, from simulating every remaining game and every player's stats."
+        />
+        <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
           <Leaders />
         </Suspense>
       </ResetOnLeave>

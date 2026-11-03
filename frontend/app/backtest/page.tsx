@@ -1,4 +1,4 @@
-import PageTitle from "@/components/PageTitle";
+import PageHeader from "@/components/PageHeader";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import CalibrationChart from "@/components/CalibrationChart";
@@ -253,14 +253,17 @@ export default function BacktestPage() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
       <ResetOnLeave>
-        <PageTitle>
-          Model <span className="text-accent-ink">Accuracy</span>
-        </PageTitle>
-        <div className="mt-3">
-          <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
-            <Backtest />
-          </Suspense>
-        </div>
+        <PageHeader
+          title={
+            <>
+              Model <span className="text-accent-ink">Accuracy</span>
+            </>
+          }
+          subtitle="How well the model predicted past seasons it was never tuned on, and how each improvement scored."
+        />
+        <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
+          <Backtest />
+        </Suspense>
       </ResetOnLeave>
     </main>
   );

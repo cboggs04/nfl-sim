@@ -1,4 +1,4 @@
-import PageTitle from "@/components/PageTitle";
+import PageHeader from "@/components/PageHeader";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import BracketSim from "@/components/BracketSim";
@@ -47,10 +47,15 @@ export default function BracketPage() {
   return (
     <main className="mx-auto w-full max-w-[1700px] px-4 py-10 sm:px-6">
       <ResetOnLeave>
-        <PageTitle>
-          Playoff <span className="text-accent-ink">Simulator</span>
-        </PageTitle>
-        <Suspense fallback={<div className="mt-6 h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
+        <PageHeader
+          title={
+            <>
+              Playoff <span className="text-accent-ink">Simulator</span>
+            </>
+          }
+          subtitle="Play out the rest of the season, see the standings it produces, then play the playoffs round by round."
+        />
+        <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
           <PlayoffTabs />
         </Suspense>
       </ResetOnLeave>

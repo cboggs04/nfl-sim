@@ -124,7 +124,7 @@ function LeaderCard({ title, stat, rows, projected }: { title: string; stat: str
 export default function LeadersView({ data }: { data: LeadersResponse }) {
   const [projected, setProjected] = useState(true);
   return (
-    <div className="mt-5 space-y-12">
+    <div className="space-y-12">
       <section>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <p className="text-sm text-muted">Top 10 in each category. &quot;To lead&quot; is the chance he finishes first.</p>

@@ -13,7 +13,7 @@ export interface TabSpec {
 export default function Tabs({ tabs, label, idPrefix }: { tabs: TabSpec[]; label: string; idPrefix: string }) {
   const [active, setActive] = useState(tabs[0].key);
   return (
-    <div className="mt-5">
+    <div>
       <TabButtons
         tabs={tabs}
         active={active}

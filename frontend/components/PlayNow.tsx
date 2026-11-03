@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Headshot from "@/components/Headshot";
+import PageHeader from "@/components/PageHeader";
 import PlayHelp from "@/components/PlayHelp";
 import TeamLogo from "@/components/TeamLogo";
 import { buildSprites, type Sprites } from "@/lib/pixelSprites";
@@ -1344,23 +1345,38 @@ export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const helpButton = (
+    <button
+      onClick={() => setHelp(true)}
+      aria-label="How to play and controls"
+      title="How to play and controls"
+      className={`font-display flex shrink-0 items-center justify-center rounded-full bg-accent text-on-accent shadow-md hover:brightness-110 ${setup ? "h-9 w-9 text-2xl sm:h-10 sm:w-10" : "h-9 w-9 text-2xl sm:h-12 sm:w-12 sm:text-4xl"}`}
+    >
+      ?
+    </button>
+  );
   return (
     <div>
-      <div className="flex items-start justify-between gap-4">
-        {/* while a game is on, the title shrinks to leave more room for the field */}
-        <h1 className={`font-display text-strong ${setup ? "text-4xl sm:text-5xl" : "text-4xl sm:text-6xl"}`}>
-          Play <span className="text-accent-ink">Now</span>
-        </h1>
-        <button
-          onClick={() => setHelp(true)}
-          aria-label="How to play and controls"
-          title="How to play and controls"
-          className={`font-display flex shrink-0 items-center justify-center rounded-full bg-accent text-on-accent shadow-md hover:brightness-110 ${setup ? "h-9 w-9 text-2xl sm:h-10 sm:w-10" : "h-9 w-9 text-2xl sm:mt-1 sm:h-12 sm:w-12 sm:text-4xl"}`}
-        >
-          ?
-        </button>
-      </div>
-      {!setup && <p className="mt-3 max-w-2xl text-sm text-muted">A pixel-art football game: pick two teams, call the plays and score. Click the ? for the controls.</p>}
+      {setup ? (
+        // while a game is on, the title shrinks to leave more room for the field
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="font-display text-4xl text-strong sm:text-5xl">
+            Play <span className="text-accent-ink">Now</span>
+          </h1>
+          {helpButton}
+        </div>
+      ) : (
+        <PageHeader
+          tight
+          title={
+            <>
+              Play <span className="text-accent-ink">Now</span>
+            </>
+          }
+          subtitle="A pixel-art football game: pick two teams, call the plays and score. Click the ? for the controls."
+          action={helpButton}
+        />
+      )}
       {setup && user && opp ? (
         <GameScreen user={user} opp={opp} teams={teams} level={setup.level} userJersey={setup.userJersey} oppJersey={setup.oppJersey} onExit={() => setSetup(null)} paused={help} onHelp={() => setHelp(true)} />
       ) : (

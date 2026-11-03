@@ -207,7 +207,10 @@ export default function Standings({ teams, bracket }: { teams: TeamOdds[]; brack
 
   return (
     <div className="mt-6">
-      <div className="panel flex flex-wrap items-center justify-between gap-4 p-4">
+      <div className="panel flex flex-wrap items-center gap-4 p-4">
+        <button onClick={() => void newSeason()} disabled={loading} className="btn btn-primary text-xl">
+          {loading ? "Simulating…" : sim ? "Simulate a new season" : "Simulate the rest of the season"}
+        </button>
         <div role="group" aria-label="Which standings to show" className="flex flex-wrap gap-2">
           <button aria-pressed={view === "projected"} onClick={() => setChoice({ runs, view: "projected" })} className={`btn btn-sm text-lg ${view === "projected" ? "btn-primary" : "btn-ghost"}`}>
             Model projections
@@ -221,9 +224,6 @@ export default function Standings({ teams, bracket }: { teams: TeamOdds[]; brack
             Simulated season
           </button>
         </div>
-        <button onClick={() => void newSeason()} disabled={loading} className="btn btn-primary text-xl">
-          {loading ? "Simulating…" : sim ? "Simulate a new season" : "Simulate the rest of the season"}
-        </button>
       </div>
       {error && (
         <p role="alert" className="mt-3 rounded-md bg-bad/15 px-4 py-2 text-sm text-bad-ink ring-1 ring-bad/40">

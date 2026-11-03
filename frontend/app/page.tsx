@@ -2,7 +2,7 @@ import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import ContenderCards from "@/components/ContenderCards";
 import FeatureCards from "@/components/FeatureCards";
-import PageTitle from "@/components/PageTitle";
+import PageHeader from "@/components/PageHeader";
 import SeasonTable from "@/components/SeasonTable";
 import { getSeason } from "@/lib/api";
 
@@ -17,17 +17,16 @@ async function Dashboard() {
   const progress = Math.round((season.games_played / season.games_total) * 100);
   return (
     <>
-      <header className="rise">
-        <PageTitle>
-          NFL Season <span className="text-accent-ink">Simulator</span>
-        </PageTitle>
-        <p className="mt-3 max-w-3xl text-sm text-muted">
-          Simulates the NFL season {season.n_sims.toLocaleString("en-US")} times to project every team&apos;s record, playoff odds and Super Bowl chances. Explore the
-          what-ifs, check the stat leaders, or play a game.
-        </p>
-      </header>
+      <PageHeader
+        title={
+          <>
+            NFL Season <span className="text-accent-ink">Simulator</span>
+          </>
+        }
+        subtitle={`Simulates the NFL season ${season.n_sims.toLocaleString("en-US")} times to project every team's record, playoff odds and Super Bowl chances. Explore the what-ifs, check the stat leaders, or play a game.`}
+      />
 
-      <section className="mt-6" aria-label="What you can do here">
+      <section aria-label="What you can do here">
         <FeatureCards />
       </section>
 
