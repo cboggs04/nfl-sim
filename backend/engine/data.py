@@ -112,6 +112,7 @@ PLAYER_STAT_COLUMNS = [
     "targets", "receptions", "receiving_yards", "receiving_tds",
     "def_tackles_solo", "def_tackle_assists", "def_tackles_for_loss", "def_sacks", "def_interceptions",
     "def_pass_defended", "fg_made", "fg_att", "pat_made", "pat_att", "pt_att", "pt_yards", "pt_inside_20",
+    "passing_epa", "rushing_epa", "receiving_epa",   # expected points added (used for the skill-player ratings)
 ]
 ROSTER_COLUMNS = ["gsis_id", "pfr_id", "full_name", "team", "position", "jersey_number", "status",
                   "years_exp", "birth_date", "headshot_url", "height", "weight", "college"]
@@ -138,6 +139,8 @@ def load_player_totals(seasons: list[int], refresh: bool = False) -> pl.DataFram
     refresh=True re-downloads only the latest requested season."""
     cache = DATA_DIR / "player_totals.parquet"
     have = pl.read_parquet(cache) if cache.exists() else None
+    if have is not None and "passing_epa" not in have.columns:
+        have = None  # an older cache without the EPA columns: download again
     if have is not None and refresh:
         have = have.filter(pl.col("season") != max(seasons))
     have_seasons = set(have["season"].unique().to_list()) if have is not None else set()

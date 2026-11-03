@@ -66,5 +66,5 @@ def whatif(req: WhatIfRequest):
         season=state.season, n_sims=req.n_sims,
         generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
         games_played=sum(g["result"] is not None for g in schedule), games_total=len(schedule),
-        teams=teams, trade_effects=trade_effects,
+        teams=teams, trade_effects=trade_effects, trade_deltas={t: round(d, 1) for t, d in trade_adj.items()},
     )

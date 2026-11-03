@@ -42,16 +42,20 @@ def player_values(players_by_team: dict[str, list[dict]]) -> dict[str, float]:
     return values
 
 
-def trade_effect(player: dict, value: float, to_best: float, qb: dict | None = None) -> tuple[float, float]:
-    """(Elo change for the team giving him up, Elo change for the team getting him).
+def player_effect(position: str, value: float, avail: float, to_best: float) -> tuple[float, float]:
+    """(Elo change for the team giving up a non-quarterback, Elo change for the team getting him).
 
-    `value`: his Elo value (non-QBs). `to_best`: the best Elo value among the new team's players at his position.
-    `qb`: for a quarterback, {"adj": his Elo adjustment, "to_starter_adj": the new team's current starter's}.
-    """
-    avail = max(0.3, player.get("avail_full", 0.9))
-    if qb is not None:
-        loss = -(qb["adj"] - BACKUP_QB_ADJ) * avail
-        gain = max(0.0, qb["adj"] - qb["to_starter_adj"]) * avail
-        return loss, gain
-    fit = min(1.0, max(0.5, 1.0 - 0.5 * to_best / MAX_VALUE[player["position"]]))
+    `to_best`: the best Elo value among the new team's players at his position (the less it needs him, the less he adds)."""
+    avail = max(0.3, avail)
+    fit = min(1.0, max(0.5, 1.0 - 0.5 * to_best / MAX_VALUE[position]))
     return -value * avail, value * fit * avail
+
+
+def qb_team_delta(before: list[float], leaving: list[float], arriving: list[float]) -> float:
+    """Change in a team's quarterback adjustment (Elo points). Each list holds QB adjustments: the team's quarterbacks
+    before, the ones traded away, and the ones coming in. The team plays its best one, or a replacement-level backup."""
+    after = list(before)
+    for a in leaving:
+        after.remove(a)
+    after += arriving
+    return max(after + [BACKUP_QB_ADJ]) - max(before + [BACKUP_QB_ADJ])

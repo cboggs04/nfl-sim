@@ -39,6 +39,7 @@ class SeasonResponse(BaseModel):
     games_total: int
     teams: list[TeamOdds]
     trade_effects: list["TradeEffect"] = []     # only on what-if responses that include trades
+    trade_deltas: dict[str, float] = {}         # team -> net Elo change from the trades
 
 
 class GameView(BaseModel):
@@ -118,8 +119,7 @@ class TradeEffect(BaseModel):
     position: str
     from_team: str
     to_team: str
-    from_delta: float                # change for the team that gave him up (<= 0)
-    to_delta: float                  # change for the team that got him (>= 0)
+    value: float                     # his estimated Elo value (a quarterback's is what he adds over a backup)
 
 
 class TradeCandidate(BaseModel):
@@ -130,6 +130,8 @@ class TradeCandidate(BaseModel):
     headshot: str | None
     jersey: int | None
     value: float                     # Elo points his team would lose without him
+    epa: float | None = None         # season EPA so far
+    epa_per_game: float | None = None
     note: str                        # one line on what the number is based on
 
 
@@ -278,6 +280,9 @@ class RosterPlayer(BaseModel):
     stats: dict[str, float]          # season totals so far (keys depend on position, see TeamRoster.columns)
     proj: dict[str, float]           # projected final totals
     rates: dict[str, float]          # per-game rates behind the projection
+    epa: float | None = None         # skill players (QB RB WR TE): season EPA so far (passing, or rushing + receiving)
+    epa_per_game: float | None = None
+    elo_value: float | None = None   # Elo points he adds to his team versus a replacement (QB: measured; others: estimated from production)
 
 
 class TeamRoster(BaseModel):

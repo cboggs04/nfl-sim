@@ -1,7 +1,7 @@
 {
  "season": 2026,
  "n_sims": 20000,
- "generated_at": "2026-11-03T18:44:15+00:00",
+ "generated_at": "2026-11-03T20:49:56+00:00",
  "games_played": 121,
  "games_total": 272,
  "teams": [
@@ -1317,5 +1317,6 @@
    "qb_headshot": "https://static.www.nfl.com/image/upload/f_auto,q_auto/league/l7iuimdeqgmmhdzdhl67",
    "qb_adj": -75.1
   }
- ]
+ ],
+ "trade_effects": []
 }

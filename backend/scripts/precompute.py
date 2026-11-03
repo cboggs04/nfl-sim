@@ -24,6 +24,7 @@ from app.schemas import AwardRow, LeaderRow, LeadersResponse, RosterPlayer, Team
 from engine.drives import drives_by_game
 from engine.data import DATA_DIR, load_games, load_player_totals, load_qb_game_epa, load_roster, load_snap_games
 from engine.awards import AWARDS, LEADER_CATEGORIES, simulate_awards
+from engine.trade import BACKUP_QB_ADJ, player_values
 from engine.players import POSITION_STATS, apply_depth_chart, build_player
 from engine.elo import EloConfig, game_probability, walk_games
 from engine.qb import QbConfig, QbTracker, projected_starters, stats_by_game
@@ -130,13 +131,14 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False, a
         games=[StateGame(game_id=g["game_id"], week=g["week"], home_team=g["home_team"],
                          away_team=g["away_team"], neutral=g["neutral"],
                          result=None if g["result"] is None else int(g["result"])) for g in schedule])
-    rosters = build_rosters(season, schedule, refresh)
+    rosters = build_rosters(season, schedule, refresh, tracker)
     return {"season": season_resp, "teams": teams, "bracket": bracket, "state": state, "rosters": rosters,
             "leaders": build_leaders(rosters, schedule, ratings, cfg, award_sims)}
 
 
-def build_rosters(season: int, schedule: list[dict], refresh: bool = False) -> dict[str, TeamRoster]:
-    """Every team's players with current stats, per-game rates and projections (engine.players)."""
+def build_rosters(season: int, schedule: list[dict], refresh: bool = False, tracker: QbTracker | None = None) -> dict[str, TeamRoster]:
+    """Every team's players with current stats, per-game rates and projections (engine.players), plus the skill players' EPA
+    and every tradable player's Elo value (engine.trade; a quarterback's comes from `tracker`)."""
     roster = load_roster(season, refresh).filter(pl.col("status").is_in(["ACT", "INA", "RES"]) & pl.col("position").is_in(list(POSITION_STATS)))
     totals = {(r["player_id"], r["season"]): r for r in load_player_totals([season - 1, season], refresh).to_dicts()}
     snaps = {s: {r["pfr_id"]: r["games"] for r in load_snap_games(s, refresh and s == season).to_dicts()} for s in (season - 1, season)}
@@ -175,6 +177,19 @@ def build_rosters(season: int, schedule: list[dict], refresh: bool = False) -> d
                 rates={k: round(v, 4) for k, v in p["rates"].items()}))
         out[t] = TeamRoster(team=t, season=season, generated_at=now, team_games_played=played[t], games_remaining=remaining[t],
                             columns=POSITION_STATS, players=players)
+
+    # Skill players (QB RB WR TE): EPA so far. Then every tradable player's Elo value.
+    values = player_values({t: [p.model_dump() for p in r.players] for t, r in out.items()})
+    for r in out.values():
+        for p in r.players:
+            cur = totals.get((p.id, season)) or {}
+            if p.position in ("QB", "RB", "WR", "TE"):
+                p.epa = round(cur.get("passing_epa", 0.0) if p.position == "QB" else cur.get("rushing_epa", 0.0) + cur.get("receiving_epa", 0.0), 1)
+                p.epa_per_game = round(p.epa / p.gp, 2) if p.gp else None
+            if p.position == "QB" and tracker is not None:
+                p.elo_value = round(tracker.adjustment(r.team, p.id) - BACKUP_QB_ADJ, 1)
+            elif p.id in values:
+                p.elo_value = round(values[p.id], 1)
     return out
 
 

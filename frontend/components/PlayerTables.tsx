@@ -44,6 +44,7 @@ export function PositionTable({
     view === "simulated" ? (simStats.get(p.id)?.[stat] ?? p.proj[stat]) : view === "projected" ? p.proj[stat] : p.stats[stat];
   const gpOf = (p: RosterPlayer) => (view === "simulated" ? (simGp.get(p.id) ?? p.proj_gp) : view === "projected" ? p.proj_gp : p.gp);
   const main = MAIN_STAT[position];
+  const skill = ["QB", "RB", "WR", "TE"].includes(position); // these get an EPA and an Elo rating column
 
   const rows = [...players].sort((a, b) => {
     if (main) {
@@ -72,6 +73,16 @@ export function PositionTable({
                     {STAT_LABELS[c]?.short ?? c}
                   </th>
                 ))}
+                {skill && (
+                  <>
+                    <th className="px-3 py-2 text-right font-semibold" title="Expected points added this season (passing, or rushing plus receiving), and per game">
+                      EPA
+                    </th>
+                    <th className="px-3 py-2 text-right font-semibold" title="Elo points he adds to his team's rating versus a replacement. Quarterbacks: measured from EPA per dropback. Others: estimated from production versus the position.">
+                      Elo
+                    </th>
+                  </>
+                )}
               </tr>
             </thead>
           )}
@@ -115,6 +126,17 @@ export function PositionTable({
                   {columns.map((c) => (
                     <Cell key={c} stat={c} value={valueOf(p, c) ?? 0} base={p.stats[c] ?? 0} view={view} showDelta={showDelta} />
                   ))}
+                  {skill && (
+                    <>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        <div className="text-base font-semibold">{p.epa == null ? "–" : `${p.epa >= 0 ? "+" : "−"}${Math.abs(p.epa).toFixed(1)}`}</div>
+                        {p.epa_per_game != null && <div className="text-[10px] text-muted">{p.epa_per_game >= 0 ? "+" : "−"}{Math.abs(p.epa_per_game).toFixed(2)}/g</div>}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        <div className="text-base font-semibold">{p.elo_value == null ? "–" : Math.round(p.elo_value)}</div>
+                      </td>
+                    </>
+                  )}
                 </tr>
               );
             })}

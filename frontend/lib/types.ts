@@ -35,6 +35,7 @@ export interface SeasonResponse {
   games_total: number;
   teams: TeamOdds[];
   trade_effects?: TradeEffect[]; // on what-if responses that included trades
+  trade_deltas?: Record<string, number>; // team -> net Elo change from the trades
 }
 
 export interface GameView {
@@ -103,8 +104,7 @@ export interface TradeEffect {
   position: string;
   from_team: string;
   to_team: string;
-  from_delta: number; // Elo change for the team that gave him up
-  to_delta: number; // Elo change for the team that got him
+  value: number; // his estimated Elo value
 }
 
 export interface TradeCandidate {
@@ -114,6 +114,8 @@ export interface TradeCandidate {
   headshot: string | null;
   jersey: number | null;
   value: number; // estimated Elo value to his team
+  epa: number | null; // season EPA so far (skill players)
+  epa_per_game: number | null;
   note: string;
 }
 
@@ -186,6 +188,9 @@ export interface RosterPlayer {
   proj_gp: number;
   avail: number; // chance he plays each remaining game
   avail_full?: number; // same, ignoring his injury status
+  epa?: number | null; // skill players (QB RB WR TE): season EPA so far
+  epa_per_game?: number | null;
+  elo_value?: number | null; // Elo points he adds to his team versus a replacement
   stats: Record<string, number>; // season totals so far
   proj: Record<string, number>; // projected final totals
   rates: Record<string, number>; // per-game rates behind the projection

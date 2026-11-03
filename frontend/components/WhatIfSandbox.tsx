@@ -20,6 +20,13 @@ const N_SIMS = 2000;
 // A replacement-level backup adds about -30 Elo (QbConfig.prior x elo_per_epa in engine/qb.py).
 const BACKUP_ADJ = -30;
 
+interface Swap {
+  a: TradeCandidate;
+  aTeam: string;
+  b: TradeCandidate;
+  bTeam: string;
+}
+
 interface Forced {
   team: string;
   opponent: string;
@@ -70,39 +77,65 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
   const [games, setGames] = useState<GameView[] | null>(null);
   const [forced, setForced] = useState<Record<string, Forced>>({});
 
-  // trades: a player from one team to another
+  // trades: one player for another (each team has to get a player back)
   const [tradeFrom, setTradeFrom] = useState(startTeam);
   const [tradeTo, setTradeTo] = useState(teams.find((t) => t.team !== startTeam)!.team);
-  const [candidates, setCandidates] = useState<TradeCandidate[] | null>(null);
-  const [tradePlayer, setTradePlayer] = useState<string>("");
-  const [trades, setTrades] = useState<{ player: TradeCandidate; from: string; to: string }[]>([]);
+  const [candFrom, setCandFrom] = useState<TradeCandidate[] | null>(null);
+  const [candTo, setCandTo] = useState<TradeCandidate[] | null>(null);
+  const [pickFrom, setPickFrom] = useState("");
+  const [pickTo, setPickTo] = useState("");
+  const [swaps, setSwaps] = useState<Swap[]>([]);
 
-  async function loadCandidates(team: string) {
-    setTradeFrom(team);
-    setCandidates(null);
+  // (the player lists load when a team is chosen, and for the two starting teams when the page opens)
+  async function loadSide(team: string, side: "from" | "to") {
+    if (side === "from") {
+      setTradeFrom(team);
+      setCandFrom(null);
+    } else {
+      setTradeTo(team);
+      setCandTo(null);
+    }
     try {
       const c = await getTradeCandidates(team);
-      setCandidates(c);
-      setTradePlayer(c[0]?.id ?? "");
+      if (side === "from") {
+        setCandFrom(c);
+        setPickFrom(c[0]?.id ?? "");
+      } else {
+        setCandTo(c);
+        setPickTo(c[0]?.id ?? "");
+      }
     } catch {
-      setCandidates([]);
+      if (side === "from") setCandFrom([]);
+      else setCandTo([]);
     }
   }
-  // Show the first team's players when the page opens.
+  const secondTeam = teams.find((t) => t.team !== startTeam)!.team;
   useEffect(() => {
     let cancelled = false;
-    getTradeCandidates(startTeam)
-      .then((c) => {
+    Promise.all([getTradeCandidates(startTeam), getTradeCandidates(secondTeam)])
+      .then(([a, b]) => {
         if (cancelled) return;
-        setCandidates(c);
-        setTradePlayer(c[0]?.id ?? "");
+        setCandFrom(a);
+        setPickFrom(a[0]?.id ?? "");
+        setCandTo(b);
+        setPickTo(b[0]?.id ?? "");
       })
-      .catch(() => !cancelled && setCandidates([]));
+      .catch(() => {
+        if (!cancelled) {
+          setCandFrom([]);
+          setCandTo([]);
+        }
+      });
     return () => {
       cancelled = true;
     };
-  }, [startTeam]);
-  const picked = candidates?.find((c) => c.id === tradePlayer);
+  }, [startTeam, secondTeam]);
+  const playerFrom = candFrom?.find((c) => c.id === pickFrom);
+  const playerTo = candTo?.find((c) => c.id === pickTo);
+  const trades = swaps.flatMap((w) => [
+    { player: w.a, from: w.aTeam, to: w.bTeam },
+    { player: w.b, from: w.bTeam, to: w.aTeam },
+  ]);
 
   const [result, setResult] = useState<SeasonResponse | null>(null);
   const [ran, setRan] = useState<{ adjust: Record<string, number>; forced: Record<string, Forced>; trades: { player: TradeCandidate; from: string; to: string }[] } | null>(null); // the changes behind `result`
@@ -111,7 +144,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
   const [showAll, setShowAll] = useState(false);
 
   const winChance = 1 / (1 + 10 ** (-delta / 400));
-  const changes = Object.keys(adjust).length + Object.keys(forced).length + trades.length;
+  const changes = Object.keys(adjust).length + Object.keys(forced).length + swaps.length;
 
   async function loadGames(team: string) {
     setForceTeam(team);
@@ -155,7 +188,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
         n_sims: N_SIMS,
       });
       setResult(res);
-      setRan({ adjust: { ...adjust }, forced: { ...forced }, trades: [...trades] });
+      setRan({ adjust: { ...adjust }, forced: { ...forced }, trades });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -166,7 +199,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
   function reset() {
     setAdjust({});
     setForced({});
-    setTrades([]);
+    setSwaps([]);
     setResult(null);
     setRan(null);
     setError(null);
@@ -188,9 +221,11 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
   const describe = (team: string) => {
     const parts: string[] = [];
     if (ran && team in ran.adjust) parts.push(`${signed(ran.adjust[team])} Elo`);
-    for (const e of result?.trade_effects ?? []) {
-      if (e.from_team === team) parts.push(`traded away ${e.name} (${signed(Math.round(e.from_delta))} Elo)`);
-      if (e.to_team === team) parts.push(`acquired ${e.name} (${signed(Math.round(e.to_delta))} Elo)`);
+    const sentOut = (result?.trade_effects ?? []).filter((e) => e.from_team === team).map((e) => e.name);
+    const gotIn = (result?.trade_effects ?? []).filter((e) => e.to_team === team).map((e) => e.name);
+    if (sentOut.length) {
+      const net = result?.trade_deltas?.[team] ?? 0;
+      parts.push(`sent ${sentOut.join(", ")}, got ${gotIn.join(", ")} (net ${signed(Math.round(net))} Elo)`);
     }
     for (const f of Object.values(ran?.forced ?? {}))
       if (f.team === team) parts.push(`${f.teamWins ? "beat" : "lost to"} ${f.opponent} (wk ${f.week})`);
@@ -318,59 +353,71 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
         </section>
 
         <section className="panel p-5">
-          <h2 className="font-display text-3xl text-strong">3 · Trade a player</h2>
-          <p className="mt-1 text-xs text-muted">Send a star to another team and see how both teams&apos; odds change.</p>
-          <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <TeamSelect value={tradeFrom} onChange={(t) => void loadCandidates(t)} teams={teams} label="Team trading the player away" />
-            <span className="font-display text-xl text-muted">→</span>
-            <TeamSelect value={tradeTo} onChange={setTradeTo} teams={teams} label="Team receiving the player" />
-          </div>
-          <ul className="mt-3 max-h-64 space-y-1 overflow-y-auto pr-1" role="radiogroup" aria-label="Player to trade">
-            {candidates === null && <li className="py-3 text-center text-sm text-muted">Loading players…</li>}
-            {candidates?.length === 0 && <li className="py-3 text-center text-sm text-muted">No tradable players found.</li>}
-            {candidates?.map((c) => (
-              <li key={c.id}>
-                <button
-                  role="radio"
-                  aria-checked={tradePlayer === c.id}
-                  onClick={() => setTradePlayer(c.id)}
-                  className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm ring-1 ${tradePlayer === c.id ? "bg-accent/15 ring-accent" : "bg-head ring-transparent hover:bg-hover"}`}
-                >
-                  <Headshot src={c.headshot} name={c.name} color={teamInfo(tradeFrom).primary} size={32} />
-                  <span className="min-w-0 flex-1 truncate font-semibold text-strong">
-                    {c.name} <span className="text-xs font-normal text-muted">{c.position}</span>
-                  </span>
-                  <span className="text-xs font-semibold text-muted tabular-nums" title={c.note}>
-                    worth {Math.round(c.value)} Elo
-                  </span>
-                </button>
-              </li>
+          <h2 className="font-display text-3xl text-strong">3 · Trade players</h2>
+          <p className="mt-1 text-xs text-muted">Swap a player from each team and see how both teams&apos; odds change. Each team has to get a player back.</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            {([
+              { side: "from" as const, team: tradeFrom, cands: candFrom, pick: pickFrom, setPick: setPickFrom, label: "sends" },
+              { side: "to" as const, team: tradeTo, cands: candTo, pick: pickTo, setPick: setPickTo, label: "sends" },
+            ]).map((col) => (
+              <div key={col.side} className="min-w-0">
+                <TeamSelect value={col.team} onChange={(t) => void loadSide(t, col.side)} teams={teams} label={col.side === "from" ? "First team in the trade" : "Second team in the trade"} />
+                <div className="mt-1 text-[11px] font-semibold tracking-widest text-muted uppercase">{teamInfo(col.team).name.split(" ").pop()} {col.label}</div>
+                <ul className="mt-1 max-h-56 space-y-1 overflow-y-auto pr-1" role="radiogroup" aria-label={`Player ${teamInfo(col.team).name} sends`}>
+                  {col.cands === null && <li className="py-3 text-center text-sm text-muted">Loading players…</li>}
+                  {col.cands?.length === 0 && <li className="py-3 text-center text-sm text-muted">No tradable players found.</li>}
+                  {col.cands?.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        role="radio"
+                        aria-checked={col.pick === c.id}
+                        onClick={() => col.setPick(c.id)}
+                        className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm ring-1 ${col.pick === c.id ? "bg-accent/15 ring-accent" : "bg-head ring-transparent hover:bg-hover"}`}
+                      >
+                        <Headshot src={c.headshot} name={c.name} color={teamInfo(col.team).primary} size={30} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-semibold text-strong">
+                            {c.name} <span className="text-xs font-normal text-muted">{c.position}</span>
+                          </span>
+                          <span className="block text-[11px] text-muted tabular-nums">
+                            {c.epa !== null ? `EPA ${c.epa >= 0 ? "+" : "−"}${Math.abs(c.epa).toFixed(1)}${c.epa_per_game !== null ? ` (${c.epa_per_game >= 0 ? "+" : "−"}${Math.abs(c.epa_per_game).toFixed(2)}/g)` : ""}` : "No EPA for this position"}
+                          </span>
+                        </span>
+                        <span className="text-right text-xs font-semibold text-strong tabular-nums" title={c.note}>
+                          {Math.round(c.value)}
+                          <span className="block text-[10px] font-normal text-muted">Elo</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
           <p className="mt-2 text-xs text-muted">
-            {picked ? picked.note : "Pick a player."} Quarterbacks use the model&apos;s measured rating. Other positions are estimates: their production ranked against the
-            league at their position, turned into Elo points. Offensive linemen, kickers and punters aren&apos;t included.
+            <b className="text-strong">Elo</b> is what the player adds to his team&apos;s rating. For quarterbacks it is measured (EPA per dropback). For other positions it is an estimate from his
+            production against the league at his position. Offensive linemen, kickers and punters aren&apos;t included.
           </p>
           <button
-            onClick={() => picked && tradeFrom !== tradeTo && setTrades((t) => [...t.filter((x) => x.player.id !== picked.id), { player: picked, from: tradeFrom, to: tradeTo }])}
-            disabled={!picked || tradeFrom === tradeTo}
+            onClick={() => {
+              if (!playerFrom || !playerTo || tradeFrom === tradeTo) return;
+              setSwaps((all) => [...all.filter((w) => w.a.id !== playerFrom.id && w.b.id !== playerTo.id && w.a.id !== playerTo.id && w.b.id !== playerFrom.id), { a: playerFrom, aTeam: tradeFrom, b: playerTo, bTeam: tradeTo }]);
+            }}
+            disabled={!playerFrom || !playerTo || tradeFrom === tradeTo}
             className="btn btn-ghost btn-sm mt-3 text-lg"
           >
             {tradeFrom === tradeTo ? "Pick two different teams" : "Add trade"}
           </button>
-          {trades.length > 0 && (
+          {swaps.length > 0 && (
             <ul className="mt-3 space-y-1.5">
-              {trades.map((t) => (
-                <li key={t.player.id} className="flex items-center gap-2 bg-head px-2 py-1.5 text-sm">
-                  <TeamLogo abbr={t.from} size={22} />
-                  <span className="text-muted">→</span>
-                  <TeamLogo abbr={t.to} size={22} />
-                  <span className="min-w-0 flex-1 truncate font-semibold">{t.player.name}</span>
-                  <button
-                    onClick={() => setTrades((all) => all.filter((x) => x.player.id !== t.player.id))}
-                    aria-label={`Remove trade of ${t.player.name}`}
-                    className="px-1 text-muted hover:text-strong"
-                  >
+              {swaps.map((w) => (
+                <li key={w.a.id + w.b.id} className="flex items-center gap-2 bg-head px-2 py-1.5 text-sm">
+                  <TeamLogo abbr={w.aTeam} size={22} />
+                  <span className="min-w-0 flex-1 truncate">
+                    <b>{w.a.name}</b> <span className="text-muted">⇄</span> <b>{w.b.name}</b>
+                  </span>
+                  <TeamLogo abbr={w.bTeam} size={22} />
+                  <button onClick={() => setSwaps((all) => all.filter((x) => x !== w))} aria-label={`Remove trade of ${w.a.name} for ${w.b.name}`} className="px-1 text-muted hover:text-strong">
                     ✕
                   </button>
                 </li>

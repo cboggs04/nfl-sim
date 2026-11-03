@@ -8,7 +8,7 @@ Live on Vercel (site) + Render (API); code at github.com/cboggs04/nfl-sim. Built
 - Team pages (Overview / Season simulator tabs): schedule with per-game win odds; simulate the rest of the season or replay the full season; player tables (stats so far, projected, simulated).
 - Playoff simulator page (Standings / Bracket tabs): one simulated season shared by both; bracket is playable round by round.
 - Stat leaders page: projected league leaders + award odds (MVP, OPOTY, DPOTY, OROY, DROY; a player wins at most one).
-- What-if sandbox: adjust team Elo, trade a player between teams (`engine/trade.py`: QBs use the measured rating, other positions an estimated production-based value; stated assumptions), or force game results; re-runs 2,000 sims.
+- What-if sandbox: adjust team Elo, trade players between teams (one-for-one swaps; each player has an `elo_value` and skill players an EPA in rosters.json) (`engine/trade.py`: QBs use the measured rating, other positions an estimated production-based value; stated assumptions), or force game results; re-runs 2,000 sims.
 - Model accuracy page: backtest, calibration, how each model improvement scored.
 - Light theme is the default (dark available via toggle); phone layout via responsive CSS.
 - Team pages: every played regular-season game has a pixel-art Replay (ties and overtime included) built from the real drives (`engine/drives.py` reads nflverse play-by-play into `backend/data/drives.json`: TD, FG, missed FG, punt, interception, fumble, downs, safety, pick sixes). Final score is real; the play drawings are for show. Games whose drives don't add up to the real score fall back to made-up drives.
