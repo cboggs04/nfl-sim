@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "NFL Season Simulator",
     short_name: "NFL Sim",
     description: "Monte Carlo projections of the NFL season, plus a football game you can play.",
-    start_url: "/play",
+    start_url: "/",
     display: "standalone",
     orientation: "any",
     background_color: "#08122a",

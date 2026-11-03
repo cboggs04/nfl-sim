@@ -56,9 +56,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]">
         <RegisterServiceWorker />
-        <nav className="sticky top-0 z-30 border-b border-line bg-background/85 backdrop-blur">
+        {/* (the top padding keeps the menu button clear of the iPhone clock and notch when the site runs as an installed app) */}
+        <nav className="sticky top-0 z-30 border-b border-line bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
             <Link href="/" className="flex items-center gap-2" aria-label="NFL Simulator home">
               <Image src="/nfl-logo.png" alt="NFL" width={44} height={44} priority className="h-9 w-9 object-contain sm:h-11 sm:w-11" />
