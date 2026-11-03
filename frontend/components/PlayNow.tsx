@@ -162,12 +162,14 @@ function TeamCarousel({
   value,
   onChange,
   ranks,
+  arrowsNearVs = false,
 }: {
   label: string;
   teams: TeamOdds[]; // in the order they are browsed
   value: string;
   onChange: (abbr: string) => void;
   ranks: Record<string, number>;
+  arrowsNearVs?: boolean; // desktop: put the arrows on the left edge, next to the VS badge
 }) {
   const index = Math.max(0, teams.findIndex((t) => t.team === value));
   const t = teams[index];
@@ -259,7 +261,7 @@ function TeamCarousel({
             <div className="h-full rounded-full bg-white/90" style={{ width: `${Math.max(4, ((r100 - 50) / (RATING_MAX - 50)) * 100)}%` }} />
           </div>
         </div>
-        <div className="flex shrink-0 flex-col gap-24 sm:gap-32">
+        <div className={`flex shrink-0 flex-col gap-24 sm:gap-32 ${arrowsNearVs ? "lg:order-first" : ""}`}>
           {arrow(-1)}
           {arrow(1)}
         </div>
@@ -306,7 +308,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
             VS
           </span>
         </div>
-        <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} />
+        <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} arrowsNearVs />
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-4">
         <button onClick={() => onStart(user, opp)} disabled={user === opp} className="btn btn-primary text-2xl">
