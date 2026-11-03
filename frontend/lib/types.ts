@@ -85,6 +85,8 @@ export interface PlayoffGameResponse {
   away: string;
   p_home: number;
   winner: string | null; // null when only the odds were requested
+  home_score?: number | null; // simulated final score (when the game was played); the winner always has more
+  away_score?: number | null;
 }
 
 export interface WhatIfRequest {

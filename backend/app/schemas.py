@@ -206,6 +206,8 @@ class PlayoffGameResponse(BaseModel):
     away: str
     p_home: float
     winner: str | None              # None when play=false
+    home_score: int | None = None   # simulated final score (play=true only); the winner always has more
+    away_score: int | None = None
 
 
 # ---- Saved simulation inputs (written by precompute, read by live endpoints) ----

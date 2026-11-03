@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import SuperBowlAnimation, { type SuperBowlResult } from "@/components/SuperBowlAnimation";
-import { makeGame } from "@/lib/superBowlGame";
+import { gameFromScore, makeGame } from "@/lib/superBowlGame";
 import TeamLogo from "@/components/TeamLogo";
 import { pct } from "@/components/ProbCell";
 import { usePlayoffSim } from "@/components/PlayoffSim";
@@ -18,6 +18,7 @@ interface Ctx {
   records: Record<string, string>;
   winners: Record<string, string>;
   probs: Record<string, number>; // matchup id -> P(home wins)
+  scores: Record<string, { home: number; away: number }>; // matchup id -> the simulated final score
   busy: boolean;
   onPlay: (m: Matchup) => void;
   onReplay: (m: Matchup) => void; // open the pixel-art replay of a game that has been played
@@ -48,6 +49,7 @@ function TeamRow({ team, m, ctx, isHome }: { team: string | null; m: Matchup; ct
   }
   const winner = ctx.winners[m.id];
   const p = ctx.probs[m.id] === undefined ? null : isHome ? ctx.probs[m.id] : 1 - ctx.probs[m.id];
+  const score = ctx.scores[m.id] === undefined ? null : isHome ? ctx.scores[m.id].home : ctx.scores[m.id].away;
   const lost = winner && winner !== team;
   const won = winner === team;
   const seed = seedLabel(ctx.seeds, team);
@@ -66,7 +68,11 @@ function TeamRow({ team, m, ctx, isHome }: { team: string | null; m: Matchup; ct
         <span className={`block truncate text-sm ${won ? "font-bold text-strong" : "font-semibold"}`}>{nickname(team)}</span>
         <span className="block text-[11px] text-muted">{ctx.records[team]}</span>
       </span>
-      {won ? (
+      {score !== null && winner ? (
+        <span className={`font-display text-2xl tabular-nums ${won ? "text-strong" : "text-muted"}`} title={won ? "Winner" : undefined}>
+          {score}
+        </span>
+      ) : won ? (
         <span className="font-display text-xl text-good" aria-label="Winner">
           ✓
         </span>
@@ -402,6 +408,7 @@ function BracketBoard({
 }) {
   const [winners, setWinners] = useState<Record<string, string>>({});
   const [probs, setProbs] = useState<Record<string, number>>({});
+  const [scores, setScores] = useState<Record<string, { home: number; away: number }>>({});
   const [busy, setBusy] = useState(false);
   const [playError, setPlayError] = useState<string | null>(null);
   const narrow = useNarrowScreen();
@@ -434,9 +441,15 @@ function BracketBoard({
   async function play(games: Matchup[]) {
     const results = await Promise.all(games.map((m) => rollGame(m.home!, m.away!, m.neutral, true)));
     const next: Record<string, string> = {};
-    games.forEach((m, i) => (next[m.id] = results[i].winner!));
+    const finals: Record<string, { home: number; away: number }> = {};
+    games.forEach((m, i) => {
+      next[m.id] = results[i].winner!;
+      const { home_score, away_score } = results[i];
+      if (home_score != null && away_score != null) finals[m.id] = { home: home_score, away: away_score };
+    });
     setProbs((p) => ({ ...p, ...Object.fromEntries(games.map((m, i) => [m.id, results[i].p_home])) }));
-    return next;
+    setScores((sc) => ({ ...sc, ...finals }));
+    return { next, finals };
   }
 
   async function run(mode: "game" | "round" | "all", game?: Matchup) {
@@ -448,7 +461,7 @@ function BracketBoard({
       do {
         const ready = game ? [game] : readyMatchups(buildBracket(sim.seeds, current), current);
         if (!ready.length) break;
-        const next = await play(ready);
+        const { next, finals } = await play(ready);
         current = { ...current, ...next };
         setWinners(current);
         // The pop-up retells the result the model already produced; the plays and score in it are just for show.
@@ -460,7 +473,13 @@ function BracketBoard({
             home: m.home,
             away: m.away,
             winner,
-            events: makeGame(),
+            // the drives add up to the model's simulated score (random drives only if an older API sent no score)
+            events: finals[m.id]
+              ? gameFromScore(
+                  winner === m.home ? finals[m.id].home : finals[m.id].away,
+                  winner === m.home ? finals[m.id].away : finals[m.id].home,
+                )
+              : makeGame(),
             winnerRecord: records[winner],
             winnerSeed: seedLabel(sim.seeds, winner),
             title: roundTitle(m),
@@ -480,7 +499,7 @@ function BracketBoard({
   }
 
   const champ = winners["SB"];
-  const ctx: Ctx = { seeds: sim?.seeds ?? { AFC: [], NFC: [] }, records, winners, probs, busy, onPlay: (m) => run("game", m), onReplay: (m) => setReplayId(m.id), reg: () => () => {} };
+  const ctx: Ctx = { seeds: sim?.seeds ?? { AFC: [], NFC: [] }, records, winners, probs, scores, busy, onPlay: (m) => run("game", m), onReplay: (m) => setReplayId(m.id), reg: () => () => {} };
   const anyReady = bracket ? readyMatchups(bracket, winners).length > 0 : false;
 
   return (

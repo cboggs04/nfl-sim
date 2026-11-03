@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from engine.data import DATA_DIR
 from engine.elo import EloConfig, game_probability
 from engine.players import simulate_player
+from engine.scores import simulate_score
 from engine.playoffs import play_game
 from engine.simulate import simulate_one_season
 from engine.teams import TEAMS
@@ -58,9 +59,14 @@ def playoff_game(req: PlayoffGameRequest):
             raise HTTPException(422, f"Unknown team '{t}'")
     if req.home == req.away:
         raise HTTPException(422, "A team cannot play itself")
-    p_home, winner = play_game(req.home, req.away, state.ratings, random.Random(), cfg, req.neutral)
-    return PlayoffGameResponse(home=req.home, away=req.away, p_home=p_home,
-                               winner=winner if req.play else None)
+    rng = random.Random()
+    p_home, winner = play_game(req.home, req.away, state.ratings, rng, cfg, req.neutral)
+    home_score = away_score = None
+    if req.play:  # how they won: a score consistent with the winner just drawn (engine.scores)
+        home_score, away_score = simulate_score(state.ratings[req.home], state.ratings[req.away],
+                                                0.0 if req.neutral else cfg.home_field, winner == req.home, rng)
+    return PlayoffGameResponse(home=req.home, away=req.away, p_home=p_home, winner=winner if req.play else None,
+                               home_score=home_score, away_score=away_score)
 
 
 @router.post("/team", response_model=SimTeamResult)

@@ -167,3 +167,13 @@ def test_cors_regex_allows_preview_origins(monkeypatch):
     finally:
         monkeypatch.delenv("CORS_ORIGIN_REGEX")
         importlib.reload(main)
+
+
+@needs_data
+def test_playoff_game_returns_a_score_that_matches_the_winner():
+    for _ in range(40):
+        d = client.post("/api/sim/game", json={"home": "BUF", "away": "SEA", "neutral": False, "play": True}).json()
+        h, a = d["home_score"], d["away_score"]
+        assert (h > a) == (d["winner"] == "BUF") and h != a
+    odds = client.post("/api/sim/game", json={"home": "BUF", "away": "SEA", "play": False}).json()
+    assert odds["home_score"] is None and odds["away_score"] is None and odds["winner"] is None
