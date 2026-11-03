@@ -3,6 +3,8 @@ import { Barlow_Condensed, Geist, Geist_Mono, Press_Start_2P } from "next/font/g
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
+import AboutModel from "@/components/AboutModel";
+import AboutModelLoader from "@/components/AboutModelLoader";
 import NavLinks from "@/components/NavLinks";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -69,6 +71,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <div className="flex items-center gap-2 sm:gap-4">
               <Suspense fallback={<div className="hidden h-9 w-72 md:block" aria-hidden />}>
                 <NavLinks />
+              </Suspense>
+              <Suspense fallback={<AboutModel />}>
+                <AboutModelLoader />
               </Suspense>
               <ThemeToggle />
             </div>
