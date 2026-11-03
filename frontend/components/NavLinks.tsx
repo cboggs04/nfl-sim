@@ -51,7 +51,7 @@ export default function NavLinks() {
         </svg>
       </button>
       {open && (
-        <div id="mobile-menu" className="absolute inset-x-0 top-full border-b border-line bg-background shadow-lg shadow-black/30 backdrop-blur md:hidden">
+        <div id="mobile-menu" className="absolute inset-x-0 top-full border-b border-line bg-background shadow-lg shadow-black/30 md:hidden">
           <ul className="mx-auto max-w-7xl px-4 py-2">
             {LINKS.map((l) => (
               <li key={l.href}>
