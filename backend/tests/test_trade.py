@@ -1,4 +1,4 @@
-from engine.trade import BACKUP_QB_ADJ, MAX_VALUE, player_effect, player_values, qb_team_delta
+from engine.trade import BACKUP_QB_ADJ, MAX_VALUE, player_effect, player_values, qb_team_delta, skill_values
 
 
 def player(pid, pos, pts, gp=8):
@@ -12,6 +12,16 @@ def test_stars_are_worth_more_and_replacement_players_nothing():
     assert v["w10"] == MAX_VALUE["WR"]          # best receiver: full value
     assert v["w0"] == 0.0                       # worst: replacement level
     assert v["w10"] > v["w8"] > v["w6"]
+
+
+def test_skill_rating_measures_epa_shrinks_small_samples_and_floors_at_replacement():
+    base = [{"id": f"w{i}", "position": "WR", "gp": 8, "epa": float(i), "prev_epa": 0.0, "prev_games": 0} for i in range(10)]
+    star = {"id": "star", "position": "WR", "gp": 8, "epa": 40.0, "prev_epa": 0.0, "prev_games": 0}
+    fluke = {"id": "fluke", "position": "WR", "gp": 1, "epa": 5.0, "prev_epa": 0.0, "prev_games": 0}
+    v = skill_values(base + [star, fluke])
+    assert v["star"] > v["w9"] > 0
+    assert v["w0"] == 0.0                      # below replacement: floored
+    assert v["fluke"] < v["star"] / 2           # one big game is pulled toward replacement
 
 
 def test_new_team_gains_less_when_already_deep_at_the_position():
