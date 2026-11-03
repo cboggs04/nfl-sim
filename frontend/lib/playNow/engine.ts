@@ -14,6 +14,7 @@ export const Y_MID = 112;
 export const HALF_SECONDS = 600; // game seconds in a half
 export const TIME_SCALE = 5; // game seconds per real second while a play is live
 const BALL_SPEED = 230; // px/s of a thrown ball
+const CATCH_GRACE = 0.3; // seconds after a catch before a defender can tackle the receiver
 
 export type Rng = () => number;
 export type Phase = "presnap" | "live" | "kick" | "result" | "opp" | "halftime" | "final";
@@ -172,6 +173,7 @@ export class FootballGame {
   t = 0; // time into the current play
   pastLine = false; // the quarterback has crossed the line of scrimmage, so he can't throw
   caught = false;
+  private caughtAt = 0; // when the catch was made (a receiver gets a moment to get going before anyone can tackle him)
   boostUntil = 0;
   boostReady = 0;
   private moveX = 0;
@@ -334,7 +336,12 @@ export class FootballGame {
     ents.find((x) => x.id === "cb1")!.cover = "wr1";
     ents.find((x) => x.id === "cb2")!.cover = "wr2";
     ents.find((x) => x.id === "lb2")!.cover = "wr3";
-    for (const e of ents) if (e.role === "dl") e.breakAt = (2.2 + this.rng() * 1.7) * (1 + 0.15 * this.edge);
+    // How quickly the rush gets home changes every play: sometimes a quick rush or a blitz, usually normal, sometimes slow.
+    const roll = this.rng();
+    const base = roll < 0.28 ? 0.6 : roll < 0.72 ? 1.7 : 2.7;
+    for (const e of ents) if (e.role === "dl") e.breakAt = (base + this.rng() * 0.9) * (1 + 0.15 * this.edge);
+    const lb1 = ents.find((x) => x.id === "lb1")!;
+    lb1.breakAt = roll < 0.28 ? 0.5 + this.rng() * 0.6 : 2.2 + this.rng() * 0.8; // a blitzing linebacker is the fastest of all
     this.ents = ents;
     this.controlled = "qb";
     this.ball = { x: L - 20, y: Y_MID - 6, z: 0, holder: "qb", flight: null };
@@ -526,7 +533,7 @@ export class FootballGame {
         if (this.t < d.breakAt || !qb) this.step(d, d.x, qb ? lerpToward(d.y, qb.y, 6, dt) : d.y, 12, dt);
         else this.step(d, qb.x, qb.y, d.speed, dt);
       } else if (d.role === "lb" && !d.cover) {
-        if (this.t < 2.2 || !qb) this.step(d, d.x, qb ? lerpToward(d.y, qb.y, 10, dt) : d.y, 10, dt);
+        if (this.t < d.breakAt || !qb) this.step(d, d.x, qb ? lerpToward(d.y, qb.y, 10, dt) : d.y, 10, dt);
         else this.step(d, qb.x, qb.y, d.speed, dt);
       } else if (d.cover) {
         const r = this.ent(d.cover);
@@ -605,9 +612,10 @@ export class FootballGame {
     const defs = this.ents.filter((e) => e.side === "def");
     const near = Math.min(...defs.map((e) => dist(e.x, e.y, target.x, target.y)));
     const sep = near / PX_PER_YD;
-    const pCatch = clamp(0.45 + 0.13 * sep + 0.1 * this.edge - (f.pressured ? 0.08 : 0), 0.12, 0.95);
+    const pCatch = clamp(0.38 + 0.12 * sep + 0.1 * this.edge - (f.pressured ? 0.08 : 0), 0.12, 0.95);
     if (this.rng() < pCatch) {
       this.caught = true;
+      this.caughtAt = this.t;
       this.ball.holder = target.id;
       this.controlled = target.id;
       this.stats.passComp++;
@@ -622,6 +630,7 @@ export class FootballGame {
     void dt;
     const h = this.holder();
     if (!h || h.side !== "off") return;
+    if (this.caught && h.role !== "qb" && this.t - this.caughtAt < CATCH_GRACE) return; // just caught it: room to run
     const boosting = this.t < this.boostUntil;
     for (const d of this.ents) {
       if (d.side !== "def" || d.cooldown > 0) continue;
