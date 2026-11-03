@@ -581,7 +581,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         Run the offense. Throw to your receivers, scramble, pick your plays and go for the end zone. Between your drives the other team&apos;s
         possessions are simulated from the two teams&apos; ratings, so a stronger team has a real edge. Four short quarters, about a minute each.
       </p>
-      <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">On a phone? Turn it sideways: the game plays in landscape with on-screen controls. A keyboard works on a computer.</p>
+      <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">On a phone? Turn it sideways: the game plays in landscape with on-screen controls. To hide the Safari address bar on an iPhone, tap Share, then Add to Home Screen, and open the game from there. A keyboard works on a computer.</p>
       <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use the arrow keys).</p>
       <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-5">
         <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} jersey={userJersey} onJersey={setUserJersey} />

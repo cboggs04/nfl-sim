@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,6 +34,14 @@ const pixel = Press_Start_2P({
 export const metadata: Metadata = {
   title: "NFL Season Simulator",
   description: "Monte Carlo projections of every team's record, playoff odds, and Super Bowl odds.",
+  // "Add to Home Screen" on an iPhone opens the site with no Safari address bar (a web page can't hide it any other way)
+  appleWebApp: { capable: true, title: "NFL Sim", statusBarStyle: "black-translucent" },
+  icons: { apple: "/nfl-logo.png" },
+};
+
+export const viewport: Viewport = {
+  viewportFit: "cover", // let the page use the whole screen, including behind the notch (the game pads for the safe areas itself)
+  themeColor: "#08122a",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
