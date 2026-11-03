@@ -62,7 +62,7 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
           <h3 className="font-display text-2xl text-accent-ink">Running a play</h3>
           <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-muted">
             <li>
-              <b className="text-strong">Pick pass or run</b> with ← →, then pick one of the three plays with <b className="text-strong">1, 2 or 3</b> (Quick Slants, Crossers or Deep Shots; Inside Run, Outside Sweep or Draw). The dotted lines show the routes or where the back is headed.
+              <b className="text-strong">Pick pass or run</b> with ← →, then pick one of the three plays with <b className="text-strong">1, 2 or 3</b> (three of five pass plays and three of five run plays are offered each snap). The dotted lines show the routes or where the back is headed.
             </li>
             <li>
               <b className="text-strong">Press Space</b> to snap the ball.

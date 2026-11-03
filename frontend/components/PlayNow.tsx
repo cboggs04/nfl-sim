@@ -6,7 +6,7 @@ import Headshot from "@/components/Headshot";
 import PlayHelp from "@/components/PlayHelp";
 import TeamLogo from "@/components/TeamLogo";
 import { buildSprites, type Sprites } from "@/lib/pixelSprites";
-import { FootballGame, GOAL_L, GOAL_R, PLAYS, WORLD_W, Y_MID, type Difficulty, type OppDrive, type Phase } from "@/lib/playNow/engine";
+import { FootballGame, GOAL_L, GOAL_R, PLAYS, WORLD_W, Y_MID, type Difficulty, type PlayDef, type OppDrive, type Phase } from "@/lib/playNow/engine";
 import { logoSrc, teamInfo } from "@/lib/teams";
 import type { TeamOdds } from "@/lib/types";
 
@@ -113,6 +113,7 @@ interface Hud {
   message: string;
   selected: "pass" | "run";
   choice: number; // which of the three plays is picked
+  plays: PlayDef[]; // the three on offer
   down: number;
   canKick: boolean;
   fgDistance: number;
@@ -137,6 +138,7 @@ function snapshot(g: FootballGame): Hud {
     message: g.message,
     selected: g.selected,
     choice: g.choice[g.selected],
+    plays: g.offered[g.selected].map((i) => PLAYS[g.selected][i]),
     down: g.down,
     canKick: g.canKick,
     fgDistance: Math.round(g.fgDistance),
@@ -688,7 +690,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
                   {hud.down === 4 ? "4TH DOWN: CHOOSE, OR PICK A PLAY TO GO FOR IT" : "PICK A PLAY (1 2 3), THEN SNAP"}
                 </span>
                 <div className="flex w-full max-w-2xl justify-center gap-1.5 sm:gap-2">
-                  {PLAYS[hud.selected].map((p, i) => (
+                  {hud.plays.map((p, i) => (
                     <button
                       key={p.id}
                       onClick={() => act(`play${i + 1}` as "play1" | "play2" | "play3")}

@@ -132,17 +132,21 @@ export interface PlayDef {
   delay?: number; // ... extra seconds the defense is fooled before it reacts
   rbY?: number; // ... where the running back lines up (default: just behind the line, to the side)
 }
-/** Three plays to choose from after picking pass or run. Press 1, 2 or 3 before the snap. */
+/** Five plays of each kind; every snap offers three of them. Press 1, 2 or 3 before the snap. */
 export const PLAYS: { pass: PlayDef[]; run: PlayDef[] } = {
   pass: [
     { id: "slants", name: "Quick Slants", blurb: "Short and safe: slants and a flat route", routes: ["slant", "slant", "flat"] },
     { id: "crossers", name: "Crossers", blurb: "Medium: drags across the middle and a curl", routes: ["drag", "drag", "curl"] },
     { id: "deep", name: "Deep Shots", blurb: "Long: go routes and a post. Risky, big gains", routes: ["go", "post", "go"] },
+    { id: "hitches", name: "Hitches", blurb: "Receivers stop and turn: easy catches, small gains", routes: ["curl", "curl", "flat"] },
+    { id: "corner", name: "Corner Combo", blurb: "Medium-deep: a corner, a post and an out", routes: ["corner", "post", "out"] },
   ],
   run: [
     { id: "inside", name: "Inside Run", blurb: "Up the middle behind the line: steady gains", dlHold: 1.2, edgeHold: 0.9 },
     { id: "outside", name: "Outside Sweep", blurb: "Bounce it to the edge: receivers block downfield", dlHold: 0.85, edgeHold: 1.3, rbY: 150 },
     { id: "draw", name: "Draw", blurb: "Fakes the pass: the defense bites for a moment", dlHold: 0.95, edgeHold: 1, delay: 0.25 },
+    { id: "power", name: "Power Run", blurb: "Smash it up the gut: a big hole, but linebackers close fast", dlHold: 1.4, edgeHold: 0.8 },
+    { id: "counter", name: "Counter", blurb: "Starts one way, cuts back: the defense is slow to react", dlHold: 1.05, edgeHold: 1.15, delay: 0.2, rbY: 84 },
   ],
 };
 
@@ -207,7 +211,8 @@ export class FootballGame {
   toGo = 10;
   phase: Phase = "presnap";
   selected: PlayKind = "pass";
-  choice = { pass: 0, run: 0 }; // which of the three plays is picked for each kind
+  offered: { pass: number[]; run: number[] } = { pass: [0, 1, 2], run: [0, 1, 2] }; // the three plays on offer this snap (indexes into PLAYS)
+  choice = { pass: 0, run: 0 }; // which of the three is picked for each kind
   message = "";
   stats: Stats = { passAtt: 0, passComp: 0, passYds: 0, rushYds: 0, sacks: 0, ints: 0, firstDowns: 0 };
 
@@ -250,7 +255,7 @@ export class FootballGame {
   // ---------------------------------------------------------------- queries
   /** The play picked for the kind of play currently selected. */
   get play(): PlayDef {
-    return PLAYS[this.selected][this.choice[this.selected]];
+    return PLAYS[this.selected][this.offered[this.selected][this.choice[this.selected]]];
   }
   get losX() {
     return GOAL_L + this.yardLine * PX_PER_YD;
@@ -347,6 +352,16 @@ export class FootballGame {
     this.scoredTD = false;
     this.kick = null;
     this.playKind = this.selected; // what the field shows (route lines, receiver numbers) follows your choice
+    // three plays of each kind are on offer every snap
+    for (const kind of ["pass", "run"] as const) {
+      const all = PLAYS[kind].map((_, i) => i);
+      for (let i = all.length - 1; i > 0; i--) {
+        const j = Math.floor(this.rng() * (i + 1));
+        [all[i], all[j]] = [all[j], all[i]];
+      }
+      this.offered[kind] = all.slice(0, 3);
+      this.choice[kind] = 0;
+    }
     this.buildFormation();
   }
 
@@ -359,7 +374,7 @@ export class FootballGame {
 
   /** Give the receivers the routes of the picked pass play. */
   private assignRoutes() {
-    const routes = PLAYS.pass[this.choice.pass].routes!;
+    const routes = PLAYS.pass[this.offered.pass[this.choice.pass]].routes!;
     ["wr1", "wr2", "wr3"].forEach((id, i) => {
       const e = this.ent(id);
       if (!e) return;
