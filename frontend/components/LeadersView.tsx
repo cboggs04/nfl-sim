@@ -128,7 +128,7 @@ export default function LeadersView({ data }: { data: LeadersResponse }) {
       <section>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-display text-4xl text-strong">Stat leaders</h2>
+            <h2 className="font-display text-4xl text-strong">League leaders</h2>
             <p className="mt-1 text-sm text-muted">Top 10 in each category. &quot;To lead&quot; is the chance he finishes first.</p>
           </div>
           <div role="group" aria-label="Which totals to show" className="flex gap-2">

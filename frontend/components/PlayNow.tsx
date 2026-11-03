@@ -578,11 +578,6 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
 
   return (
     <div>
-      <p className="mt-2 hidden max-w-4xl text-sm text-muted md:block [@media(max-height:780px)]:hidden">
-        Run the offense: throw to your receivers, scramble, pick your plays and go for the end zone. Between your drives the other team&apos;s possessions are
-        simulated from the two teams&apos; ratings, so a stronger team has a real edge. Four short quarters, about a minute each. Flip through the teams with the arrows
-        (or click a card and use the arrow keys), and click the <b className="text-strong">?</b> for the controls.
-      </p>
       <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">On a phone? Turn it sideways: the game plays in landscape with on-screen controls. To hide the Safari address bar on an iPhone, tap Share, then Add to Home Screen, and open the game from there. A keyboard works on a computer.</p>
       <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
         <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} jersey={userJersey} onJersey={setUserJersey} />
@@ -596,7 +591,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         </div>
         <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} jersey={oppJersey} onJersey={setOppJersey} arrowsNearVs />
       </div>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
         <div>
           <div className="text-xs font-semibold tracking-widest text-muted uppercase">Difficulty</div>
           <div role="radiogroup" aria-label="Difficulty" className="mt-1 flex flex-wrap items-center gap-3">
@@ -1365,6 +1360,7 @@ export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
           ?
         </button>
       </div>
+      {!setup && <p className="mt-3 max-w-2xl text-sm text-muted">A pixel-art football game: pick two teams, call the plays and score. Click the ? for the controls.</p>}
       {setup && user && opp ? (
         <GameScreen user={user} opp={opp} teams={teams} level={setup.level} userJersey={setup.userJersey} oppJersey={setup.oppJersey} onExit={() => setSetup(null)} paused={help} onHelp={() => setHelp(true)} />
       ) : (
