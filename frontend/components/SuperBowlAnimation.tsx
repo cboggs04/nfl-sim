@@ -13,6 +13,8 @@ export interface SuperBowlResult {
   events: GameEvent[]; // the drives, from makeGame(): the model picks the winner, everything else is for show
   winnerRecord?: string;
   winnerSeed?: number | null;
+  title?: string; // heading, e.g. "WILD CARD" (defaults to SUPER BOWL)
+  isSuperBowl?: boolean; // false: the winner "advances" instead of being crowned champion
 }
 
 // ---------- the scene ----------
@@ -555,12 +557,13 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
   const pointsOf = (team: string) => (team === result.winner ? points.W : points.L);
   const shownTeam = shown ? (shown.team === "W" ? result.winner : loser) : null;
   const finalW = pointsFor(events, "W");
+  const champion = result.isSuperBowl ?? true;
 
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label="Super Bowl animation" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6">
+    <div role="dialog" aria-modal="true" aria-label={`${result.title ?? "Super Bowl"} animation`} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6">
       <div className="relative w-full max-w-4xl">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="font-pixel text-[10px] leading-relaxed text-white sm:text-xs">SUPER BOWL</div>
+          <div className="font-pixel text-[10px] leading-relaxed text-white sm:text-xs">{result.title ?? "SUPER BOWL"}</div>
           <div className="flex gap-2">
             {phase !== "final" && (
               <button onClick={skip} className="font-pixel rounded bg-white/15 px-3 py-2 text-[10px] text-white hover:bg-white/25">
@@ -602,7 +605,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
             )}
             {phase === "final" && (
               <div className="rise absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/60 p-2 text-center sm:gap-2 sm:p-3">
-                <div className="font-pixel hidden text-[8px] text-yellow-300 sm:block sm:text-xs">SUPER BOWL CHAMPIONS</div>
+                <div className="font-pixel hidden text-[8px] text-yellow-300 sm:block sm:text-xs">{champion ? "SUPER BOWL CHAMPIONS" : "WINNER: ADVANCES"}</div>
                 <div className="sm:hidden">
                   <TeamLogo abbr={result.winner} size={48} />
                 </div>
@@ -610,7 +613,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
                   <TeamLogo abbr={result.winner} size={96} />
                 </div>
                 <div className="font-pixel text-[9px] text-white [text-shadow:2px_2px_0_#000] sm:text-2xl">{win.name.toUpperCase()}</div>
-                <div className="font-pixel text-[7px] text-yellow-300 sm:hidden">CHAMPIONS</div>
+                <div className="font-pixel text-[7px] text-yellow-300 sm:hidden">{champion ? "CHAMPIONS" : "ADVANCES"}</div>
                 {result.winnerRecord && (
                   <div className="font-pixel hidden text-[8px] text-white/80 sm:block sm:text-[10px]">
                     {result.winnerRecord} IN THE REGULAR SEASON{result.winnerSeed ? ` · #${result.winnerSeed} SEED` : ""}

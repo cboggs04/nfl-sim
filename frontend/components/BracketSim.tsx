@@ -20,6 +20,7 @@ interface Ctx {
   probs: Record<string, number>; // matchup id -> P(home wins)
   busy: boolean;
   onPlay: (m: Matchup) => void;
+  onReplay: (m: Matchup) => void; // open the pixel-art replay of a game that has been played
   reg: (id: string) => (el: HTMLElement | null) => void; // lets the bracket measure each card to draw connector lines
 }
 
@@ -30,6 +31,14 @@ const seedLabel = (seeds: Record<Conference, string[]>, team: string) => {
   }
   return null;
 };
+
+/** The heading shown on a game's pop-up. */
+function roundTitle(m: Matchup): string {
+  if (m.round === "SB") return "SUPER BOWL";
+  if (m.round === "CONF") return `${m.id.startsWith("AFC") ? "AFC" : "NFC"} CHAMPIONSHIP`;
+  if (m.round === "DIV") return "DIVISIONAL ROUND";
+  return "WILD CARD";
+}
 
 const nickname = (team: string) => teamInfo(team).name.split(" ").pop() ?? team;
 
@@ -87,6 +96,15 @@ function MatchupCard({ m, ctx, label }: { m: Matchup; ctx: Ctx; label?: string }
           className="font-display w-full border-t border-line bg-accent/90 py-1 text-base text-on-accent hover:bg-accent disabled:opacity-40"
         >
           Play game
+        </button>
+      )}
+      {m.home && m.away && ctx.winners[m.id] && (
+        <button
+          onClick={() => ctx.onReplay(m)}
+          className="font-display w-full border-t border-line bg-head py-1 text-base text-strong hover:bg-hover"
+          aria-label={`Watch the replay of ${m.home} vs ${m.away}`}
+        >
+          ▶ Replay
         </button>
       )}
     </div>
@@ -387,9 +405,10 @@ function BracketBoard({
   const [busy, setBusy] = useState(false);
   const [playError, setPlayError] = useState<string | null>(null);
   const narrow = useNarrowScreen();
-  const [sbResult, setSbResult] = useState<SuperBowlResult | null>(null); // the Super Bowl just played, for the animation
-  const [sbOpen, setSbOpen] = useState(false);
-  const closeSb = useCallback(() => setSbOpen(false), []);
+  // One made-up game per playoff game, created when it is played, so a replay shows the same game every time.
+  const [replays, setReplays] = useState<Record<string, SuperBowlResult>>({});
+  const [replayId, setReplayId] = useState<string | null>(null); // which game's pop-up is open
+  const closeReplay = useCallback(() => setReplayId(null), []);
   const error = loadError ?? playError;
   const requested = useRef(new Set<string>());
 
@@ -432,12 +451,24 @@ function BracketBoard({
         const next = await play(ready);
         current = { ...current, ...next };
         setWinners(current);
-        const sbGame = ready.find((m) => m.id === "SB");
-        if (sbGame?.home && sbGame.away && next["SB"]) {
-          // The pop-up retells the result the model already produced; the score in it is just for show.
-          setSbResult({ home: sbGame.home, away: sbGame.away, winner: next["SB"], events: makeGame(), winnerRecord: records[next["SB"]], winnerSeed: seedLabel(sim.seeds, next["SB"]) });
-          setSbOpen(true);
+        // The pop-up retells the result the model already produced; the plays and score in it are just for show.
+        const made: Record<string, SuperBowlResult> = {};
+        for (const m of ready) {
+          const winner = next[m.id];
+          if (!m.home || !m.away || !winner) continue;
+          made[m.id] = {
+            home: m.home,
+            away: m.away,
+            winner,
+            events: makeGame(),
+            winnerRecord: records[winner],
+            winnerSeed: seedLabel(sim.seeds, winner),
+            title: roundTitle(m),
+            isSuperBowl: m.id === "SB",
+          };
         }
+        setReplays((r) => ({ ...r, ...made }));
+        if (made["SB"]) setReplayId("SB"); // the Super Bowl opens by itself; every other game only on Replay
         game = undefined;
         if (mode === "all") await wait(700); // a beat between rounds so it's watchable
       } while (mode === "all");
@@ -449,7 +480,7 @@ function BracketBoard({
   }
 
   const champ = winners["SB"];
-  const ctx: Ctx = { seeds: sim?.seeds ?? { AFC: [], NFC: [] }, records, winners, probs, busy, onPlay: (m) => run("game", m), reg: () => () => {} };
+  const ctx: Ctx = { seeds: sim?.seeds ?? { AFC: [], NFC: [] }, records, winners, probs, busy, onPlay: (m) => run("game", m), onReplay: (m) => setReplayId(m.id), reg: () => () => {} };
   const anyReady = bracket ? readyMatchups(bracket, winners).length > 0 : false;
 
   return (
@@ -466,11 +497,6 @@ function BracketBoard({
             <button onClick={() => run("all")} disabled={!anyReady || busy} className="btn btn-ghost text-xl">
               Play to the Super Bowl
             </button>
-            {winners["SB"] && sbResult && (
-              <button onClick={() => setSbOpen(true)} className="btn btn-ghost text-xl">
-                ▶ Watch the Super Bowl
-              </button>
-            )}
             <span className="text-sm text-muted">
               Season #{runs} · {sim.games.filter((g) => !g.played).length} games simulated
             </span>
@@ -501,7 +527,7 @@ function BracketBoard({
           </div>
         </div>
       )}
-      {sbOpen && sbResult && <SuperBowlAnimation result={sbResult} onClose={closeSb} />}
+      {replayId && replays[replayId] && <SuperBowlAnimation key={replayId} result={replays[replayId]} onClose={closeReplay} />}
     </div>
   );
 }
