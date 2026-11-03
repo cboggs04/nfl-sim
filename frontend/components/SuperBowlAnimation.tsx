@@ -53,6 +53,8 @@ interface Script {
   carrier?: string;
   /** How long this play takes compared with a normal one (short plays are quick, bombs take longer). */
   dur: number;
+  /** Shown instead of "TOUCHDOWN!" for a special kind of score (a pick six). */
+  label?: string;
 }
 
 const GOAL_LINE_X = 294; // where a runner or receiver ends up, inside the end zone
@@ -183,6 +185,7 @@ function makePickSix(L: number, dur = 1): Script {
     off,
     def,
     dur,
+    label: "PICK SIX!",
     carrier: "cb1",
     ball: (t) => {
       const qb = at(def.qb, t);
@@ -452,6 +455,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
   const [phase, setPhase] = useState<"play" | "result" | "final">("play");
   const [points, setPoints] = useState({ W: 0, L: 0 });
   const [shown, setShown] = useState<GameEvent | null>(null); // the drive whose result graphic is showing
+  const [shownLabel, setShownLabel] = useState<string | null>(null); // special headline for the score on screen (e.g. PICK SIX!)
   const [punting, setPunting] = useState<GameEvent | null>(null); // set while a punt is in the air, so "PUNT" can be shown
   const sceneRef = useRef<HTMLCanvasElement>(null);
   const confettiRef = useRef<HTMLCanvasElement>(null);
@@ -614,6 +618,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
         if (next === "result") {
           lastIdx = idx;
           setShown(ev);
+          setShownLabel(script.label ?? null);
           if (ev.kind === "TD") burst(ev.team === "W" ? 26 : 10, ev.team === "W", ev.team === "W" ? 0.7 : 0.5);
           else if (ev.kind === "FG") burst(ev.team === "W" ? 12 : 5, ev.team === "W", 0.6);
         }
@@ -672,6 +677,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
   const replay = () => {
     setPhase("play");
     setShown(null);
+    setShownLabel(null);
     setPunting(null);
     setPoints({ W: 0, L: 0 });
     setRun((r) => r + 1);
@@ -715,7 +721,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
             <canvas ref={sceneRef} width={W} height={H} className="block w-full" style={{ imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }} />
             {phase === "result" && shown && shownTeam && shown.kind !== "PUNT" && !punting && (
               <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 sm:gap-2">
-                <span className="animate-pulse text-2xl text-yellow-300 [text-shadow:3px_3px_0_#000] sm:text-5xl">{shown.kind === "TD" ? "TOUCHDOWN!" : "FIELD GOAL!"}</span>
+                <span className="animate-pulse text-2xl text-yellow-300 [text-shadow:3px_3px_0_#000] sm:text-5xl">{shownLabel ?? (shown.kind === "TD" ? "TOUCHDOWN!" : "FIELD GOAL!")}</span>
                 <span className="rounded px-2 py-1 text-[9px] text-white [text-shadow:1px_1px_0_#000] sm:text-sm" style={{ backgroundColor: teamInfo(shownTeam).primary }}>
                   {teamInfo(shownTeam).name.toUpperCase()} +{shown.pts}
                 </span>
