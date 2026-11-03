@@ -95,7 +95,7 @@ function LeaderCard({ title, stat, rows, projected }: { title: string; stat: str
   const sorted = [...rows].sort((a, b) => (projected ? b.projected - a.projected : b.current - a.current));
   return (
     <section className="panel-flat overflow-hidden">
-      <h3 className="font-display border-b border-line bg-head px-4 py-2 text-2xl text-strong">{title}</h3>
+      <h2 className="font-display border-b border-line bg-head px-4 py-2 text-2xl text-strong">{title}</h2>
       <ol className="divide-y divide-line/60">
         {sorted.map((r, i) => (
           <li key={r.id} className="flex items-center gap-3 px-4 py-2" style={{ boxShadow: `inset 4px 0 0 ${teamInfo(r.team).primary}` }}>

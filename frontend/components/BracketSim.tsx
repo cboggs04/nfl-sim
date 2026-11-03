@@ -139,7 +139,7 @@ function ByeCard({ conf, ctx }: { conf: Conference; ctx: Ctx }) {
 function SeedList({ conf, sim, ctx }: { conf: Conference; sim: SimulatedSeason; ctx: Ctx }) {
   return (
     <div>
-      <h4 className="font-display mb-3 text-2xl text-accent-ink">{conf} final seeding</h4>
+      <h3 className="font-display mb-3 text-2xl text-accent-ink">{conf} final seeding</h3>
       <ol className="panel-flat overflow-hidden">
         {sim.seeds[conf].map((t, i) => (
           <li
@@ -197,7 +197,7 @@ function bracketEdges(b: Bracket, seeds: Record<Conference, string[]>, winners: 
 }
 
 function ColumnTitle({ children }: { children: React.ReactNode }) {
-  return <h4 className="font-display mb-3 text-center text-xl text-accent-ink">{children}</h4>;
+  return <h3 className="font-display mb-3 text-center text-xl text-accent-ink">{children}</h3>;
 }
 
 function RoundColumn({ title, children }: { title: string; children: React.ReactNode }) {
@@ -278,8 +278,8 @@ function BracketView({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx;
   return (
     <div className="overflow-x-auto pb-2">
       <div className="mb-2 flex min-w-[1280px] items-end justify-between px-1">
-        <h3 className="font-display text-7xl text-strong">AFC</h3>
-        <h3 className="font-display text-7xl text-strong">NFC</h3>
+        <h2 className="font-display text-7xl text-strong">AFC</h2>
+        <h2 className="font-display text-7xl text-strong">NFC</h2>
       </div>
       <div ref={wrap} className="relative grid min-w-[1280px] grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,1.15fr)_repeat(3,minmax(0,1fr))] gap-x-7">
         <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full" aria-hidden>
@@ -338,7 +338,7 @@ function useNarrowScreen(): boolean {
 function MobileBracket({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx; champ: string | undefined; sim: SimulatedSeason }) {
   const round = (title: string, children: React.ReactNode) => (
     <div className="mt-5">
-      <h4 className="font-display mb-2 text-2xl text-accent-ink">{title}</h4>
+      <h3 className="font-display mb-2 text-2xl text-accent-ink">{title}</h3>
       <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">{children}</div>
     </div>
   );
@@ -348,7 +348,7 @@ function MobileBracket({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ct
         const cb = bracket[conf];
         return (
           <section key={conf} className="mb-8">
-            <h3 className="font-display text-5xl text-strong">{conf}</h3>
+            <h2 className="font-display text-5xl text-strong">{conf}</h2>
             {round(
               "Wild card",
               <>
@@ -367,7 +367,7 @@ function MobileBracket({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ct
         );
       })}
       <section>
-        <h3 className="font-display text-5xl text-strong">Super Bowl</h3>
+        <h2 className="font-display text-5xl text-strong">Super Bowl</h2>
         <div className="mt-3 max-w-md">
           <MatchupCard m={bracket.sb} ctx={ctx} label="Neutral site" />
         </div>

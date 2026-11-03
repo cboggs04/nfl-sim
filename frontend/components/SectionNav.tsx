@@ -58,7 +58,7 @@ export default function SectionNav({ items, className = "" }: { items: SectionLi
             onClick={() => go(it.id)}
             aria-current={active === it.id ? "true" : undefined}
             className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap ring-1 transition-colors ${
-              active === it.id ? "bg-accent text-on-accent ring-accent" : "bg-head text-muted ring-line hover:bg-hover hover:text-strong"
+              active === it.id ? "bg-accent text-on-accent ring-accent" : "bg-head text-strong ring-line hover:bg-hover"
             }`}
           >
             {it.label}

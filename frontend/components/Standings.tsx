@@ -45,7 +45,7 @@ function DivisionTable({ name, teams, sim }: { name: string; teams: TeamOdds[]; 
     : [...teams].sort((a, b) => winPct(b) - winPct(a) || b.exp_wins - a.exp_wins);
   return (
     <section className="panel-flat overflow-hidden">
-      <h4 className="font-display border-b border-line bg-head px-4 py-2 text-2xl text-strong">{name}</h4>
+      <h3 className="font-display border-b border-line bg-head px-4 py-2 text-2xl text-strong">{name}</h3>
       <div className="overflow-x-auto">
         <table className="w-full text-sm md:min-w-[460px]">
           <thead className="border-b border-line text-[11px] tracking-widest text-muted uppercase">
@@ -138,7 +138,7 @@ function assignSeeds(slots: BracketResponse["conferences"][number]["slots"]) {
 function SeedPicture({ conference, slots }: { conference: Conference; slots: BracketResponse["conferences"][number]["slots"] }) {
   return (
     <section className="panel-flat overflow-hidden">
-      <h4 className="font-display border-b border-line bg-head px-4 py-2 text-2xl text-strong">Projected playoff seeds</h4>
+      <h3 className="font-display border-b border-line bg-head px-4 py-2 text-2xl text-strong">Projected playoff seeds</h3>
       <ol className="divide-y divide-line/60">
         {assignSeeds(slots).map(({ seed, pick, next }) =>
           pick ? (
@@ -175,7 +175,7 @@ function SimSeeds({ conference, sim }: { conference: Conference; sim: SimulatedS
   const rec = new Map(sim.standings.map((r) => [r.team, r]));
   return (
     <section className="panel-flat overflow-hidden">
-      <h4 className="font-display border-b border-line bg-head px-4 py-2 text-2xl text-strong">Playoff seeds in this simulated season</h4>
+      <h3 className="font-display border-b border-line bg-head px-4 py-2 text-2xl text-strong">Playoff seeds in this simulated season</h3>
       <ol className="divide-y divide-line/60">
         {sim.seeds[conference].map((t, i) => {
           const r = rec.get(t);
@@ -239,7 +239,7 @@ export default function Standings({ teams, bracket }: { teams: TeamOdds[]; brack
       <div className="mt-6 grid gap-8 xl:grid-cols-2">
         {(["AFC", "NFC"] as const).map((conf) => (
           <div key={conf} className="min-w-0">
-            <h3 className="font-display text-5xl text-strong sm:text-6xl">{conf}</h3>
+            <h2 className="font-display text-5xl text-strong sm:text-6xl">{conf}</h2>
             <div className="mt-3 space-y-4">
               {info && sim ? (
                 <SimSeeds conference={conf} sim={sim} />

@@ -39,9 +39,10 @@ function Delta({ value, unit = "pts", digits = 1, noise = 1 }: { value: number; 
   );
 }
 
-function TeamSelect({ value, onChange, teams }: { value: string; onChange: (t: string) => void; teams: TeamOdds[] }) {
+function TeamSelect({ value, onChange, teams, label }: { value: string; onChange: (t: string) => void; teams: TeamOdds[]; label: string }) {
   return (
     <select
+      aria-label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-full rounded-md border border-line bg-panel px-3 py-2 text-sm font-semibold text-strong"
@@ -163,7 +164,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
           <p className="mt-1 text-xs text-muted">Adjust a team&apos;s Elo rating, the model&apos;s measure of strength.</p>
           <div className="mt-3 flex items-center gap-3">
             <TeamLogo abbr={boostTeam} size={40} />
-            <TeamSelect value={boostTeam} onChange={setBoostTeam} teams={teams} />
+            <TeamSelect value={boostTeam} onChange={setBoostTeam} teams={teams} label="Team to adjust" />
           </div>
           {base[boostTeam].qb && (
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
@@ -230,7 +231,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
           <p className="mt-1 text-xs text-muted">Pick a team, then decide how its remaining games end.</p>
           <div className="mt-3 flex items-center gap-3">
             <TeamLogo abbr={forceTeam} size={40} />
-            <TeamSelect value={forceTeam} onChange={(t) => void loadGames(t)} teams={teams} />
+            <TeamSelect value={forceTeam} onChange={(t) => void loadGames(t)} teams={teams} label="Team whose game result to force" />
           </div>
           <ul className="mt-3 max-h-72 space-y-1 overflow-y-auto pr-1">
             {games === null && <li className="py-3 text-center text-sm text-muted">Loading schedule…</li>}

@@ -503,7 +503,7 @@ function TeamCarousel({
           </div>
 
           <div className="mt-1 text-xs font-semibold tracking-[0.2em] text-white/75 uppercase">{t.division}</div>
-          <h3 className="font-display flex h-[2em] items-center justify-center text-4xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">{t.name}</h3>
+          <h2 className="font-display flex h-[2em] items-center justify-center text-4xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">{t.name}</h2>
 
           <div className="mt-2 flex items-end justify-center gap-3">
             <div>

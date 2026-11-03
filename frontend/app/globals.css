@@ -11,7 +11,7 @@
   --accent: #1d6fe0; /* bright blue: primary actions and highlights */
   --gold: #f5b301; /* champion highlight only */
   --blue: #2b8cff;
-  --good: #22c55e;
+  --good: #16a34a; /* (deep enough that white text on it is readable) */
   --bad: #f04b4b;
 
   --chart-bar: #2b8cff;

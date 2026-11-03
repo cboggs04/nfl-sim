@@ -41,8 +41,8 @@ function ResultCell({ g, team, drives }: { g: GameView; team: string; drives?: D
     return (
       <span className="inline-flex items-center gap-3">
         <span
-          className={`font-display inline-flex h-9 w-9 items-center justify-center rounded text-xl text-white ${
-            g.result === "W" ? "bg-good" : g.result === "L" ? "bg-bad" : "bg-zinc-500"
+          className={`font-display inline-flex h-9 w-9 items-center justify-center rounded text-xl ${
+            g.result === "W" ? "bg-good text-white" : g.result === "L" ? "bg-bad text-white" : "bg-zinc-500 text-white"
           }`}
           aria-label={g.result === "W" ? "Win" : g.result === "L" ? "Loss" : "Tie"}
         >
