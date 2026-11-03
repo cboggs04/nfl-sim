@@ -230,12 +230,12 @@ function TeamCarousel({
             <div className="flex w-28 flex-col items-center gap-1 sm:w-32">
               <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={96} />
               <div className="text-[9px] font-semibold tracking-widest text-white/70 uppercase">Quarterback</div>
-              <div className="font-display text-xl leading-none [text-shadow:0_2px_8px_rgba(0,0,0,.55)]">{t.qb ?? "TBD"}</div>
+              <div className="font-display flex h-[2em] items-center justify-center text-xl leading-none [text-shadow:0_2px_8px_rgba(0,0,0,.55)]">{t.qb ?? "TBD"}</div>
             </div>
           </div>
 
           <div className="mt-2 text-xs font-semibold tracking-[0.2em] text-white/75 uppercase">{t.division}</div>
-          <h3 className="font-display text-4xl [text-shadow:0_2px_10px_rgba(0,0,0,.55)] sm:text-5xl">{t.name}</h3>
+          <h3 className="font-display flex h-[2em] items-center justify-center text-4xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,.55)] sm:text-5xl">{t.name}</h3>
 
           <div className="mt-2 flex items-end justify-center gap-3">
             <div>
