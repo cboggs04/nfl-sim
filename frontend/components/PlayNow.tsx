@@ -492,22 +492,22 @@ function TeamCarousel({
               <TeamLogo abbr={t.team} size={128} />
             </div>
             <div className="hidden sm:block">
-              <TeamLogo abbr={t.team} size={184} />
+              <TeamLogo abbr={t.team} size={132} />
             </div>
             <div className="flex w-28 flex-col items-center gap-1 sm:w-32">
-              <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={96} />
+              <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={80} />
               <div className="text-[9px] font-semibold tracking-widest text-white/70 uppercase">Quarterback</div>
               <div className="font-display flex h-[2em] items-center justify-center text-xl leading-none [text-shadow:0_2px_8px_rgba(0,0,0,.55)]">{t.qb ?? "TBD"}</div>
             </div>
           </div>
 
-          <div className="mt-2 text-xs font-semibold tracking-[0.2em] text-white/75 uppercase">{t.division}</div>
-          <h3 className="font-display flex h-[2em] items-center justify-center text-4xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,.55)] sm:text-5xl">{t.name}</h3>
+          <div className="mt-1 text-xs font-semibold tracking-[0.2em] text-white/75 uppercase">{t.division}</div>
+          <h3 className="font-display flex h-[2em] items-center justify-center text-4xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">{t.name}</h3>
 
           <div className="mt-2 flex items-end justify-center gap-3">
             <div>
               <div className="text-[10px] font-semibold tracking-widest text-white/70 uppercase">Team rating</div>
-              <div className="font-display text-6xl tabular-nums [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">
+              <div className="font-display text-5xl tabular-nums [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">
                 {r100}
                 <span className="ml-1 text-2xl text-white/70">/100</span>
               </div>
@@ -578,13 +578,13 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
 
   return (
     <div>
-      <p className="mt-3 max-w-2xl text-sm text-muted">
-        Run the offense. Throw to your receivers, scramble, pick your plays and go for the end zone. Between your drives the other team&apos;s
-        possessions are simulated from the two teams&apos; ratings, so a stronger team has a real edge. Four short quarters, about a minute each.
+      <p className="mt-2 max-w-4xl text-sm text-muted [@media(max-height:780px)]:hidden">
+        Run the offense: throw to your receivers, scramble, pick your plays and go for the end zone. Between your drives the other team&apos;s possessions are
+        simulated from the two teams&apos; ratings, so a stronger team has a real edge. Four short quarters, about a minute each. Flip through the teams with the arrows
+        (or click a card and use the arrow keys), and click the <b className="text-strong">?</b> for the controls.
       </p>
       <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">On a phone? Turn it sideways: the game plays in landscape with on-screen controls. To hide the Safari address bar on an iPhone, tap Share, then Add to Home Screen, and open the game from there. A keyboard works on a computer.</p>
-      <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use the arrow keys).</p>
-      <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-5">
+      <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
         <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} jersey={userJersey} onJersey={setUserJersey} />
         <div className="flex items-center justify-center" aria-hidden>
           <span
@@ -596,42 +596,44 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         </div>
         <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} jersey={oppJersey} onJersey={setOppJersey} arrowsNearVs />
       </div>
-      <div className="mt-5">
-        <div className="text-xs font-semibold tracking-widest text-muted uppercase">Difficulty</div>
-        <div role="radiogroup" aria-label="Difficulty" className="mt-2 flex flex-wrap items-center gap-3">
-          <div className="inline-flex overflow-hidden rounded-md ring-1 ring-line">
-            {LEVELS.map((l) => (
-              <button
-                key={l.id}
-                role="radio"
-                aria-checked={level === l.id}
-                onClick={() => setLevel(l.id)}
-                className={`font-display px-4 py-2 text-xl sm:px-6 sm:text-2xl ${level === l.id ? "bg-accent text-on-accent" : "bg-head text-strong hover:bg-hover"}`}
-              >
-                {l.label}
-              </button>
-            ))}
-          </div>
-          <p className="max-w-md text-sm text-muted">{LEVELS.find((l) => l.id === level)!.blurb}</p>
-        </div>
-      </div>
-      <div className="mt-5 flex flex-wrap items-center gap-4">
-        <button
-          onClick={() => {
-            enterTouchMode();
-            onStart(user, opp, level, userJersey, oppJersey);
-          }} disabled={user === opp} className="btn btn-primary text-2xl">
-          Kick off
-        </button>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
         <div>
-          <div className="text-sm font-semibold text-strong">{matchup}</div>
-          {user !== opp && clash && <div className="text-xs font-semibold text-bad-ink">The two uniforms look alike. Switch one team to a different uniform.</div>}
-          {user !== opp && <div className="text-xs text-muted">The ratings give {u.team} about a {winPct}% chance in a normal game.</div>}
+          <div className="text-xs font-semibold tracking-widest text-muted uppercase">Difficulty</div>
+          <div role="radiogroup" aria-label="Difficulty" className="mt-1 flex flex-wrap items-center gap-3">
+            <div className="inline-flex overflow-hidden rounded-md ring-1 ring-line">
+              {LEVELS.map((l) => (
+                <button
+                  key={l.id}
+                  role="radio"
+                  aria-checked={level === l.id}
+                  onClick={() => setLevel(l.id)}
+                  className={`font-display px-4 py-1.5 text-xl sm:px-5 sm:text-2xl ${level === l.id ? "bg-accent text-on-accent" : "bg-head text-strong hover:bg-hover"}`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+            <p className="max-w-xs text-sm text-muted">{LEVELS.find((l) => l.id === level)!.blurb}</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <div>
+            <div className="text-sm font-semibold text-strong">{matchup}</div>
+            {user !== opp && clash && <div className="text-xs font-semibold text-bad-ink">The two uniforms look alike. Switch one team to a different uniform.</div>}
+            {user !== opp && <div className="text-xs text-muted">The ratings give {u.team} about a {winPct}% chance in a normal game.</div>}
+          </div>
+          <button
+            onClick={() => {
+              enterTouchMode();
+              onStart(user, opp, level, userJersey, oppJersey);
+            }}
+            disabled={user === opp}
+            className="btn btn-primary text-2xl"
+          >
+            Kick off
+          </button>
         </div>
       </div>
-      <p className="mt-6 text-sm text-muted">
-        New to it? Click the <b className="text-strong">?</b> at the top right for the controls and how to play.
-      </p>
     </div>
   );
 }
@@ -1351,14 +1353,14 @@ export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
     <div>
       <div className="flex items-start justify-between gap-4">
         {/* while a game is on, the title shrinks to leave more room for the field */}
-        <h1 className={`font-display text-strong ${setup ? "text-4xl sm:text-5xl" : "text-5xl sm:text-8xl"}`}>
+        <h1 className={`font-display text-strong ${setup ? "text-4xl sm:text-5xl" : "text-5xl sm:text-6xl"}`}>
           Play <span className="text-accent-ink">Now</span>
         </h1>
         <button
           onClick={() => setHelp(true)}
           aria-label="How to play and controls"
           title="How to play and controls"
-          className={`font-display flex shrink-0 items-center justify-center rounded-full bg-accent text-on-accent shadow-md hover:brightness-110 ${setup ? "h-9 w-9 text-2xl sm:h-10 sm:w-10" : "mt-2 h-11 w-11 text-3xl sm:mt-4 sm:h-14 sm:w-14 sm:text-4xl"}`}
+          className={`font-display flex shrink-0 items-center justify-center rounded-full bg-accent text-on-accent shadow-md hover:brightness-110 ${setup ? "h-9 w-9 text-2xl sm:h-10 sm:w-10" : "mt-1 h-11 w-11 text-3xl sm:h-12 sm:w-12 sm:text-4xl"}`}
         >
           ?
         </button>
