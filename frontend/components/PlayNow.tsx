@@ -6,7 +6,7 @@ import Headshot from "@/components/Headshot";
 import PlayHelp from "@/components/PlayHelp";
 import TeamLogo from "@/components/TeamLogo";
 import { buildSprites, type Sprites } from "@/lib/pixelSprites";
-import { FootballGame, GOAL_L, GOAL_R, WORLD_W, Y_MID, type Difficulty, type OppDrive, type Phase } from "@/lib/playNow/engine";
+import { FootballGame, GOAL_L, GOAL_R, PLAYS, WORLD_W, Y_MID, type Difficulty, type OppDrive, type Phase } from "@/lib/playNow/engine";
 import { logoSrc, teamInfo } from "@/lib/teams";
 import type { TeamOdds } from "@/lib/types";
 
@@ -112,6 +112,7 @@ interface Hud {
   situation: string;
   message: string;
   selected: "pass" | "run";
+  choice: number; // which of the three plays is picked
   down: number;
   canKick: boolean;
   fgDistance: number;
@@ -135,12 +136,13 @@ function snapshot(g: FootballGame): Hud {
     situation: `${ordinal(g.down)} & ${g.toGo >= 100 - g.yardLine && g.yardLine >= 90 ? "GOAL" : g.toGo} · ${g.ownerLabel}`,
     message: g.message,
     selected: g.selected,
+    choice: g.choice[g.selected],
     down: g.down,
     canKick: g.canKick,
     fgDistance: Math.round(g.fgDistance),
     oppDrive: g.oppDrive,
     oppProgress: Math.min(1, g.oppT / g.oppDurReal),
-    boost: g.phase === "live" ? Math.max(0, Math.min(1, 1 - (g.boostReady - g.t) / 2)) : 1,
+    boost: g.phase === "live" ? Math.max(0, Math.min(1, 1 - (g.boostReady - g.t) / 1.8)) : 1,
     carrying,
     stats: { ...g.stats },
   };
@@ -437,13 +439,13 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
           game_.press("continue");
           break;
         case "Digit1":
-          game_.press("throw1");
+          game_.press(game_.phase === "presnap" ? "play1" : "throw1");
           break;
         case "Digit2":
-          game_.press("throw2");
+          game_.press(game_.phase === "presnap" ? "play2" : "throw2");
           break;
         case "Digit3":
-          game_.press("throw3");
+          game_.press(game_.phase === "presnap" ? "play3" : "throw3");
           break;
         case "KeyF":
           game_.press("fieldGoal");
@@ -528,6 +530,22 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             for (let k = 1; k <= n; k += 2) g.fillRect(sx(px + ((tx - px) * k) / n), Math.round(py + ((ty - py) * k) / n), 1, 1);
             px = tx;
             py = ty;
+          }
+        }
+      }
+
+      // a run play shows where the back is headed
+      if (game.phase === "presnap" && game.selected === "run") {
+        const rb = game.ent("rb");
+        if (rb) {
+          const pts: [number, number][] =
+            game.play.id === "outside" ? [[rb.x, rb.y], [rb.x + 28, Math.min(160, rb.y + 6)], [rb.x + 110, Math.min(160, rb.y + 6)]] : game.play.id === "draw" ? [[rb.x, rb.y], [rb.x + 40, Y_MID], [rb.x + 100, Y_MID - 6]] : [[rb.x, rb.y], [rb.x + 30, Y_MID + 4], [rb.x + 100, Y_MID]];
+          g.fillStyle = "rgba(250,204,21,0.8)";
+          for (let i = 1; i < pts.length; i++) {
+            const [ax, ay] = pts[i - 1];
+            const [bx2, by2] = pts[i];
+            const n = Math.max(1, Math.floor(Math.hypot(bx2 - ax, by2 - ay) / 5));
+            for (let k = 1; k <= n; k += 2) g.fillRect(sx(ax + ((bx2 - ax) * k) / n), Math.round(ay + ((by2 - ay) * k) / n), 1, 1);
           }
         }
       }
@@ -665,8 +683,26 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             )}
 
             {hud.phase === "presnap" && (
-              <div className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
-                <span className="font-pixel rounded bg-black/60 px-2 py-1 text-[8px] text-white sm:text-[10px]">{hud.down === 4 ? "4TH DOWN: CHOOSE" : "PICK A PLAY, THEN SNAP"}</span>
+              <div className="absolute inset-x-0 top-1.5 flex flex-col items-center gap-1 px-2 sm:top-2 sm:gap-1.5">
+                <span className="font-pixel pointer-events-none rounded bg-black/60 px-2 py-1 text-[7px] text-white sm:text-[10px]">
+                  {hud.down === 4 ? "4TH DOWN: CHOOSE, OR PICK A PLAY TO GO FOR IT" : "PICK A PLAY (1 2 3), THEN SNAP"}
+                </span>
+                <div className="flex w-full max-w-2xl justify-center gap-1.5 sm:gap-2">
+                  {PLAYS[hud.selected].map((p, i) => (
+                    <button
+                      key={p.id}
+                      onClick={() => act(`play${i + 1}` as "play1" | "play2" | "play3")}
+                      aria-pressed={hud.choice === i}
+                      className={`flex min-w-0 flex-1 items-center gap-1.5 rounded px-1.5 py-1 text-left ring-2 sm:gap-2 sm:px-2 sm:py-1.5 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-black/85 text-white ring-white/20 hover:bg-black"}`}
+                    >
+                      <span className={`font-pixel flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] sm:h-7 sm:w-7 sm:text-sm ${hud.choice === i ? "bg-black text-yellow-300" : "bg-white/20"}`}>{i + 1}</span>
+                      <span className="min-w-0">
+                        <span className="font-pixel block truncate text-[7px] sm:text-[10px]">{p.name.toUpperCase()}</span>
+                        <span className={`hidden truncate text-[10px] leading-tight sm:block ${hud.choice === i ? "text-black/70" : "text-white/70"}`}>{p.blurb}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 

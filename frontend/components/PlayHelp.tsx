@@ -7,7 +7,7 @@ const KEYS: [string, string][] = [
   ["← →", "Before the snap: choose a pass or a run"],
   ["Space", "Snap the ball. While you have the ball in the open, sprint (it recharges)"],
   ["Arrow keys / WASD", "Move the quarterback or the ball carrier"],
-  ["1  2  3", "Throw to the receiver with that number"],
+  ["1  2  3", "Before the snap: pick one of the three plays shown. During a pass: throw to the receiver with that number"],
   ["F", "4th down: kick a field goal (shows the distance)"],
   ["P", "4th down: punt"],
   ["Space", "4th down: go for it"],
@@ -62,7 +62,7 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
           <h3 className="font-display text-2xl text-accent-ink">Running a play</h3>
           <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-muted">
             <li>
-              <b className="text-strong">Pick the play</b> with ← → (pass or run). The dotted lines show where each numbered receiver is going.
+              <b className="text-strong">Pick pass or run</b> with ← →, then pick one of the three plays with <b className="text-strong">1, 2 or 3</b> (Quick Slants, Crossers or Deep Shots; Inside Run, Outside Sweep or Draw). The dotted lines show the routes or where the back is headed.
             </li>
             <li>
               <b className="text-strong">Press Space</b> to snap the ball.

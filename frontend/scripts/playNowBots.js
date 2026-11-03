@@ -33,7 +33,7 @@ function play(seed,userR,oppR,skill){
   while(g.phase!=="final"&&steps<400000){ steps++;
     if(g.phase==="presnap"){
       if(g.down===4){ if(g.toGo<=2&&g.yardLine>45&&rng()<0.7){} else if(g.canKick){g.press("fieldGoal");g.update(1/60);continue;} else {g.press("punt");g.update(1/60);continue;} }
-      g.press(rng()<skill.run?"selectRun":"selectPass"); g.press("snap"); g.update(1/60); continue; }
+      g.press(rng()<skill.run?"selectRun":"selectPass"); g.press("play"+(1+Math.floor(rng()*3))); g.press("snap"); g.update(1/60); continue; }
     if(g.phase==="live"){
       const carrying=g.ball.holder===g.controlled&&(g.caught||g.playKind==="run"||g.pastLine);
       if(g.playKind==="pass"&&!g.ball.flight&&g.ball.holder==="qb"&&!g.pastLine){

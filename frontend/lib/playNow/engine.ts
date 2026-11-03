@@ -19,7 +19,7 @@ const CATCH_GRACE = 0.3; // seconds after a catch before a defender can tackle t
 export type Rng = () => number;
 export type Phase = "presnap" | "live" | "kick" | "result" | "opp" | "halftime" | "final";
 export type PlayKind = "pass" | "run";
-export type Action = "snap" | "selectPass" | "selectRun" | "fieldGoal" | "punt" | "throw1" | "throw2" | "throw3" | "boost" | "continue";
+export type Action = "snap" | "selectPass" | "selectRun" | "fieldGoal" | "punt" | "throw1" | "throw2" | "throw3" | "play1" | "play2" | "play3" | "boost" | "continue";
 
 export interface TeamRating {
   abbr: string;
@@ -42,9 +42,9 @@ export interface Tuning {
   oppEdge: number; // added to your edge when the computer team's drives are simulated
 }
 export const DIFFICULTY: Record<Difficulty, Tuning> = {
-  rookie: { defSpeed: 0.95, offSpeed: 1.03, rushTime: 1.25, runBlockFail: 0.27, cover: 1.4, tackle: 0.93, catchBonus: 0.06, intMult: 0.7, oppEdge: 0.1 },
-  pro: { defSpeed: 1, offSpeed: 1, rushTime: 1, runBlockFail: 0.35, cover: 1, tackle: 1, catchBonus: 0, intMult: 1, oppEdge: 0 },
-  allstar: { defSpeed: 1.03, offSpeed: 1, rushTime: 0.85, runBlockFail: 0.42, cover: 0.7, tackle: 1.06, catchBonus: -0.05, intMult: 1.3, oppEdge: -0.15 },
+  rookie: { defSpeed: 0.95, offSpeed: 1.03, rushTime: 1.25, runBlockFail: 0.3, cover: 1.4, tackle: 0.93, catchBonus: 0.06, intMult: 0.7, oppEdge: 0.1 },
+  pro: { defSpeed: 1, offSpeed: 1, rushTime: 1, runBlockFail: 0.38, cover: 1, tackle: 1, catchBonus: 0, intMult: 1, oppEdge: 0 },
+  allstar: { defSpeed: 1.03, offSpeed: 1, rushTime: 0.85, runBlockFail: 0.45, cover: 0.7, tackle: 1.06, catchBonus: -0.05, intMult: 1.3, oppEdge: -0.15 },
 };
 
 export interface Ent {
@@ -122,7 +122,29 @@ const ROUTES: Record<string, [number, number][]> = {
   drag: [[12, 6], [26, 52]],
   flat: [[8, -14], [44, -36]],
 };
-const ROUTE_NAMES = Object.keys(ROUTES);
+export interface PlayDef {
+  id: string;
+  name: string;
+  blurb: string;
+  routes?: [string, string, string]; // a pass play: the routes of receivers 1, 2 and 3
+  dlHold?: number; // a run play: how long the line holds the defensive line (1 = normal)
+  edgeHold?: number; // ... and how long the receivers hold the linebackers and cornerbacks
+  delay?: number; // ... extra seconds the defense is fooled before it reacts
+  rbY?: number; // ... where the running back lines up (default: just behind the line, to the side)
+}
+/** Three plays to choose from after picking pass or run. Press 1, 2 or 3 before the snap. */
+export const PLAYS: { pass: PlayDef[]; run: PlayDef[] } = {
+  pass: [
+    { id: "slants", name: "Quick Slants", blurb: "Short and safe: slants and a flat route", routes: ["slant", "slant", "flat"] },
+    { id: "crossers", name: "Crossers", blurb: "Medium: drags across the middle and a curl", routes: ["drag", "drag", "curl"] },
+    { id: "deep", name: "Deep Shots", blurb: "Long: go routes and a post. Risky, big gains", routes: ["go", "post", "go"] },
+  ],
+  run: [
+    { id: "inside", name: "Inside Run", blurb: "Up the middle behind the line: steady gains", dlHold: 1.2, edgeHold: 0.9 },
+    { id: "outside", name: "Outside Sweep", blurb: "Bounce it to the edge: receivers block downfield", dlHold: 0.85, edgeHold: 1.3, rbY: 150 },
+    { id: "draw", name: "Draw", blurb: "Fakes the pass: the defense bites for a moment", dlHold: 0.95, edgeHold: 1, delay: 0.25 },
+  ],
+};
 
 /**
  * One possession of the other team, simulated. Chances come from league-average drive results (about 22% touchdowns,
@@ -185,6 +207,7 @@ export class FootballGame {
   toGo = 10;
   phase: Phase = "presnap";
   selected: PlayKind = "pass";
+  choice = { pass: 0, run: 0 }; // which of the three plays is picked for each kind
   message = "";
   stats: Stats = { passAtt: 0, passComp: 0, passYds: 0, rushYds: 0, sacks: 0, ints: 0, firstDowns: 0 };
 
@@ -201,6 +224,7 @@ export class FootballGame {
   private moveX = 0;
   private moveY = 0;
   private pressured = false;
+  private runDelay = 0; // seconds the defense is fooled at the start of a draw
 
   // results, kicks and opponent drives
   private resultT = 0;
@@ -224,6 +248,10 @@ export class FootballGame {
   }
 
   // ---------------------------------------------------------------- queries
+  /** The play picked for the kind of play currently selected. */
+  get play(): PlayDef {
+    return PLAYS[this.selected][this.choice[this.selected]];
+  }
   get losX() {
     return GOAL_L + this.yardLine * PX_PER_YD;
   }
@@ -261,7 +289,10 @@ export class FootballGame {
       case "presnap":
         if (a === "selectPass") this.selected = this.playKind = "pass";
         else if (a === "selectRun") this.selected = this.playKind = "run";
-        else if (a === "snap") this.snap();
+        else if (a === "play1" || a === "play2" || a === "play3") {
+          this.choice[this.selected] = Number(a.slice(-1)) - 1;
+          this.applyPlay();
+        } else if (a === "snap") this.snap();
         else if (a === "fieldGoal" && this.down === 4 && this.canKick) this.startFieldGoal();
         else if (a === "punt" && this.down === 4) this.startPunt();
         break;
@@ -326,6 +357,25 @@ export class FootballGame {
     };
   }
 
+  /** Give the receivers the routes of the picked pass play. */
+  private assignRoutes() {
+    const routes = PLAYS.pass[this.choice.pass].routes!;
+    ["wr1", "wr2", "wr3"].forEach((id, i) => {
+      const e = this.ent(id);
+      if (!e) return;
+      const toMid = e.y < Y_MID ? 1 : -1;
+      e.route = { pts: ROUTES[routes[i]].map(([dx, dy]) => [e.x + dx, clamp(e.y + dy * toMid, Y_MIN, Y_MAX)] as [number, number]), i: 0 };
+      e.num = i + 1;
+    });
+  }
+
+  /** The play just picked changes how the players line up (the sweep back lines up wide, the pass routes change). */
+  private applyPlay() {
+    this.assignRoutes();
+    const rb = this.ent("rb");
+    if (rb) rb.y = this.selected === "run" && this.play.rbY ? this.play.rbY : Y_MID + 10;
+  }
+
   private buildFormation() {
     const L = this.losX;
     const dm = (1 - 0.05 * this.edge) * this.tune.defSpeed; // better teams face slower defenders; the level changes it too
@@ -348,15 +398,8 @@ export class FootballGame {
       this.mkEnt("cb2", "def", "cb", L + 8, 152, 64 * dm),
       this.mkEnt("s", "def", "s", L + 44, Y_MID, 63 * dm),
     ];
-    // three different routes for the three receivers
-    const names = [...ROUTE_NAMES];
-    for (const id of ["wr1", "wr2", "wr3"]) {
-      const e = ents.find((x) => x.id === id)!;
-      const name = names.splice(Math.floor(this.rng() * names.length), 1)[0];
-      const toMid = e.y < Y_MID ? 1 : -1;
-      e.route = { pts: ROUTES[name].map(([dx, dy]) => [e.x + dx, clamp(e.y + dy * toMid, Y_MIN, Y_MAX)] as [number, number]), i: 0 };
-      e.num = Number(id.slice(-1));
-    }
+    this.ents = ents;
+    this.assignRoutes();
     for (const [ol, dl] of [["ol1", "dl1"], ["ol2", "dl2"], ["ol3", "dl3"]]) ents.find((x) => x.id === ol)!.blocking = dl;
     ents.find((x) => x.id === "cb1")!.cover = "wr1";
     ents.find((x) => x.id === "cb2")!.cover = "wr2";
@@ -368,6 +411,7 @@ export class FootballGame {
     const lb1 = ents.find((x) => x.id === "lb1")!;
     lb1.breakAt = (roll < 0.28 ? 0.5 + this.rng() * 0.6 : 2.2 + this.rng() * 0.8) * this.tune.rushTime; // a blitzing linebacker is the fastest of all
     this.ents = ents;
+    this.applyPlay();
     this.controlled = "qb";
     this.ball = { x: L - 20, y: Y_MID - 6, z: 0, holder: "qb", flight: null };
   }
@@ -380,6 +424,7 @@ export class FootballGame {
     if (this.playKind === "run") {
       this.controlled = "rb";
       this.ball.holder = "rb";
+      this.runDelay = this.play.delay ?? 0;
       // on a run the receivers block downfield instead of running routes, and the line holds its men longer
       for (const [wr, d] of [["wr1", "cb1"], ["wr2", "cb2"], ["wr3", "lb2"]]) {
         const e = this.ent(wr)!;
@@ -389,7 +434,8 @@ export class FootballGame {
       }
       for (const d of this.ents) {
         if (d.side !== "def" || !["dl", "cb", "lb"].includes(d.role) || d.id === "lb1") continue;
-        const held = d.role === "dl" ? 0.6 + this.rng() * 0.7 : d.role === "cb" ? 0.7 + this.rng() * 0.6 : 0.8 + this.rng() * 0.7;
+        const pl = this.play; // the run play picked before the snap decides who is held longer
+        const held = (d.role === "dl" ? 0.6 + this.rng() * 0.7 : d.role === "cb" ? 0.7 + this.rng() * 0.6 : 0.8 + this.rng() * 0.7) * (d.role === "dl" ? pl.dlHold ?? 1 : pl.edgeHold ?? 1);
         // some blocks simply fail: the defender beats his man right away and the run is stuffed
         d.breakAt = (this.rng() < this.tune.runBlockFail ? 0.15 + this.rng() * 0.25 : held * this.tune.rushTime) * (1 + 0.2 * this.edge);
       }
@@ -406,8 +452,8 @@ export class FootballGame {
   // ---------------------------------------------------------------- a live play
   private boost() {
     if (this.t >= this.boostReady && this.holder()?.id === this.controlled && (this.caught || this.playKind === "run" || this.pastLine)) {
-      this.boostUntil = this.t + 0.7;
-      this.boostReady = this.t + 2.0;
+      this.boostUntil = this.t + 0.8;
+      this.boostReady = this.t + 1.8;
     }
   }
 
@@ -539,7 +585,7 @@ export class FootballGame {
         continue;
       }
       if (this.playKind === "run") {
-        const delay = d.role === "dl" ? 0.4 : d.role === "lb" ? 0.3 : d.role === "s" ? 0.35 : 0.5;
+        const delay = (d.role === "dl" ? 0.4 : d.role === "lb" ? 0.3 : d.role === "s" ? 0.35 : 0.5) + this.runDelay;
         if (this.t < delay) {
           this.step(d, d.x, d.y, 0, dt);
         } else chase(d.speed);
@@ -665,7 +711,7 @@ export class FootballGame {
         return this.endPlay("sack", h.x);
       }
       // a blocked defender can still arm-tackle a runner who goes right past him, just much less often
-      const p = d.engaged ? (boosting ? 0.28 : 0.55) : boosting ? 0.42 : 0.74;
+      const p = d.engaged ? (boosting ? 0.26 : 0.5) : boosting ? 0.4 : 0.74;
       if (this.rng() < Math.min(0.95, p * this.tune.tackle)) return this.endPlay("tackle", h.x);
       d.cooldown = 0.7; // he whiffed
     }
