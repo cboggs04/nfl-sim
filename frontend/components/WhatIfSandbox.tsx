@@ -233,8 +233,10 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
+    <div className="space-y-6">
       <div className="min-w-0 space-y-5">
+        {/* the three ways to change the world sit side by side; the results come below */}
+        <div className="grid items-stretch gap-5 lg:grid-cols-3">
         <section className="panel p-5">
           <h2 className="font-display text-3xl text-strong">1 · Change a team</h2>
           <p className="mt-1 text-xs text-muted">Adjust a team&apos;s Elo rating, the model&apos;s measure of strength.</p>
@@ -309,7 +311,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
             <TeamLogo abbr={forceTeam} size={40} />
             <TeamSelect value={forceTeam} onChange={(t) => void loadGames(t)} teams={teams} label="Team whose game result to force" />
           </div>
-          <ul className="mt-3 max-h-72 space-y-1 overflow-y-auto pr-1">
+          <ul className="mt-3 max-h-72 space-y-1 overflow-y-auto pr-1 lg:max-h-80">
             {games === null && <li className="py-3 text-center text-sm text-muted">Loading schedule…</li>}
             {games?.length === 0 && <li className="py-3 text-center text-sm text-muted">No games left to force.</li>}
             {games?.map((g) => {
@@ -355,7 +357,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
         <section className="panel p-5">
           <h2 className="font-display text-3xl text-strong">3 · Trade players</h2>
           <p className="mt-1 text-xs text-muted">Swap a player from each team and see how both teams&apos; odds change. Each team has to get a player back.</p>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             {([
               { side: "from" as const, team: tradeFrom, cands: candFrom, pick: pickFrom, setPick: setPickFrom, label: "sends" },
               { side: "to" as const, team: tradeTo, cands: candTo, pick: pickTo, setPick: setPickTo, label: "sends" },
@@ -363,7 +365,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
               <div key={col.side} className="min-w-0">
                 <TeamSelect value={col.team} onChange={(t) => void loadSide(t, col.side)} teams={teams} label={col.side === "from" ? "First team in the trade" : "Second team in the trade"} />
                 <div className="mt-1 text-[11px] font-semibold tracking-widest text-muted uppercase">{teamInfo(col.team).name.split(" ").pop()} {col.label}</div>
-                <ul className="mt-1 max-h-56 space-y-1 overflow-y-auto pr-1" role="radiogroup" aria-label={`Player ${teamInfo(col.team).name} sends`}>
+                <ul className="mt-1 max-h-56 space-y-1 overflow-y-auto pr-1 lg:max-h-40" role="radiogroup" aria-label={`Player ${teamInfo(col.team).name} sends`}>
                   {col.cands === null && <li className="py-3 text-center text-sm text-muted">Loading players…</li>}
                   {col.cands?.length === 0 && <li className="py-3 text-center text-sm text-muted">No tradable players found.</li>}
                   {col.cands?.map((c) => (
@@ -425,6 +427,8 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
             </ul>
           )}
         </section>
+
+        </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <button onClick={run} disabled={loading || changes === 0} className="btn btn-primary text-xl">
