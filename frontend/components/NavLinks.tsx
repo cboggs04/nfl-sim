@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/leaders", label: "Stat leaders" },
   { href: "/whatif", label: "What-if" },
   { href: "/backtest", label: "Model accuracy" },
+  { href: "/play", label: "Play now" },
 ];
 
 const isActive = (href: string, pathname: string) => (href === "/" ? pathname === "/" || pathname.startsWith("/teams") : pathname.startsWith(href));

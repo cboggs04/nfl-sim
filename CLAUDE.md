@@ -11,7 +11,9 @@ Live on Vercel (site) + Render (API); code at github.com/cboggs04/nfl-sim. Built
 - What-if sandbox: adjust team Elo or force game results, re-run 2,000 sims.
 - Model accuracy page: backtest, calibration, how each model improvement scored.
 - Light theme is the default (dark available via toggle); phone layout via responsive CSS.
-Not built yet: Claude API chat layer (feature 6); an idea for a pixel-art Super Bowl animation with confetti (scripted to the model's winner, cosmetic score).
+- Playoff games: model-simulated scores (engine/scores.py) shown on the cards; every played game has a pixel-art Replay (the Super Bowl opens by itself). Plays/drives are for show; the model only picks the winner and the score.
+- Play now (/play): a keyboard pixel-art football game (you play offense vs the computer defense; the other team's drives are simulated from team ratings). Engine in `frontend/lib/playNow/engine.ts` (pure TS, bot-tested via `frontend/scripts/playNowBots.js`), screen in `components/PlayNow.tsx`. Two halves of 10:00 game clock (5x speed while the ball is live, about 90-120 s real time each).
+Not built yet: Claude API chat layer (feature 6).
 
 ## Stack
 - Backend: Python 3.11 + FastAPI (numpy, polars, pydantic). Hosted on Render (`render.yaml`, `backend/requirements-api.txt`).
