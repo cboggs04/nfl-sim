@@ -478,7 +478,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
       if ((e.target as HTMLElement)?.closest?.("select, input, textarea")) return;
       const dir = dirOf(e.code);
       const game_ = game;
-      if (dir || ["Space", "Enter", "Digit1", "Digit2", "Digit3", "KeyF", "KeyP"].includes(e.code)) e.preventDefault();
+      if (dir || ["Space", "Enter", "Digit1", "Digit2", "Digit3", "KeyZ", "KeyX", "KeyC", "KeyF", "KeyP"].includes(e.code)) e.preventDefault();
       if (dir) {
         keys.current.add(dir);
         if (game_.phase === "presnap" && !e.repeat) {
@@ -497,12 +497,15 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
           game_.press("continue");
           break;
         case "Digit1":
+        case "KeyZ":
           game_.press(game_.phase === "presnap" ? "play1" : "throw1");
           break;
         case "Digit2":
+        case "KeyX":
           game_.press(game_.phase === "presnap" ? "play2" : "throw2");
           break;
         case "Digit3":
+        case "KeyC":
           game_.press(game_.phase === "presnap" ? "play3" : "throw3");
           break;
         case "KeyF":
@@ -619,13 +622,38 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
         g.drawImage(sprite, x - 4, y - sprite.height + 6);
       }
 
+      // Rookie: the receiver with the most room around him glows, so you know who to throw to
+      let openId: string | null = null;
+      if (level === "rookie" && game.phase === "live" && game.playKind === "pass" && !game.caught && !game.ball.flight && !game.pastLine) {
+        let best = -1;
+        for (const e of game.ents) {
+          if (!e.num) continue;
+          let near = 1e9;
+          for (const d of game.ents) if (d.side === "def") near = Math.min(near, Math.hypot(d.x - e.x, d.y - e.y));
+          if (near > best) {
+            best = near;
+            openId = e.id;
+          }
+        }
+      }
+
       // receiver numbers and a marker over the player you control
       if ((game.phase === "presnap" || game.phase === "live") && (game.phase === "presnap" ? game.selected : game.playKind) === "pass" && !game.caught && !game.ball.flight && !game.pastLine) {
         for (const e of game.ents) {
           if (!e.num) continue;
           const x = sx(e.x) - 3;
           const y = Math.round(e.y) - 22;
-          g.fillStyle = "#facc15";
+          if (e.id === openId) {
+            // a green box around the open receiver, and a green number tile
+            g.fillStyle = "#4ade80";
+            const bx0 = sx(e.x) - 8;
+            const by0 = Math.round(e.y) - 9;
+            g.fillRect(bx0, by0, 17, 1);
+            g.fillRect(bx0, by0 + 16, 17, 1);
+            g.fillRect(bx0, by0, 1, 17);
+            g.fillRect(bx0 + 16, by0, 1, 17);
+          }
+          g.fillStyle = e.id === openId ? "#4ade80" : "#facc15";
           g.fillRect(x - 2, y - 1, 9, 9);
           drawDigits(g, String(e.num), x + 1, y + 1, "#111827");
         }
@@ -666,7 +694,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [game, uInfo.primary, uInfo.secondary, oInfo.primary, oInfo.secondary]);
+  }, [game, level, uInfo.primary, uInfo.secondary, oInfo.primary, oInfo.secondary]);
 
   const act = (a: Parameters<FootballGame["press"]>[0]) => {
     game.press(a);
@@ -819,7 +847,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             {hud.phase === "presnap" && (
               <div className="mb-3">
                 <div className="font-pixel mb-1.5 text-center text-[7px] text-white/70 sm:text-[9px]">
-                  {hud.down === 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3), THEN SNAP"}
+                  {hud.down === 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (Z X C OR 1 2 3), THEN SNAP"}
                 </div>
                 <div className="mx-auto flex max-w-3xl justify-center gap-1.5 sm:gap-2">
                   {hud.plays.map((p, i) => (
@@ -880,7 +908,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             )}
             {hud.phase === "live" && (
               <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
-                <span className="font-pixel text-[8px] text-white/80 sm:text-[10px]">ARROWS MOVE · 1 2 3 THROW</span>
+                <span className="font-pixel text-[8px] text-white/80 sm:text-[10px]">ARROWS MOVE · Z X C (OR 1 2 3) THROW</span>
                 <span className="font-pixel flex items-center gap-2 text-[8px] text-white/80 sm:text-[10px]">
                   SPRINT (SPACE)
                   <span className="inline-block h-2 w-16 overflow-hidden rounded bg-white/20">

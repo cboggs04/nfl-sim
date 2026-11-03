@@ -7,7 +7,7 @@ const KEYS: [string, string][] = [
   ["← →", "Before the snap: choose a pass or a run"],
   ["Space", "Snap the ball. While you have the ball in the open, sprint (it recharges)"],
   ["Arrow keys / WASD", "Move the quarterback or the ball carrier"],
-  ["1  2  3", "Before the snap: pick one of the three plays shown. During a pass: throw to the receiver with that number"],
+  ["Z  X  C  (or 1  2  3)", "Before the snap: pick one of the three plays shown. During a pass: throw to receiver 1, 2 or 3. Z X C sit under your left hand"],
   ["F", "4th down: kick a field goal (shows the distance)"],
   ["P", "4th down: punt"],
   ["Space", "4th down: go for it"],
@@ -62,13 +62,13 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
           <h3 className="font-display text-2xl text-accent-ink">Running a play</h3>
           <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-muted">
             <li>
-              <b className="text-strong">Pick pass or run</b> with ← →, then pick one of the three plays with <b className="text-strong">1, 2 or 3</b> (three of five pass plays and three of five run plays are offered each snap). The dotted lines show the routes or where the back is headed.
+              <b className="text-strong">Pick pass or run</b> with ← →, then pick one of the three plays with <b className="text-strong">Z, X or C</b> (or 1, 2, 3) (three of five pass plays and three of five run plays are offered each snap). The dotted lines show the routes or where the back is headed.
             </li>
             <li>
               <b className="text-strong">Press Space</b> to snap the ball.
             </li>
             <li>
-              <b className="text-strong">On a pass</b>, the pass rush closes in after a few seconds. Press <b className="text-strong">1, 2 or 3</b> to throw to that
+              <b className="text-strong">On a pass</b>, the pass rush closes in after a few seconds. Press <b className="text-strong">Z, X or C</b> (or 1, 2, 3) to throw to that
               receiver, ideally the one with the most space around him. You can slide the quarterback with the arrow keys to buy time, but you can&apos;t throw
               once you cross the line of scrimmage.
             </li>
@@ -100,7 +100,7 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
           <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
             <li>On 4th down you choose: go for it, kick a field goal (up to about 62 yards, and longer kicks miss more) or punt.</li>
             <li>Missing the first-down line on 4th down gives the other team the ball where you stopped.</li>
-            <li>Pick a difficulty before kickoff: Rookie (receivers get open, slow pass rush, easy running), Pro, or All-Star (fast defenders and quick pressure).</li>
+            <li>Pick a difficulty before kickoff: Rookie (the most open receiver glows green, receivers get open, slow pass rush, easy running), Pro, or All-Star (fast defenders and quick pressure).</li>
             <li>Don&apos;t hold the ball too long: if a defender reaches the quarterback it&apos;s a sack.</li>
             <li>Running is safer than passing, but passing gains yards faster.</li>
             <li>The clock stops between plays, and the other team&apos;s drive uses up time, so a half is only a few possessions each.</li>
