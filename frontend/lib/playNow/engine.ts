@@ -19,7 +19,7 @@ const CATCH_GRACE = 0.3; // seconds after a catch before a defender can tackle t
 export type Rng = () => number;
 export type Phase = "presnap" | "live" | "kick" | "result" | "opp" | "halftime" | "final";
 export type PlayKind = "pass" | "run";
-export type Action = "snap" | "selectPass" | "selectRun" | "fieldGoal" | "punt" | "throw1" | "throw2" | "throw3" | "play1" | "play2" | "play3" | "boost" | "continue";
+export type Action = "snap" | "selectPass" | "selectRun" | "fieldGoal" | "punt" | "throw1" | "throw2" | "throw3" | "play1" | "play2" | "play3" | "prevPlay" | "nextPlay" | "boost" | "continue";
 
 export interface TeamRating {
   abbr: string;
@@ -297,6 +297,9 @@ export class FootballGame {
         else if (a === "selectRun") this.selected = this.playKind = "run";
         else if (a === "play1" || a === "play2" || a === "play3") {
           this.choice[this.selected] = Number(a.slice(-1)) - 1;
+          this.applyPlay();
+        } else if (a === "prevPlay" || a === "nextPlay") {
+          this.choice[this.selected] = (this.choice[this.selected] + (a === "nextPlay" ? 1 : 2)) % 3;
           this.applyPlay();
         } else if (a === "snap") this.snap();
         else if (a === "fieldGoal" && this.down === 4 && this.canKick) this.startFieldGoal();

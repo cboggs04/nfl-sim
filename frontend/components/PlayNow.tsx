@@ -481,12 +481,12 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
       if ((e.target as HTMLElement)?.closest?.("select, input, textarea")) return;
       const dir = dirOf(e.code);
       const game_ = game;
-      if (dir || ["Space", "Enter", "Digit1", "Digit2", "Digit3", "KeyZ", "KeyX", "KeyC", "KeyF", "KeyP"].includes(e.code)) e.preventDefault();
+      if (dir || ["Space", "Enter", "Digit1", "Digit2", "Digit3", "KeyZ", "KeyX", "KeyC", "KeyQ", "KeyE", "KeyF", "KeyP"].includes(e.code)) e.preventDefault();
       if (dir) {
         keys.current.add(dir);
         if (game_.phase === "presnap" && !e.repeat) {
-          if (dir === "left") game_.press("selectPass");
-          if (dir === "right") game_.press("selectRun");
+          if (dir === "left") game_.press("prevPlay");
+          if (dir === "right") game_.press("nextPlay");
         }
         updateMove();
         return;
@@ -516,6 +516,12 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
           break;
         case "KeyC":
           game_.press("throw3");
+          break;
+        case "KeyQ":
+          game_.press("selectPass");
+          break;
+        case "KeyE":
+          game_.press("selectRun");
           break;
         case "KeyF":
           game_.press("fieldGoal");
@@ -856,7 +862,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             {hud.phase === "presnap" && (
               <div className="mb-3">
                 <div className="font-pixel mb-1.5 text-center text-[7px] text-white/70 sm:text-[9px]">
-                  {hud.down === 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3), THEN SNAP"}
+                  {hud.down === 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3 OR ← →), THEN SNAP"}
                 </div>
                 <div className="mx-auto flex max-w-3xl justify-center gap-1.5 sm:gap-2">
                   {hud.plays.map((p, i) => (
@@ -890,7 +896,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
                     aria-pressed={hud.selected === k}
                     className={`font-pixel rounded px-3 py-2 text-[10px] ${hud.selected === k ? "bg-yellow-300 text-black" : "bg-white/15 text-white hover:bg-white/25"}`}
                   >
-                    {k === "pass" ? "← PASS" : "RUN →"}
+                    {k === "pass" ? "Q  PASS" : "RUN  E"}
                   </button>
                 ))}
                 <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-4 py-2 text-[10px] text-black hover:bg-emerald-300">
