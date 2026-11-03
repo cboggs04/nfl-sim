@@ -49,7 +49,7 @@ export default function SectionNav({ items, className = "" }: { items: SectionLi
   };
 
   return (
-    <nav aria-label="On this page" className={`sticky top-14 z-20 -mx-4 border-b border-line bg-background px-4 py-2 sm:top-[65px] sm:-mx-6 sm:px-6 ${className}`}>
+    <nav aria-label="On this page" className={`sticky top-14 z-20 -mx-4 border-b border-line bg-background px-4 py-2 sm:top-[65px] land:top-0 sm:-mx-6 sm:px-6 ${className}`}>
       <div className="flex items-center gap-2 overflow-x-auto">
         <span className="shrink-0 text-xs font-semibold tracking-widest text-muted uppercase">On this page</span>
         {items.map((it) => (

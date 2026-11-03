@@ -46,7 +46,7 @@ async function PlayoffTabs() {
 
 export default function BracketPage() {
   return (
-    <main className="mx-auto w-full max-w-[1700px] px-4 py-10 sm:px-6">
+    <main className="mx-auto w-full max-w-[1700px] px-4 py-10 land:py-3 sm:px-6">
       <ResetOnLeave>
         <PageHeader
           title={

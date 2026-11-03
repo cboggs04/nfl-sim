@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* A phone held sideways: wide but short. Used (as `land:`) to compact the layout so more fits on screen. */
+@custom-variant land (@media (orientation: landscape) and (max-height: 520px));
+
 /* Broadcast / game-menu look: one dark theme, bold condensed display type, angled panels. */
 :root {
   --background: #08122a;

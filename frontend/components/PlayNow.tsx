@@ -8,6 +8,7 @@ import PlayHelp from "@/components/PlayHelp";
 import TeamLogo from "@/components/TeamLogo";
 import { buildSprites, type Sprites } from "@/lib/pixelSprites";
 import { FootballGame, GOAL_L, GOAL_R, PLAYS, ROUTES, WORLD_W, Y_MAX, Y_MID, Y_MIN, type Difficulty, type PlayDef, type OppDrive, type Phase } from "@/lib/playNow/engine";
+import { useShortLandscape } from "@/lib/useShortLandscape";
 import { colorDistance, JERSEYS, jerseyColors, logoSrc, teamInfo, type Jersey } from "@/lib/teams";
 import type { TeamOdds } from "@/lib/types";
 
@@ -436,6 +437,7 @@ function TeamCarousel({
   onJersey: (j: Jersey) => void;
   arrowsNearVs?: boolean; // desktop: put the arrows on the left edge, next to the VS badge
 }) {
+  const land = useShortLandscape(); // a phone held sideways: a smaller, tighter card so two fit side by side
   const [picking, setPicking] = useState(false);
   const index = Math.max(0, teams.findIndex((t) => t.team === value));
   const t = teams[index];
@@ -446,7 +448,7 @@ function TeamCarousel({
     <button
       onClick={() => go(dir)}
       aria-label={dir === -1 ? `Previous team (${label})` : `Next team (${label})`}
-      className="flex h-9 w-14 shrink-0 items-center justify-center bg-black/35 hover:bg-black/55 sm:h-12 sm:w-20"
+      className="flex h-9 w-14 shrink-0 items-center justify-center bg-black/35 hover:bg-black/55 sm:h-12 sm:w-20 land:h-8 land:w-11"
       style={{ clipPath: dir === -1 ? "polygon(50% 0, 100% 100%, 0 100%)" : "polygon(0 0, 100% 0, 50% 100%)" }}
     >
       <span className="sr-only">{dir === -1 ? "Previous" : "Next"}</span>
@@ -477,40 +479,46 @@ function TeamCarousel({
         aria-hidden
         width={520}
         height={520}
-        className="pointer-events-none absolute top-1/2 left-1/2 h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2 -rotate-6 opacity-[0.13] sm:h-[500px] sm:w-[500px]"
+        className="pointer-events-none absolute top-1/2 left-1/2 h-[440px] w-[440px] -translate-x-1/2 -translate-y-1/2 -rotate-6 opacity-[0.13] sm:h-[500px] sm:w-[500px] land:h-[280px] land:w-[280px]"
       />
-      <div className="relative flex items-center justify-between px-4 pt-3 text-white">
+      <div className="relative flex items-center justify-between px-4 pt-3 text-white land:pt-1.5">
         <span className="text-xs font-semibold tracking-widest text-white/80 uppercase">{label}</span>
         <span className="font-pixel text-[9px] text-white/80 tabular-nums">
           {index + 1} / {teams.length}
         </span>
       </div>
 
-      <div className="relative flex items-center gap-1 px-2 pb-4 sm:gap-3 sm:px-4">
+      <div className="relative flex items-center gap-1 px-2 pb-4 sm:gap-3 sm:px-4 land:pb-2">
         <div key={t.team} className="rise min-w-0 flex-1 text-center text-white">
           <div className="flex items-center justify-center gap-4 sm:gap-6">
-            <div className="sm:hidden">
-              <TeamLogo abbr={t.team} size={128} />
-            </div>
-            <div className="hidden sm:block">
-              <TeamLogo abbr={t.team} size={132} />
-            </div>
-            <div className="flex w-28 flex-col items-center gap-1 sm:w-32">
-              <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={80} />
-              <div className="text-[9px] font-semibold tracking-widest text-white/70 uppercase">Quarterback</div>
-              <div className="font-display flex h-[2em] items-center justify-center text-xl leading-none [text-shadow:0_2px_8px_rgba(0,0,0,.55)]">{t.qb ?? "TBD"}</div>
+            {land ? (
+              <TeamLogo abbr={t.team} size={76} />
+            ) : (
+              <>
+                <div className="sm:hidden">
+                  <TeamLogo abbr={t.team} size={128} />
+                </div>
+                <div className="hidden sm:block">
+                  <TeamLogo abbr={t.team} size={132} />
+                </div>
+              </>
+            )}
+            <div className="flex w-28 flex-col items-center gap-1 sm:w-32 land:w-24">
+              <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={land ? 52 : 80} />
+              <div className="text-[9px] font-semibold tracking-widest text-white/70 uppercase land:hidden">Quarterback</div>
+              <div className="font-display flex h-[2em] items-center justify-center text-xl leading-none [text-shadow:0_2px_8px_rgba(0,0,0,.55)] land:h-auto land:text-base">{t.qb ?? "TBD"}</div>
             </div>
           </div>
 
-          <div className="mt-1 text-xs font-semibold tracking-[0.2em] text-white/75 uppercase">{t.division}</div>
-          <h2 className="font-display flex h-[2em] items-center justify-center text-4xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">{t.name}</h2>
+          <div className="mt-1 text-xs font-semibold tracking-[0.2em] text-white/75 uppercase land:hidden">{t.division}</div>
+          <h2 className="font-display flex h-[2em] items-center justify-center text-4xl leading-none [text-shadow:0_2px_10px_rgba(0,0,0,.55)] land:mt-1 land:h-auto land:text-3xl">{t.name}</h2>
 
-          <div className="mt-2 flex items-end justify-center gap-3">
+          <div className="mt-2 flex items-end justify-center gap-3 land:mt-1">
             <div>
               <div className="text-[10px] font-semibold tracking-widest text-white/70 uppercase">Team rating</div>
-              <div className="font-display text-5xl tabular-nums [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">
+              <div className="font-display text-5xl tabular-nums [text-shadow:0_2px_10px_rgba(0,0,0,.55)] land:text-4xl">
                 {r100}
-                <span className="ml-1 text-2xl text-white/70">/100</span>
+                <span className="ml-1 text-2xl text-white/70 land:text-xl">/100</span>
               </div>
             </div>
             <div className="pb-2 text-left text-xs text-white/80">
@@ -523,11 +531,11 @@ function TeamCarousel({
               </div>
             </div>
           </div>
-          <div className="mx-auto mt-2 h-2 max-w-xs overflow-hidden rounded-full bg-black/35" role="img" aria-label={`Rating ${r100} out of 100, ranked ${ranks[t.team]} of ${teams.length}`}>
+          <div className="mx-auto mt-2 h-2 max-w-xs overflow-hidden rounded-full bg-black/35 land:mt-1" role="img" aria-label={`Rating ${r100} out of 100, ranked ${ranks[t.team]} of ${teams.length}`}>
             <div className="h-full rounded-full bg-white/90" style={{ width: `${Math.max(4, ((r100 - 50) / (RATING_MAX - 50)) * 100)}%` }} />
           </div>
           {/* the uniform this team wears: a button that opens a preview you can cycle through */}
-          <div className="mt-3 flex justify-center">
+          <div className="mt-3 flex justify-center land:mt-1.5">
             <button
               onClick={() => setPicking(true)}
               aria-haspopup="dialog"
@@ -542,7 +550,7 @@ function TeamCarousel({
             </button>
           </div>
         </div>
-        <div className={`flex shrink-0 flex-col gap-24 sm:gap-32 ${arrowsNearVs ? "lg:order-first" : ""}`}>
+        <div className={`flex shrink-0 flex-col gap-24 sm:gap-32 land:gap-14 ${arrowsNearVs ? "lg:order-first land:order-first" : ""}`}>
           {arrow(-1)}
           {arrow(1)}
         </div>
@@ -579,13 +587,13 @@ function TeamSelect({ teams, initialTeam, onStart }: { teams: TeamOdds[]; initia
   const clash = colorDistance(jerseyColors(user, userJersey).primary, jerseyColors(opp, oppJersey).primary) < 90;
 
   return (
-    <div>
-      <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">On a phone? Turn it sideways: the game plays in landscape with on-screen controls. To hide the Safari address bar on an iPhone, tap Share, then Add to Home Screen, and open the game from there. A keyboard works on a computer.</p>
-      <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
+    <div className="land:[zoom:0.85]">
+      <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden land:hidden">On a phone? Turn it sideways: the game plays in landscape with on-screen controls. To hide the Safari address bar on an iPhone, tap Share, then Add to Home Screen, and open the game from there. A keyboard works on a computer.</p>
+      <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-4 land:mt-1 land:grid-cols-[1fr_auto_1fr] land:gap-2">
         <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} jersey={userJersey} onJersey={setUserJersey} />
         <div className="flex items-center justify-center" aria-hidden>
           <span
-            className="font-display bg-accent px-6 py-2 text-5xl text-on-accent shadow-lg sm:text-6xl lg:px-5 lg:py-8 lg:text-6xl"
+            className="font-display bg-accent px-6 py-2 text-5xl text-on-accent shadow-lg sm:text-6xl lg:px-5 lg:py-8 lg:text-6xl land:px-3 land:py-5 land:text-4xl"
             style={{ clipPath: "polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%)" }}
           >
             VS
@@ -593,7 +601,7 @@ function TeamSelect({ teams, initialTeam, onStart }: { teams: TeamOdds[]; initia
         </div>
         <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} jersey={oppJersey} onJersey={setOppJersey} arrowsNearVs />
       </div>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 land:flex-nowrap land:gap-y-1">
         <div>
           <div className="text-xs font-semibold tracking-widest text-muted uppercase">Difficulty</div>
           <div role="radiogroup" aria-label="Difficulty" className="mt-1 flex flex-wrap items-center gap-3">
@@ -604,13 +612,13 @@ function TeamSelect({ teams, initialTeam, onStart }: { teams: TeamOdds[]; initia
                   role="radio"
                   aria-checked={level === l.id}
                   onClick={() => setLevel(l.id)}
-                  className={`font-display px-4 py-1.5 text-xl sm:px-5 sm:text-2xl ${level === l.id ? "bg-accent text-on-accent" : "bg-head text-strong hover:bg-hover"}`}
+                  className={`font-display px-4 py-1.5 text-xl sm:px-5 sm:text-2xl land:py-0.5 land:text-xl ${level === l.id ? "bg-accent text-on-accent" : "bg-head text-strong hover:bg-hover"}`}
                 >
                   {l.label}
                 </button>
               ))}
             </div>
-            <p className="max-w-xs text-sm text-muted">{LEVELS.find((l) => l.id === level)!.blurb}</p>
+            <p className="max-w-xs text-sm text-muted land:hidden">{LEVELS.find((l) => l.id === level)!.blurb}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -1351,7 +1359,7 @@ export default function PlayNow({ teams, initialTeam }: { teams: TeamOdds[]; ini
       onClick={() => setHelp(true)}
       aria-label="How to play and controls"
       title="How to play and controls"
-      className={`font-display flex shrink-0 items-center justify-center rounded-full bg-accent text-on-accent shadow-md hover:brightness-110 ${setup ? "h-9 w-9 text-2xl sm:h-10 sm:w-10" : "h-9 w-9 text-2xl sm:h-12 sm:w-12 sm:text-4xl"}`}
+      className={`font-display flex shrink-0 items-center justify-center rounded-full bg-accent text-on-accent shadow-md hover:brightness-110 ${setup ? "h-9 w-9 text-2xl sm:h-10 sm:w-10" : "h-9 w-9 text-2xl sm:h-12 sm:w-12 sm:text-4xl land:h-8 land:w-8 land:text-xl"}`}
     >
       ?
     </button>

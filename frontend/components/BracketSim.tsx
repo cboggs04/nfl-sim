@@ -9,6 +9,7 @@ import { usePlayoffSim } from "@/components/PlayoffSim";
 import { rollGame } from "@/lib/api";
 import { allMatchups, buildBracket, readyMatchups, type Bracket, type Matchup } from "@/lib/bracket";
 import { teamInfo } from "@/lib/teams";
+import { useShortLandscape } from "@/lib/useShortLandscape";
 import type { Conference, SimulatedSeason } from "@/lib/types";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -230,11 +231,12 @@ function BracketView({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx;
     if (!root) return;
     const measure = () => {
       const base = root.getBoundingClientRect();
+      const k = root.offsetWidth ? base.width / root.offsetWidth : 1; // (the bracket may be scaled down to fit a phone held sideways)
       const box = (id: string) => {
         const el = els.current.get(id);
         if (!el) return null;
         const r = el.getBoundingClientRect();
-        return { l: r.left - base.left, r: r.right - base.left, y: (r.top + r.bottom) / 2 - base.top };
+        return { l: (r.left - base.left) / k, r: (r.right - base.left) / k, y: ((r.top + r.bottom) / 2 - base.top) / k };
       };
       const next: { d: string; active: boolean }[] = [];
       for (const e of edges) {
@@ -334,6 +336,34 @@ function useNarrowScreen(): boolean {
   );
 }
 
+/** Shows its children at a fixed design width, scaled down to fit the available width (so a whole bracket fits a phone held sideways). */
+function FitWidth({ designWidth, children }: { designWidth: number; children: React.ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState<{ scale: number; height?: number }>({ scale: 1 });
+  useLayoutEffect(() => {
+    const o = outer.current;
+    const i = inner.current;
+    if (!o || !i) return;
+    const measure = () => {
+      const scale = Math.min(1, o.clientWidth / designWidth);
+      setFit({ scale, height: i.offsetHeight * scale });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(o);
+    ro.observe(i);
+    return () => ro.disconnect();
+  }, [designWidth]);
+  return (
+    <div ref={outer} style={{ height: fit.height }} className="overflow-hidden">
+      <div ref={inner} style={{ width: designWidth, transform: `scale(${fit.scale})`, transformOrigin: "top left" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /** The same bracket as a simple top-to-bottom list for small screens: each conference round by round, then the Super Bowl. */
 function MobileBracket({ bracket, ctx, champ, sim }: { bracket: Bracket; ctx: Ctx; champ: string | undefined; sim: SimulatedSeason }) {
   const round = (title: string, children: React.ReactNode) => (
@@ -412,6 +442,7 @@ function BracketBoard({
   const [busy, setBusy] = useState(false);
   const [playError, setPlayError] = useState<string | null>(null);
   const narrow = useNarrowScreen();
+  const land = useShortLandscape(); // a phone held sideways: show the whole bracket, scaled to fit, instead of the list
   // One made-up game per playoff game, created when it is played, so a replay shows the same game every time.
   const [replays, setReplays] = useState<Record<string, SuperBowlResult>>({});
   const [replayId, setReplayId] = useState<string | null>(null); // which game's pop-up is open
@@ -538,7 +569,15 @@ function BracketBoard({
       {sim && bracket && (
         <div className="mt-8 space-y-8">
           <div className="panel rise p-3 sm:p-6">
-            {narrow ? <MobileBracket bracket={bracket} ctx={ctx} champ={champ} sim={sim} /> : <BracketView bracket={bracket} ctx={ctx} champ={champ} sim={sim} />}
+            {land ? (
+              <FitWidth designWidth={1280}>
+                <BracketView bracket={bracket} ctx={ctx} champ={champ} sim={sim} />
+              </FitWidth>
+            ) : narrow ? (
+              <MobileBracket bracket={bracket} ctx={ctx} champ={champ} sim={sim} />
+            ) : (
+              <BracketView bracket={bracket} ctx={ctx} champ={champ} sim={sim} />
+            )}
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             <SeedList conf="AFC" sim={sim} ctx={ctx} />

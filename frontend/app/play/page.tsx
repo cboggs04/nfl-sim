@@ -15,7 +15,7 @@ async function Game({ searchParams }: { searchParams: PageProps<"/play">["search
 
 export default function PlayPage(props: PageProps<"/play">) {
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
+    <main className="mx-auto w-full max-w-7xl px-4 py-10 land:py-3 sm:px-6">
       <ResetOnLeave>
         <Suspense
           fallback={

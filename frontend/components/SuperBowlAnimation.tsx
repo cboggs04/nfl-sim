@@ -6,6 +6,7 @@ import TeamLogo from "@/components/TeamLogo";
 import { buildSprites } from "@/lib/pixelSprites";
 import { pointsFor, type GameEvent, type Kind } from "@/lib/superBowlGame";
 import { teamInfo } from "@/lib/teams";
+import { useShortLandscape } from "@/lib/useShortLandscape";
 
 export interface SuperBowlResult {
   home: string;
@@ -467,6 +468,7 @@ interface Particle {
 }
 
 export default function SuperBowlAnimation({ result, onClose }: { result: SuperBowlResult; onClose: () => void }) {
+  const land = useShortLandscape(); // a phone held sideways: size the whole pop-up to the screen's height
   const loser = result.winner === result.home ? result.away : result.home;
   const win = teamInfo(result.winner);
   const lose = teamInfo(loser);
@@ -748,17 +750,17 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
   const hadOvertime = events.some((e) => (e.q ?? 0) > 4);
 
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={`${result.title ?? "Super Bowl"} animation`} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6">
-      <div className="relative w-full max-w-4xl">
-        <div className="mb-2 flex items-center justify-between gap-2">
+    <div role="dialog" aria-modal="true" aria-label={`${result.title ?? "Super Bowl"} animation`} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6 land:p-1.5">
+      <div className="relative w-full max-w-4xl" style={{ maxWidth: land ? "calc((100dvh - 5.2rem) * 16 / 9)" : "min(56rem, calc((100dvh - 9.5rem) * 16 / 9))" }}>
+        <div className="mb-2 land:mb-1 flex items-center justify-between gap-2">
           <div className="font-pixel text-[10px] leading-relaxed text-white sm:text-xs">{result.title ?? "SUPER BOWL"}</div>
           <div className="flex gap-2">
             {phase !== "final" && (
-              <button onClick={skip} className="font-pixel rounded bg-white/15 px-3 py-2 text-[10px] text-white hover:bg-white/25">
+              <button onClick={skip} className="font-pixel rounded bg-white/15 px-3 py-2 land:py-1 text-[10px] text-white hover:bg-white/25">
                 SKIP
               </button>
             )}
-            <button ref={closeRef} onClick={onClose} aria-label="Close" className="font-pixel rounded bg-white/15 px-3 py-2 text-[10px] text-white hover:bg-white/25">
+            <button ref={closeRef} onClick={onClose} aria-label="Close" className="font-pixel rounded bg-white/15 px-3 py-2 land:py-1 text-[10px] text-white hover:bg-white/25">
               CLOSE X
             </button>
           </div>
@@ -768,7 +770,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
           {/* scoreboard: updates with every score */}
           <div className="font-pixel flex items-stretch justify-between bg-[#111827] text-white">
             {[result.away].map((team) => (
-              <div key={team} className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2" style={{ borderColor: teamInfo(team).primary }}>
+              <div key={team} className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2 land:py-0.5" style={{ borderColor: teamInfo(team).primary }}>
                 <span className="text-[10px] sm:text-sm">{team}</span>
                 <span className={`text-lg tabular-nums sm:text-3xl ${phase === "result" && shown && shown.pts > 0 && shownTeam === team ? "animate-pulse text-white" : "text-yellow-300"}`}>
                   {String(pointsOf(team)).padStart(2, "0")}
@@ -781,7 +783,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
               </div>
             )}
             {[result.home].map((team) => (
-              <div key={team} className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2" style={{ borderColor: teamInfo(team).primary }}>
+              <div key={team} className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2 land:py-0.5" style={{ borderColor: teamInfo(team).primary }}>
                 <span className="text-[10px] sm:text-sm">{team}</span>
                 <span className={`text-lg tabular-nums sm:text-3xl ${phase === "result" && shown && shown.pts > 0 && shownTeam === team ? "animate-pulse text-white" : "text-yellow-300"}`}>
                   {String(pointsOf(team)).padStart(2, "0")}
@@ -793,7 +795,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
             <canvas ref={sceneRef} width={W} height={H} className="block w-full" style={{ imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }} />
             {phase === "result" && shown && shownTeam && shown.kind !== "PUNT" && !punting && !otBanner && (
               <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 sm:gap-2">
-                <span className={`animate-pulse text-2xl [text-shadow:3px_3px_0_#000] sm:text-5xl ${shown.pts > 0 ? "text-yellow-300" : "text-red-400"}`}>
+                <span className={`animate-pulse text-2xl [text-shadow:3px_3px_0_#000] sm:text-5xl land:text-xl ${shown.pts > 0 ? "text-yellow-300" : "text-red-400"}`}>
                   {shownLabel ?? NO_SCORE_LABEL[shown.kind] ?? (shown.kind === "TD" ? "TOUCHDOWN!" : "FIELD GOAL!")}
                 </span>
                 <span className="rounded px-2 py-1 text-[9px] text-white [text-shadow:1px_1px_0_#000] sm:text-sm" style={{ backgroundColor: teamInfo(shownTeam).primary }}>
@@ -810,12 +812,12 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
             )}
             {otBanner && phase !== "final" && (
               <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/45">
-                <span className="rise animate-pulse text-3xl text-red-400 [text-shadow:4px_4px_0_#000] sm:text-6xl">OVERTIME</span>
+                <span className="rise animate-pulse text-3xl text-red-400 [text-shadow:4px_4px_0_#000] sm:text-6xl land:text-3xl">OVERTIME</span>
               </div>
             )}
             {punting && phase !== "final" && !otBanner && (
               <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 sm:gap-2">
-                <span className="text-2xl text-white [text-shadow:3px_3px_0_#000] sm:text-5xl">PUNT</span>
+                <span className="text-2xl text-white [text-shadow:3px_3px_0_#000] sm:text-5xl land:text-xl">PUNT</span>
                 <span
                   className="rounded px-2 py-1 text-[9px] text-white [text-shadow:1px_1px_0_#000] sm:text-sm"
                   style={{ backgroundColor: teamInfo(punting.team === "W" ? result.winner : loser).primary }}
@@ -832,10 +834,10 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
                     <div className="flex items-center gap-3">
                       {[result.away, result.home].map((tm) => (
                         <div key={tm}>
-                          <div className="sm:hidden">
+                          <div className={land ? "" : "sm:hidden"}>
                             <TeamLogo abbr={tm} size={44} />
                           </div>
-                          <div className="hidden sm:block">
+                          <div className={land ? "hidden" : "hidden sm:block"}>
                             <TeamLogo abbr={tm} size={80} />
                           </div>
                         </div>
@@ -845,13 +847,13 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
                 ) : (
                   <>
                     <div className="font-pixel hidden text-[8px] text-yellow-300 sm:block sm:text-xs">{champion ? "SUPER BOWL CHAMPIONS" : result.realGame ? "WINNER" : "WINNER: ADVANCES"}</div>
-                    <div className="sm:hidden">
-                      <TeamLogo abbr={result.winner} size={48} />
+                    <div className={land ? "" : "sm:hidden"}>
+                      <TeamLogo abbr={result.winner} size={land ? 44 : 48} />
                     </div>
-                    <div className="hidden sm:block">
+                    <div className={land ? "hidden" : "hidden sm:block"}>
                       <TeamLogo abbr={result.winner} size={96} />
                     </div>
-                    <div className="font-pixel text-[9px] text-white [text-shadow:2px_2px_0_#000] sm:text-2xl">{win.name.toUpperCase()}</div>
+                    <div className="font-pixel text-[9px] text-white [text-shadow:2px_2px_0_#000] sm:text-2xl land:text-sm">{win.name.toUpperCase()}</div>
                     <div className="font-pixel text-[7px] text-yellow-300 sm:hidden">{champion ? "CHAMPIONS" : result.realGame ? "WINNER" : "ADVANCES"}</div>
                   </>
                 )}
@@ -873,7 +875,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
             )}
           </div>
         </div>
-        <p className="mt-2 text-center text-xs text-white/70">{result.realGame ? (result.realDrives ? "The drives and final score are real; the plays themselves are drawn for fun." : "The final score is real; the plays are made up to match it.") : "The model picks the winner; the plays and the score are just for fun."}</p>
+        <p className="mt-2 text-center text-xs text-white/70 land:hidden">{result.realGame ? (result.realDrives ? "The drives and final score are real; the plays themselves are drawn for fun." : "The final score is real; the plays are made up to match it.") : "The model picks the winner; the plays and the score are just for fun."}</p>
       </div>
       <canvas ref={confettiRef} aria-hidden className="pointer-events-none fixed inset-0 h-full w-full" />
     </div>,
