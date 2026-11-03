@@ -11,6 +11,7 @@ Live on Vercel (site) + Render (API); code at github.com/cboggs04/nfl-sim. Built
 - What-if sandbox: adjust team Elo or force game results, re-run 2,000 sims.
 - Model accuracy page: backtest, calibration, how each model improvement scored.
 - Light theme is the default (dark available via toggle); phone layout via responsive CSS.
+- Team pages: every played regular-season game has a pixel-art Replay (ties and overtime included) built from the real drives (`engine/drives.py` reads nflverse play-by-play into `backend/data/drives.json`: TD, FG, missed FG, punt, interception, fumble, downs, safety, pick sixes). Final score is real; the play drawings are for show. Games whose drives don't add up to the real score fall back to made-up drives.
 - Playoff games: model-simulated scores (engine/scores.py) shown on the cards; every played game has a pixel-art Replay (the Super Bowl opens by itself). Plays/drives are for show; the model only picks the winner and the score.
 - Play now (/play): a keyboard pixel-art football game (you play offense vs the computer defense; the other team's drives are simulated from team ratings). Engine in `frontend/lib/playNow/engine.ts` (pure TS, bot-tested via `frontend/scripts/playNowBots.js`), screen in `components/PlayNow.tsx`. Two halves of 10:00 game clock (5x speed while the ball is live, about 90-120 s real time each).
 Not built yet: Claude API chat layer (feature 6).
@@ -35,7 +36,7 @@ Not built yet: Claude API chat layer (feature 6).
 - Backtest (2018-25, tuned only on 2012-17): Brier 0.2191, 64.8% winners picked.
 
 ## API endpoints
-- GET /api/health, /api/season, /api/teams/{abbr}, /api/teams/{abbr}/roster, /api/bracket, /api/backtest, /api/leaders
+- GET /api/health, /api/season, /api/teams/{abbr}, /api/teams/{abbr}/roster, /api/teams/{abbr}/drives, /api/bracket, /api/backtest, /api/leaders
 - POST /api/whatif
 - POST /api/sim/season, /api/sim/game, /api/sim/team (interactive single simulations)
 

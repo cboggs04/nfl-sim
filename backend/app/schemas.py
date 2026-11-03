@@ -321,3 +321,23 @@ class LeadersResponse(BaseModel):
     n_sims: int
     leaders: dict[str, list[LeaderRow]]   # category -> top players by projected total
     awards: dict[str, list[AwardRow]]     # mvp, opoty, dpoty, oroy, droy -> most likely winners
+
+
+class DriveEvent(BaseModel):
+    """One drive of a played game (real play-by-play). `side` is the team the drive belongs to: the team with the ball, or
+    the team that scored for a defensive touchdown or safety."""
+    side: Literal["home", "away"]
+    kind: Literal["TD", "FG", "MISSED_FG", "PUNT", "INT", "FUMBLE", "DOWNS", "SAFETY"]
+    pts: int
+    q: int                          # quarter, 5 = overtime
+    how: Literal["pick", "fumble", "return"] | None = None   # how a defensive touchdown happened
+
+
+class GameDrives(BaseModel):
+    game_id: str
+    drives: list[DriveEvent]
+
+
+class TeamDrives(BaseModel):
+    """GET /api/teams/{abbr}/drives: real drives for each of the team's played games that have them (others are left out)."""
+    games: dict[str, list[DriveEvent]]

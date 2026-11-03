@@ -21,6 +21,7 @@ from app.schemas import (BacktestResponse, BracketConference, BracketResponse, G
 from datetime import date
 
 from app.schemas import AwardRow, LeaderRow, LeadersResponse, RosterPlayer, TeamRoster
+from engine.drives import drives_by_game
 from engine.data import DATA_DIR, load_games, load_player_totals, load_qb_game_epa, load_roster, load_snap_games
 from engine.awards import AWARDS, LEADER_CATEGORIES, simulate_awards
 from engine.players import POSITION_STATS, apply_depth_chart, build_player
@@ -200,6 +201,20 @@ def build_leaders(rosters: dict[str, TeamRoster], schedule: list[dict], ratings:
                            generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"), leaders=leaders, awards=awards)
 
 
+def write_drives(season: int, refresh: bool) -> int:
+    """drives.json: every played game's drives (real play-by-play), for the replays on team pages. Returns the game count."""
+    path = DATA_DIR / "drives.json"
+    played = [g for g in load_games([season]).filter((pl.col("game_type") == "REG") & pl.col("home_score").is_not_null()).to_dicts()]
+    have = json.loads(path.read_text()) if path.exists() else {}
+    if not refresh and all(g["game_id"] in have for g in played):
+        return len(have)
+    import nflreadpy as nfl  # play-by-play is big (~100 MB a season), so only fetched when something is missing
+
+    drives = drives_by_game(nfl.load_pbp([season]), played)
+    path.write_text(json.dumps(drives, separators=(",", ":")))
+    return len(drives)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--season", type=int, default=2026)
@@ -216,6 +231,8 @@ def main():
     (DATA_DIR / "sim_state.json").write_text(out["state"].model_dump_json())
     (DATA_DIR / "leaders.json").write_text(out["leaders"].model_dump_json(indent=1))
     (DATA_DIR / "rosters.json").write_text(json.dumps({t: json.loads(r.model_dump_json()) for t, r in out["rosters"].items()}))
+
+    print(f"Wrote drives.json ({write_drives(args.season, args.refresh)} games)")
 
     bt = DATA_DIR / "backtest.json"
     if bt.exists():

@@ -1,5 +1,5 @@
 // The ONLY place the frontend talks to the backend. Components import from here.
-import type { BacktestResponse, BracketResponse, LeadersResponse, SimTeamResult, TeamRoster, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, WhatIfRequest } from "./types";
+import type { BacktestResponse, BracketResponse, LeadersResponse, SimTeamResult, TeamRoster, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, TeamDrives, WhatIfRequest } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Set NEXT_PUBLIC_USE_MOCK=1 to build the UI without the API running.
@@ -54,6 +54,14 @@ export async function getRoster(abbr: string): Promise<TeamRoster | null> {
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`API /api/teams/${abbr}/roster failed with status ${res.status}`);
   return res.json() as Promise<TeamRoster>;
+}
+
+/** Real drives for the team's played games (a game without data is simply left out). */
+export async function getTeamDrives(abbr: string): Promise<TeamDrives> {
+  if (USE_MOCK) return { games: {} };
+  const res = await fetch(`${BASE}/api/teams/${encodeURIComponent(abbr)}/drives`, { cache: "no-store" });
+  if (!res.ok) return { games: {} };
+  return res.json() as Promise<TeamDrives>;
 }
 
 async function post<T>(path: string, body?: unknown): Promise<T> {

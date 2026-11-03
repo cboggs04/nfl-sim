@@ -236,3 +236,16 @@ export interface BracketResponse {
   n_sims: number;
   conferences: { conference: Conference; slots: SeedSlot[] }[];
 }
+
+/** One drive of a played game (real play-by-play). `side` is the team the drive belongs to. */
+export interface DriveEvent {
+  side: "home" | "away";
+  kind: "TD" | "FG" | "MISSED_FG" | "PUNT" | "INT" | "FUMBLE" | "DOWNS" | "SAFETY";
+  pts: number;
+  q: number; // quarter, 5 = overtime
+  how?: "pick" | "fumble" | "return" | null;
+}
+
+export interface TeamDrives {
+  games: Record<string, DriveEvent[]>;
+}

@@ -9,9 +9,9 @@ import ResetOnLeave from "@/components/ResetOnLeave";
 import SeasonSimulator from "@/components/SeasonSimulator";
 import TeamTabs from "@/components/TeamTabs";
 import TeamLogo from "@/components/TeamLogo";
-import { getRoster, getTeam } from "@/lib/api";
+import { getRoster, getTeam, getTeamDrives } from "@/lib/api";
 import { logoSrc, teamInfo } from "@/lib/teams";
-import type { GameView } from "@/lib/types";
+import type { DriveEvent, GameView, TeamDrives } from "@/lib/types";
 
 function Tile({ label, value, ratio, color }: { label: string; value: string; ratio: number; color: string }) {
   return (
@@ -34,7 +34,7 @@ function tier(p: number) {
   return { label: "Likely loss", style: "bg-bad/25 text-bad-ink ring-1 ring-bad/50" };
 }
 
-function ResultCell({ g, team }: { g: GameView; team: string }) {
+function ResultCell({ g, team, drives }: { g: GameView; team: string; drives?: DriveEvent[] }) {
   if (g.played) {
     return (
       <span className="inline-flex items-center gap-3">
@@ -49,13 +49,14 @@ function ResultCell({ g, team }: { g: GameView; team: string }) {
         <span className="text-base font-semibold tabular-nums">
           {g.team_score}–{g.opp_score}
         </span>
-        {g.team_score != null && g.opp_score != null && g.team_score !== g.opp_score && (
+        {g.team_score != null && g.opp_score != null && (
           <GameReplay
             home={g.home ? team : g.opponent}
             away={g.home ? g.opponent : team}
             homeScore={g.home ? g.team_score : g.opp_score}
             awayScore={g.home ? g.opp_score : g.team_score}
             week={g.week}
+            drives={drives}
           />
         )}
       </span>
@@ -77,7 +78,8 @@ function quantile(dist: number[], q: number) {
 
 async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
   const { abbr } = await params;
-  const [team, roster] = await Promise.all([getTeam(abbr), getRoster(abbr).catch(() => null)]);
+  const [team, roster, realDrives] = await Promise.all([getTeam(abbr), getRoster(abbr).catch(() => null), getTeamDrives(abbr).catch((): TeamDrives => ({ games: {} }))]);
+  const drivesByGame = realDrives.games;
   if (!team) notFound();
   const { odds, games } = team;
   const info = teamInfo(odds.team);
@@ -207,7 +209,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
                     </Link>
                   </td>
                   <td className="px-1.5 py-2 md:px-3">
-                    <ResultCell g={g} team={odds.team} />
+                    <ResultCell g={g} team={odds.team} drives={drivesByGame[g.game_id]} />
                   </td>
                   {g.p_win != null ? <ProbCell p={g.p_win} /> : <td className="px-1.5 py-2 text-right text-muted md:px-3">—</td>}
                 </tr>

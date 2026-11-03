@@ -16,6 +16,8 @@ export interface SuperBowlResult {
   winnerSeed?: number | null;
   title?: string; // heading, e.g. "WILD CARD" (defaults to SUPER BOWL)
   isSuperBowl?: boolean; // false: the winner "advances" instead of being crowned champion
+  tie?: boolean; // a tied game: "winner" is just the first team and nobody is crowned
+  realDrives?: boolean; // the drives are the real ones from the game
   realGame?: boolean; // a game that really happened (regular season): real final score, the plays are made up
 }
 
@@ -26,8 +28,12 @@ const FIELD_TOP = 40;
 const GOAL_X = 290; // right end zone starts here
 const SCRIPT_END = 6.0; // each play script runs 0 to 6 "script seconds"
 // Real seconds each kind of drive takes to play out, and to celebrate (a punt barely pauses).
-const PLAY_BY: Record<Kind, number> = { TD: 2.5, FG: 2.0, PUNT: 1.6 };
-const CELEBRATE_BY: Record<Kind, number> = { TD: 1.1, FG: 0.8, PUNT: 0.55 };
+const PLAY_BY: Record<Kind, number> = { TD: 2.5, FG: 2.0, PUNT: 1.6, MISSED_FG: 2.0, INT: 2.2, FUMBLE: 2.0, DOWNS: 1.7, SAFETY: 2.5 };
+const CELEBRATE_BY: Record<Kind, number> = { TD: 1.1, FG: 0.8, PUNT: 0.55, MISSED_FG: 0.9, INT: 1.0, FUMBLE: 1.0, DOWNS: 0.9, SAFETY: 1.1 };
+const SCORING: Kind[] = ["TD", "FG", "SAFETY"];
+// What the screen says after a drive that didn't score (and who it hurt).
+const NO_SCORE_LABEL: Partial<Record<Kind, string>> = { MISSED_FG: "NO GOOD!", INT: "INTERCEPTED!", FUMBLE: "FUMBLE!", DOWNS: "TURNOVER ON DOWNS" };
+const RETURN_LABEL = { pick: "PICK SIX!", fumble: "FUMBLE RETURN TD!", return: "RETURN TOUCHDOWN!" } as const;
 
 type Key = [number, number, number]; // [seconds, x, y]
 
@@ -164,7 +170,7 @@ function makeRun(L: number, dur = 1): Script {
  * A "pick six": the opponent's quarterback throws, the scoring team's cornerback intercepts and runs it back.
  * Here `off` is the scoring team's DEFENSE (facing right) and `def` is the other team's offense (facing left).
  */
-function makePickSix(L: number, dur = 1): Script {
+function makePickSix(L: number, dur = 1, label = "PICK SIX!"): Script {
   const off: Record<string, Key[]> = {
     dl1: [[0, OFF_LEFT, 96], [1, L - 6, 96], [2.0, L - 6, 96], [2.8, L + 4, 100], [99, L + 4, 100]],
     dl2: [[0, OFF_LEFT, 106], [1, L - 6, 106], [2.0, L - 6, 106], [2.8, L + 6, 106], [99, L + 6, 106]],
@@ -187,7 +193,7 @@ function makePickSix(L: number, dur = 1): Script {
     off,
     def,
     dur,
-    label: "PICK SIX!",
+    label,
     carrier: "cb1",
     ball: (t) => {
       const qb = at(def.qb, t);
@@ -210,7 +216,7 @@ function makePickSix(L: number, dur = 1): Script {
 }
 
 /** A field goal kicked from line `FX` (small `FX` is a long one). The ball arcs through the posts at the back of the end zone. */
-function makeFieldGoal(FX: number, dur = 1): Script {
+function makeFieldGoal(FX: number, dur = 1, miss = false): Script {
   const off: Record<string, Key[]> = {
     ol1: [[0, OFF_LEFT, 96], [1.0, FX - 4, 96], [99, FX - 4, 96]],
     ol2: [[0, OFF_LEFT, 104], [1.0, FX - 4, 104], [99, FX - 4, 104]],
@@ -231,6 +237,8 @@ function makeFieldGoal(FX: number, dur = 1): Script {
   };
   const x0 = FX - 19;
   const height = 16 + (GOAL_POST_X - x0) * 0.16; // longer kicks fly higher
+  const endX = miss ? x0 + (GOAL_POST_X - x0) * 0.94 : GOAL_POST_X; // a miss drifts wide of the posts
+  const wide = miss ? 15 : 0;
   return {
     off,
     def,
@@ -245,9 +253,9 @@ function makeFieldGoal(FX: number, dur = 1): Script {
       if (t < 2.4) return { x: holder.x + 1, y: 109 };
       if (t < 4.6) {
         const u = (t - 2.4) / 2.2; // the kick
-        return { x: x0 + (GOAL_POST_X - x0) * u, y: 109 + (106 - 109) * u - Math.sin(Math.PI * u) * height };
+        return { x: x0 + (endX - x0) * u, y: 109 + (106 - 109) * u - Math.sin(Math.PI * u) * height + wide * u };
       }
-      return { x: GOAL_POST_X, y: 106 + Math.min(1, (t - 4.6) / 1.2) * 10 };
+      return { x: endX, y: 106 + wide + Math.min(1, (t - 4.6) / 1.2) * 10 };
     },
   };
 }
@@ -294,6 +302,64 @@ function makePunt(PX: number, land: number, fair: boolean, dur = 1): Script {
   };
 }
 
+/** An interception: the same drive as a long pass, but the cornerback picks it off and the receiver is left empty-handed. */
+function makeInterception(L: number, dur = 1): Script {
+  const base = makePass(L, dur);
+  const D = GOAL_LINE_X - L;
+  const far = L + D * 0.72;
+  const off = { ...base.off, wr1: [[0, OFF_LEFT, 70], [1, L - 6, 70], [1.6, L - 6, 70], [2.6, L + D * 0.38, 70], [4.2, far - 14, 94], [99, far - 14, 94]] as Key[] };
+  const cb1: Key[] = [[0, OFF_RIGHT, 70], [1, L + 10, 70], [1.6, L + 10, 70], [2.6, L + D * 0.38 - 8, 72], [4.2, far, 92], [5.9, far - 16, 96], [99, far - 16, 96]];
+  const def = { ...base.def, cb1 };
+  return {
+    off,
+    def,
+    dur,
+    ball: (t) => {
+      if (t < 4.2) return base.ball(t);
+      const cb = at(cb1, t);
+      return { x: cb.x + 4, y: cb.y - 6 };
+    },
+  };
+}
+
+/** A fumble: the runner is hit, the ball comes loose, and a linebacker falls on it. */
+function makeFumble(L: number, dur = 1): Script {
+  const base = makeRun(L, dur);
+  const D = GOAL_LINE_X - L;
+  const X = L + D * 0.38;
+  const rb: Key[] = [...base.off.rb.slice(0, 5), [99, X, 110]];
+  const lb: Key[] = [[0, OFF_RIGHT, 106], [1, L + 16, 106], [1.6, L + 16, 106], [3.4, X + 12, 110], [4.3, X + 3, 112], [99, X + 3, 112]];
+  return {
+    off: { ...base.off, rb },
+    def: { ...base.def, lb },
+    dur,
+    ball: (t) => {
+      if (t < 3.6) return base.ball(t);
+      const u = Math.min(1, (t - 3.6) / 0.7); // the ball squirts out, then the linebacker has it
+      const l = at(lb, t);
+      return t < 4.3 ? { x: X + 2 + u * 6, y: 108 - Math.sin(Math.PI * u) * 12 } : { x: l.x - 1, y: l.y - 6 };
+    },
+  };
+}
+
+/** Turnover on downs: a run that is stopped short. */
+function makeStuffed(L: number, dur = 1): Script {
+  const base = makeRun(L, dur);
+  const rb: Key[] = [[0, OFF_LEFT, 106], [1, L - 26, 118], [1.8, L - 26, 118], [2.4, L - 12, 110], [3.4, L + 6, 110], [99, L + 6, 110]];
+  const lb: Key[] = [[0, OFF_RIGHT, 106], [1, L + 16, 106], [1.6, L + 16, 106], [3.0, L + 14, 110], [99, L + 14, 110]];
+  const dl = (k: Key[]): Key[] => [...k.slice(0, 3), [3.0, L + 8, k[0][2] > 0 ? k[1][2] : 100], [99, L + 8, k[1][2]]];
+  return {
+    off: { ...base.off, rb },
+    def: { ...base.def, lb, dl1: dl(base.def.dl1), dl2: dl(base.def.dl2), dl3: dl(base.def.dl3) },
+    dur,
+    ball: (t) => {
+      if (t < 2.4) return base.ball(t);
+      const r = at(rb, t);
+      return { x: r.x + 4, y: r.y - 6 };
+    },
+  };
+}
+
 // The menu of plays, from short to long. Several drives in a game never look alike.
 const TD_PLAYS: (() => Script)[] = [
   () => makePass(250, 0.8), // a short toss in the red zone
@@ -304,6 +370,11 @@ const TD_PLAYS: (() => Script)[] = [
   () => makeRun(120, 1.12), // a breakaway
   () => makePickSix(160, 1.1), // an interception returned for a score
 ];
+const OFFENSE_TD_PLAYS = TD_PLAYS.slice(0, 6); // real games only show a pick six when one actually happened
+const INT_PLAYS: (() => Script)[] = [() => makeInterception(190), () => makeInterception(130, 1.1)];
+const FUMBLE_PLAYS: (() => Script)[] = [() => makeFumble(200), () => makeFumble(150, 1.1)];
+const DOWNS_PLAYS: (() => Script)[] = [() => makeStuffed(220), () => makeStuffed(180)];
+const MISS_PLAYS: (() => Script)[] = [() => makeFieldGoal(236, 1, true), () => makeFieldGoal(206, 1, true), () => makeFieldGoal(176, 1.1, true)];
 const FG_PLAYS: (() => Script)[] = [() => makeFieldGoal(262, 0.8), () => makeFieldGoal(236), () => makeFieldGoal(206), () => makeFieldGoal(176, 1.1)];
 const PUNT_PLAYS: (() => Script)[] = [() => makePunt(90, 268, false, 1.05), () => makePunt(130, 282, false), () => makePunt(166, 296, true, 0.9)];
 
@@ -324,7 +395,17 @@ function chooseScripts(events: GameEvent[]): Script[] {
   const rand = seededRandom(seed);
   const last: Record<string, number> = {};
   return events.map((e) => {
-    const menu = e.kind === "TD" ? TD_PLAYS : e.kind === "FG" ? FG_PLAYS : PUNT_PLAYS;
+    if (e.how) return makePickSix(160, 1.1, RETURN_LABEL[e.how]); // a defensive touchdown
+    if (e.kind === "SAFETY") return makePickSix(160, 1.1, "SAFETY!");
+    const real = e.q !== undefined;
+    const menu =
+      e.kind === "TD" ? (real ? OFFENSE_TD_PLAYS : TD_PLAYS)
+      : e.kind === "FG" ? FG_PLAYS
+      : e.kind === "MISSED_FG" ? MISS_PLAYS
+      : e.kind === "INT" ? INT_PLAYS
+      : e.kind === "FUMBLE" ? FUMBLE_PLAYS
+      : e.kind === "DOWNS" ? DOWNS_PLAYS
+      : PUNT_PLAYS;
     let i = Math.floor(rand() * menu.length);
     if (i === last[e.kind]) i = (i + 1 + Math.floor(rand() * (menu.length - 1))) % menu.length;
     last[e.kind] = i;
@@ -414,6 +495,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
   const [points, setPoints] = useState({ W: 0, L: 0 });
   const [shown, setShown] = useState<GameEvent | null>(null); // the drive whose result graphic is showing
   const [shownLabel, setShownLabel] = useState<string | null>(null); // special headline for the score on screen (e.g. PICK SIX!)
+  const [quarter, setQuarter] = useState<number | null>(null); // real games: which quarter the drive on screen is in
   const [punting, setPunting] = useState<GameEvent | null>(null); // set while a punt is in the air, so "PUNT" can be shown
   const sceneRef = useRef<HTMLCanvasElement>(null);
   const confettiRef = useRef<HTMLCanvasElement>(null);
@@ -453,6 +535,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
     let last = performance.now();
     let phaseNow: "play" | "result" | "final" = "play";
     let lastIdx = -1;
+    let quarterNow: number | null = null;
     let puntShown = false;
     let pW = 0;
     let pL = 0;
@@ -497,6 +580,10 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
       let idx = 0;
       while (idx < events.length - 1 && t >= starts[idx + 1]) idx++;
       const ev = events[idx];
+      if ((ev.q ?? null) !== quarterNow) {
+        quarterNow = ev.q ?? null;
+        setQuarter(quarterNow);
+      }
       const play = plays[idx];
       const tl = done ? play + celebs[idx] : t - starts[idx];
       const celebrate = tl >= play;
@@ -507,7 +594,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
       const step = Math.floor(now / 110) % 2 ? "run1" : "run2";
       const offSet = sprites[ev.team][mirror ? "L" : "R"];
       const defSet = sprites[ev.team === "W" ? "L" : "W"][mirror ? "R" : "L"];
-      const cheering = celebrate && ev.kind !== "PUNT";
+      const cheering = celebrate && SCORING.includes(ev.kind);
 
       // ---- score as of now ----
       let w = 0;
@@ -578,7 +665,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
           setShown(ev);
           setShownLabel(script.label ?? null);
           if (ev.kind === "TD") burst(ev.team === "W" ? 26 : 10, ev.team === "W", ev.team === "W" ? 0.7 : 0.5);
-          else if (ev.kind === "FG") burst(ev.team === "W" ? 12 : 5, ev.team === "W", 0.6);
+          else if (ev.kind === "FG" || ev.kind === "SAFETY") burst(ev.team === "W" ? 12 : 5, ev.team === "W", 0.6);
         }
         if (next === "final") {
           finalAt = now;
@@ -645,12 +732,13 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
   const shownTeam = shown ? (shown.team === "W" ? result.winner : loser) : null;
   const finalW = pointsFor(events, "W");
   const champion = result.isSuperBowl ?? true;
+  const hadOvertime = events.some((e) => (e.q ?? 0) > 4);
 
   return createPortal(
     <div role="dialog" aria-modal="true" aria-label={`${result.title ?? "Super Bowl"} animation`} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6">
       <div className="relative w-full max-w-4xl">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="font-pixel text-[10px] leading-relaxed text-white sm:text-xs">{result.title ?? "SUPER BOWL"}</div>
+          <div className="font-pixel text-[10px] leading-relaxed text-white sm:text-xs">{result.title ?? "SUPER BOWL"}{quarter ? ` · ${quarter > 4 ? "OVERTIME" : `Q${quarter}`}` : ""}</div>
           <div className="flex gap-2">
             {phase !== "final" && (
               <button onClick={skip} className="font-pixel rounded bg-white/15 px-3 py-2 text-[10px] text-white hover:bg-white/25">
@@ -679,9 +767,12 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
             <canvas ref={sceneRef} width={W} height={H} className="block w-full" style={{ imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }} />
             {phase === "result" && shown && shownTeam && shown.kind !== "PUNT" && !punting && (
               <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 sm:gap-2">
-                <span className="animate-pulse text-2xl text-yellow-300 [text-shadow:3px_3px_0_#000] sm:text-5xl">{shownLabel ?? (shown.kind === "TD" ? "TOUCHDOWN!" : "FIELD GOAL!")}</span>
+                <span className={`animate-pulse text-2xl [text-shadow:3px_3px_0_#000] sm:text-5xl ${shown.pts > 0 ? "text-yellow-300" : "text-red-400"}`}>
+                  {shownLabel ?? NO_SCORE_LABEL[shown.kind] ?? (shown.kind === "TD" ? "TOUCHDOWN!" : "FIELD GOAL!")}
+                </span>
                 <span className="rounded px-2 py-1 text-[9px] text-white [text-shadow:1px_1px_0_#000] sm:text-sm" style={{ backgroundColor: teamInfo(shownTeam).primary }}>
-                  {teamInfo(shownTeam).name.toUpperCase()} +{shown.pts}
+                  {teamInfo(shownTeam).name.toUpperCase()}
+                  {shown.pts > 0 ? ` +${shown.pts}` : ""}
                 </span>
                 {shown.kind === "TD" && shown.pts === 6 && (
                   <span className="rounded bg-red-600 px-2 py-0.5 text-[8px] text-white [text-shadow:1px_1px_0_#000] sm:text-xs">MISSED PAT</span>
@@ -704,21 +795,41 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
             )}
             {phase === "final" && (
               <div className="rise absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/60 p-2 text-center sm:gap-2 sm:p-3">
-                <div className="font-pixel hidden text-[8px] text-yellow-300 sm:block sm:text-xs">{champion ? "SUPER BOWL CHAMPIONS" : result.realGame ? "WINNER" : "WINNER: ADVANCES"}</div>
-                <div className="sm:hidden">
-                  <TeamLogo abbr={result.winner} size={48} />
-                </div>
-                <div className="hidden sm:block">
-                  <TeamLogo abbr={result.winner} size={96} />
-                </div>
-                <div className="font-pixel text-[9px] text-white [text-shadow:2px_2px_0_#000] sm:text-2xl">{win.name.toUpperCase()}</div>
-                <div className="font-pixel text-[7px] text-yellow-300 sm:hidden">{champion ? "CHAMPIONS" : result.realGame ? "WINNER" : "ADVANCES"}</div>
+                {result.tie ? (
+                  <>
+                    <div className="font-pixel text-[9px] text-yellow-300 sm:text-xs">{hadOvertime ? "TIED AFTER OVERTIME" : "TIE GAME"}</div>
+                    <div className="flex items-center gap-3">
+                      {[result.away, result.home].map((tm) => (
+                        <div key={tm}>
+                          <div className="sm:hidden">
+                            <TeamLogo abbr={tm} size={44} />
+                          </div>
+                          <div className="hidden sm:block">
+                            <TeamLogo abbr={tm} size={80} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-pixel hidden text-[8px] text-yellow-300 sm:block sm:text-xs">{champion ? "SUPER BOWL CHAMPIONS" : result.realGame ? "WINNER" : "WINNER: ADVANCES"}</div>
+                    <div className="sm:hidden">
+                      <TeamLogo abbr={result.winner} size={48} />
+                    </div>
+                    <div className="hidden sm:block">
+                      <TeamLogo abbr={result.winner} size={96} />
+                    </div>
+                    <div className="font-pixel text-[9px] text-white [text-shadow:2px_2px_0_#000] sm:text-2xl">{win.name.toUpperCase()}</div>
+                    <div className="font-pixel text-[7px] text-yellow-300 sm:hidden">{champion ? "CHAMPIONS" : result.realGame ? "WINNER" : "ADVANCES"}</div>
+                  </>
+                )}
                 {result.winnerRecord && (
                   <div className="font-pixel hidden text-[8px] text-white/80 sm:block sm:text-[10px]">
                     {result.winnerRecord} IN THE REGULAR SEASON{result.winnerSeed ? ` · #${result.winnerSeed} SEED` : ""}
                   </div>
                 )}
-                <div className="font-pixel text-[8px] text-white/80 sm:text-xs">FINAL: {finalW}-{pointsFor(events, "L")}</div>
+                <div className="font-pixel text-[8px] text-white/80 sm:text-xs">FINAL{hadOvertime ? " (OT)" : ""}: {finalW}-{pointsFor(events, "L")}</div>
                 <div className="mt-1 flex gap-2">
                   <button onClick={replay} className="font-pixel rounded bg-yellow-300 px-2 py-1.5 text-[8px] text-black hover:bg-yellow-200 sm:px-3 sm:py-2 sm:text-[10px]">
                     REPLAY
@@ -731,7 +842,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
             )}
           </div>
         </div>
-        <p className="mt-2 text-center text-xs text-white/70">{result.realGame ? "The final score is real; the plays are made up to match it." : "The model picks the winner; the plays and the score are just for fun."}</p>
+        <p className="mt-2 text-center text-xs text-white/70">{result.realGame ? (result.realDrives ? "The drives and final score are real; the plays themselves are drawn for fun." : "The final score is real; the plays are made up to match it.") : "The model picks the winner; the plays and the score are just for fun."}</p>
       </div>
       <canvas ref={confettiRef} aria-hidden className="pointer-events-none fixed inset-0 h-full w-full" />
     </div>,
