@@ -1,7 +1,7 @@
 {
  "season": 2026,
  "n_sims": 20000,
- "generated_at": "2026-11-03T20:49:56+00:00",
+ "generated_at": "2026-11-03T20:57:20+00:00",
  "games_played": 121,
  "games_total": 272,
  "teams": [
@@ -1318,5 +1318,6 @@
    "qb_adj": -75.1
   }
  ],
- "trade_effects": []
+ "trade_effects": [],
+ "trade_deltas": {}
 }

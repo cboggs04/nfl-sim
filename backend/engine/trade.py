@@ -1,7 +1,7 @@
 """What a trade does to two teams' ratings, in Elo points. Pure Python, no web code.
 
-Only quarterbacks have a real, measured rating in this model (EPA per dropback, engine/qb.py). Everyone else gets an
-estimate: their per-game production (the same points formulas the awards use) is ranked against every other player at
+Quarterbacks have a measured rating (EPA per dropback, engine/qb.py). Running backs, receivers and tight ends are measured
+the same way from their own EPA (`skill_values`). Defenders (and anything else) get an estimate: their per-game production (the same points formulas the awards use) is ranked against every other player at
 the same position, and the rank is turned into Elo points. Those are stated assumptions, not measured effects:
   - a league-average player is worth about nothing, an elite one is worth the position's `MAX_VALUE`;
   - the maximums are rough, round numbers (100 Elo is about 3.5 points of point spread): a great edge rusher or receiver
@@ -59,3 +59,38 @@ def qb_team_delta(before: list[float], leaving: list[float], arriving: list[floa
         after.remove(a)
     after += arriving
     return max(after + [BACKUP_QB_ADJ]) - max(before + [BACKUP_QB_ADJ])
+
+
+# ---- running backs, receivers, tight ends: measured from EPA ----
+# A QB's rating is 600 Elo per EPA/dropback (tuned by backtest, engine/qb.py); at about 35 dropbacks a game that is about 17 Elo
+# per EPA per game. A receiver or back's EPA is partly the quarterback's and the scheme's, and his snaps go to the next man up,
+# so only part of it is his own: `ATTRIBUTION` (an assumption, chosen so the best players land near the position caps above).
+ELO_PER_EPA_GAME = 17.0
+ATTRIBUTION = 0.3
+SHRINK_GAMES = 4.0     # games of "replacement" mixed into every rating, so a small sample doesn't swing it
+SEASON_DECAY = 0.7     # last season counts this much as much as this one (same as the QB ratings)
+SKILL = ("RB", "WR", "TE")
+
+
+def skill_values(players: list[dict]) -> dict[str, float]:
+    """player id -> Elo above replacement, for every RB, WR and TE with a stat line.
+
+    Each dict needs: id, position, gp (games this season), epa (this season), prev_epa, prev_games."""
+    rows: dict[str, list[tuple[str, float]]] = {}
+    for p in players:
+        if p["position"] not in SKILL:
+            continue
+        games = p["gp"] + SEASON_DECAY * p["prev_games"]
+        epa = p["epa"] + SEASON_DECAY * p["prev_epa"]
+        if games <= 0:
+            continue
+        rows.setdefault(p["position"], []).append((p["id"], epa, games))
+    out: dict[str, float] = {}
+    for pos, rs in rows.items():
+        # replacement level: the 35th percentile of EPA per game among players with enough games to mean something
+        steady = sorted(e / g for _, e, g in rs if g >= 4)
+        repl = steady[int(0.35 * (len(steady) - 1))] if steady else 0.0
+        for pid, e, g in rs:
+            shrunk = (e + repl * SHRINK_GAMES) / (g + SHRINK_GAMES)
+            out[pid] = max(0.0, ELO_PER_EPA_GAME * ATTRIBUTION * (shrunk - repl))
+    return out

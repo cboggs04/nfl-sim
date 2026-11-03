@@ -24,7 +24,7 @@ from app.schemas import AwardRow, LeaderRow, LeadersResponse, RosterPlayer, Team
 from engine.drives import drives_by_game
 from engine.data import DATA_DIR, load_games, load_player_totals, load_qb_game_epa, load_roster, load_snap_games
 from engine.awards import AWARDS, LEADER_CATEGORIES, simulate_awards
-from engine.trade import BACKUP_QB_ADJ, player_values
+from engine.trade import BACKUP_QB_ADJ, player_values, skill_values
 from engine.players import POSITION_STATS, apply_depth_chart, build_player
 from engine.elo import EloConfig, game_probability, walk_games
 from engine.qb import QbConfig, QbTracker, projected_starters, stats_by_game
@@ -179,15 +179,24 @@ def build_rosters(season: int, schedule: list[dict], refresh: bool = False, trac
                             columns=POSITION_STATS, players=players)
 
     # Skill players (QB RB WR TE): EPA so far. Then every tradable player's Elo value.
-    values = player_values({t: [p.model_dump() for p in r.players] for t, r in out.items()})
+    values = player_values({t: [p.model_dump() for p in r.players] for t, r in out.items()})  # estimates (defenders)
+    skill_rows = []
     for r in out.values():
         for p in r.players:
-            cur = totals.get((p.id, season)) or {}
+            cur, prev = totals.get((p.id, season)) or {}, totals.get((p.id, season - 1)) or {}
             if p.position in ("QB", "RB", "WR", "TE"):
                 p.epa = round(cur.get("passing_epa", 0.0) if p.position == "QB" else cur.get("rushing_epa", 0.0) + cur.get("receiving_epa", 0.0), 1)
                 p.epa_per_game = round(p.epa / p.gp, 2) if p.gp else None
+            if p.position in ("RB", "WR", "TE"):
+                skill_rows.append({"id": p.id, "position": p.position, "gp": p.gp, "epa": p.epa or 0.0,
+                                   "prev_epa": prev.get("rushing_epa", 0.0) + prev.get("receiving_epa", 0.0), "prev_games": prev.get("weeks", 0)})
+    measured = skill_values(skill_rows)
+    for r in out.values():
+        for p in r.players:
             if p.position == "QB" and tracker is not None:
-                p.elo_value = round(tracker.adjustment(r.team, p.id) - BACKUP_QB_ADJ, 1)
+                p.elo_value = round(max(0.0, tracker.adjustment(r.team, p.id) - BACKUP_QB_ADJ), 1)  # never below a replacement-level backup
+            elif p.position in ("RB", "WR", "TE"):
+                p.elo_value = round(measured.get(p.id, 0.0), 1)
             elif p.id in values:
                 p.elo_value = round(values[p.id], 1)
     return out

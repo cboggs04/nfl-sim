@@ -395,8 +395,8 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
             ))}
           </div>
           <p className="mt-2 text-xs text-muted">
-            <b className="text-strong">Elo</b> is what the player adds to his team&apos;s rating. For quarterbacks it is measured (EPA per dropback). For other positions it is an estimate from his
-            production against the league at his position. Offensive linemen, kickers and punters aren&apos;t included.
+            <b className="text-strong">Elo</b> is what the player adds to his team&apos;s rating over a replacement. Quarterbacks are measured from EPA per dropback, and running backs,
+            receivers and tight ends from their own EPA per game. Defenders are estimated from their production against the league at their position. Offensive linemen, kickers and punters aren&apos;t included.
           </p>
           <button
             onClick={() => {

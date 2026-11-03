@@ -41,7 +41,8 @@ def trade_candidates(abbr: str):
             continue
         if p["position"] != "QB" and v < 1.0:
             continue
-        note = "Quarterback, rated by EPA per dropback" if p["position"] == "QB" else "Estimated from per-game production vs. his position"
+        note = ("Rated by EPA per dropback" if p["position"] == "QB" else "Rated from his EPA per game (this season and last)"
+                if p["position"] in ("RB", "WR", "TE") else "Estimated from per-game production vs. his position")
         out.append(TradeCandidate(id=p["id"], name=p["name"], position=p["position"], headshot=p["headshot"], jersey=p["jersey"],
                                   value=round(v, 1), epa=p["epa"], epa_per_game=p["epa_per_game"], note=note))
     return sorted(out, key=lambda c: -c.value)
