@@ -236,7 +236,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
     <div className="space-y-6">
       <div className="min-w-0 space-y-5">
         {/* the three ways to change the world sit side by side; the results come below */}
-        <div className="grid items-stretch gap-5 lg:grid-cols-3">
+        <div className="grid items-stretch gap-5 lg:grid-cols-3 land:grid-cols-3 land:gap-2">
         <section className="panel p-5">
           <h2 className="font-display text-3xl text-strong">1 · Change a team</h2>
           <p className="mt-1 text-xs text-muted">Adjust a team&apos;s Elo rating, the model&apos;s measure of strength.</p>
@@ -357,7 +357,7 @@ export default function WhatIfSandbox({ baseline, initialTeam }: { baseline: Tea
         <section className="panel p-5">
           <h2 className="font-display text-3xl text-strong">3 · Trade players</h2>
           <p className="mt-1 text-xs text-muted">Swap a player from each team and see how both teams&apos; odds change. Each team has to get a player back.</p>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-1 land:grid-cols-1">
             {([
               { side: "from" as const, team: tradeFrom, cands: candFrom, pick: pickFrom, setPick: setPickFrom, label: "sends" },
               { side: "to" as const, team: tradeTo, cands: candTo, pick: pickTo, setPick: setPickTo, label: "sends" },
