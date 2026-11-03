@@ -56,6 +56,7 @@ A pixel-art football game. You run the offense; the other team's possessions are
 | 4th down | F field goal, P punt | Strip buttons |
 
 ### On a phone or tablet
+- The site is responsive. The What-if trade lists stack on a phone held upright and sit side by side when it's held sideways, and the player tables (with their EPA and Elo columns) scroll sideways with the player's name pinned.
 - The site is responsive. Hold a phone **sideways** for the best view of the playoff bracket (the **whole bracket** fits on one screen), the replays (sized to the screen's height) and Play now's team select (the two teams sit **side by side**, like on a computer).
 - In **Play now**, turning the phone sideways gives a full-screen field with on-screen controls (thumb pad, SNAP/SPRINT and throw buttons) and a play strip across the top that tucks away after you pick. It asks you to rotate if you hold it upright.
 - To remove the browser's address bar on an iPhone, tap Share, then **Add to Home Screen**, and open the app from there. It also loads faster and shows an offline page with no connection.
