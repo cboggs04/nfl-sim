@@ -1,3 +1,4 @@
+/* eslint-disable */
 // Balance and sanity test for the Play now game engine (lib/playNow/engine.ts), played by bots.
 //
 //   cd frontend && npx tsc lib/playNow/engine.ts --outDir /tmp/pn --module commonjs --target es2020 --strict \
