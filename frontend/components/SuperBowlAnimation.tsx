@@ -30,6 +30,7 @@ const SCRIPT_END = 6.0; // each play script runs 0 to 6 "script seconds"
 // Real seconds each kind of drive takes to play out, and to celebrate (a punt barely pauses).
 const PLAY_BY: Record<Kind, number> = { TD: 2.5, FG: 2.0, PUNT: 1.6, MISSED_FG: 2.0, INT: 2.2, FUMBLE: 2.0, DOWNS: 1.7, SAFETY: 2.5 };
 const CELEBRATE_BY: Record<Kind, number> = { TD: 1.1, FG: 0.8, PUNT: 0.55, MISSED_FG: 0.9, INT: 1.0, FUMBLE: 1.0, DOWNS: 0.9, SAFETY: 1.1 };
+const OT_PAUSE = 1.3; // real seconds the game holds still on the "OVERTIME" sign
 const SCORING: Kind[] = ["TD", "FG", "SAFETY"];
 // What the screen says after a drive that didn't score (and who it hurt).
 const NO_SCORE_LABEL: Partial<Record<Kind, string>> = { MISSED_FG: "NO GOOD!", INT: "INTERCEPTED!", FUMBLE: "FUMBLE!", DOWNS: "TURNOVER ON DOWNS" };
@@ -482,7 +483,8 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
   const { starts, total } = useMemo(() => {
     const starts: number[] = [];
     let at = 0;
-    events.forEach((_, i) => {
+    events.forEach((e, i) => {
+      if ((e.q ?? 0) > 4 && (events[i - 1]?.q ?? 0) <= 4) at += OT_PAUSE; // the game stops for the "OVERTIME" sign
       starts.push(at);
       at += plays[i] + celebs[i];
     });
@@ -537,7 +539,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
     let phaseNow: "play" | "result" | "final" = "play";
     let lastIdx = -1;
     let quarterNow: number | null = null;
-    let otStart = 0;
+    let otGapNow = false;
     let puntShown = false;
     let pW = 0;
     let pL = 0;
@@ -582,17 +584,17 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
       let idx = 0;
       while (idx < events.length - 1 && t >= starts[idx + 1]) idx++;
       const ev = events[idx];
-      if ((ev.q ?? null) !== quarterNow) {
-        quarterNow = ev.q ?? null;
-        setQuarter(quarterNow);
-        if (quarterNow !== null && quarterNow > 4) {
-          otStart = now;
-          setOtBanner(true);
-        }
+      // The "OVERTIME" sign holds the game still for a moment just before the first overtime drive.
+      const otIdx = events.findIndex((e) => (e.q ?? 0) > 4);
+      const inOtGap = otIdx > 0 && t >= starts[otIdx] - OT_PAUSE && t < starts[otIdx];
+      if (inOtGap !== otGapNow) {
+        otGapNow = inOtGap;
+        setOtBanner(inOtGap);
       }
-      if (otStart && now - otStart > 2200) {
-        otStart = 0;
-        setOtBanner(false);
+      const qNow = inOtGap ? 5 : (ev.q ?? null);
+      if (qNow !== quarterNow) {
+        quarterNow = qNow;
+        setQuarter(qNow);
       }
       const play = plays[idx];
       const tl = done ? play + celebs[idx] : t - starts[idx];
@@ -807,11 +809,11 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
               </div>
             )}
             {otBanner && phase !== "final" && (
-              <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/65">
+              <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/45">
                 <span className="rise animate-pulse text-3xl text-red-400 [text-shadow:4px_4px_0_#000] sm:text-6xl">OVERTIME</span>
               </div>
             )}
-            {punting && phase !== "final" && (
+            {punting && phase !== "final" && !otBanner && (
               <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 sm:gap-2">
                 <span className="text-2xl text-white [text-shadow:3px_3px_0_#000] sm:text-5xl">PUNT</span>
                 <span
