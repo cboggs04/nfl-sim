@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import NavLinks from "@/components/NavLinks";
+import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
 
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
   description: "Monte Carlo projections of every team's record, playoff odds, and Super Bowl odds.",
   // "Add to Home Screen" on an iPhone opens the site with no Safari address bar (a web page can't hide it any other way)
   appleWebApp: { capable: true, title: "NFL Sim", statusBarStyle: "black-translucent" },
-  icons: { apple: "/nfl-logo.png" },
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col">
+        <RegisterServiceWorker />
         <nav className="sticky top-0 z-30 border-b border-line bg-background/85 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
             <Link href="/" className="flex items-center gap-2" aria-label="NFL Simulator home">

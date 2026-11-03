@@ -8,8 +8,13 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Monte Carlo projections of the NFL season, plus a football game you can play.",
     start_url: "/play",
     display: "standalone",
+    orientation: "any",
     background_color: "#08122a",
     theme_color: "#08122a",
-    icons: [{ src: "/nfl-logo.png", sizes: "500x500", type: "image/png", purpose: "any" }],
+    icons: [
+      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
   };
 }
