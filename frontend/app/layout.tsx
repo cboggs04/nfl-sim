@@ -7,6 +7,8 @@ import AboutModel from "@/components/AboutModel";
 import AboutModelLoader from "@/components/AboutModelLoader";
 import NavLinks from "@/components/NavLinks";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
+import SiteFooter from "@/components/SiteFooter";
+import SiteFooterLoader from "@/components/SiteFooterLoader";
 import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
 
@@ -80,6 +82,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </nav>
         {children}
+        <Suspense fallback={<SiteFooter />}>
+          <SiteFooterLoader />
+        </Suspense>
       </body>
     </html>
   );
