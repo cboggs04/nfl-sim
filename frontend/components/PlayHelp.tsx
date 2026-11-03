@@ -7,9 +7,9 @@ const KEYS: [string, string][] = [
   ["Q  /  E", "Before the snap: choose a pass (Q) or a run (E)"],
   ["← →", "Before the snap: switch between the three plays on offer (or press 1, 2 or 3)"],
   ["Space", "Snap the ball. While you have the ball in the open, sprint (it recharges)"],
-  ["Arrow keys / WASD", "Move the quarterback or the ball carrier"],
+  ["Arrow keys", "Move the quarterback or the ball carrier"],
   ["1  2  3", "Before the snap: pick one of the three plays shown"],
-  ["Z  X  C", "During a pass: throw to the receiver wearing that letter. They sit under your left hand"],
+  ["A  S  D", "During a pass: throw to the receiver wearing that letter. They sit under your left hand"],
   ["F", "4th down: kick a field goal (shows the distance)"],
   ["P", "4th down: punt"],
   ["Space", "4th down: go for it"],
@@ -70,7 +70,7 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
               <b className="text-strong">Press Space</b> to snap the ball.
             </li>
             <li>
-              <b className="text-strong">On a pass</b>, the pass rush closes in after a few seconds. Press <b className="text-strong">Z, X or C</b> to throw to the
+              <b className="text-strong">On a pass</b>, the pass rush closes in after a few seconds. Press <b className="text-strong">A, S or D</b> to throw to the
               receiver with that letter, ideally the one with the most space around him. You can slide the quarterback with the arrow keys to buy time, but you can&apos;t throw
               once you cross the line of scrimmage.
             </li>
