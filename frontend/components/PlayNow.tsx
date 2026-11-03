@@ -127,6 +127,7 @@ interface Hud {
   oppProgress: number;
   boost: number; // 0..1: how ready the sprint is
   carrying: boolean;
+  canThrow: boolean; // a pass play where the ball hasn't been thrown yet
   stats: FootballGame["stats"];
 }
 
@@ -152,6 +153,7 @@ function snapshot(g: FootballGame): Hud {
     oppProgress: Math.min(1, g.oppT / g.oppDurReal),
     boost: g.phase === "live" ? Math.max(0, Math.min(1, 1 - (g.boostReady - g.t) / 1.8)) : 1,
     carrying,
+    canThrow: g.phase === "live" && g.playKind === "pass" && !g.ball.flight && !g.caught && !g.pastLine,
     stats: { ...g.stats },
   };
 }
@@ -170,6 +172,108 @@ const LEVELS: { id: Difficulty; label: string; blurb: string }[] = [
   { id: "pro", label: "Pro", blurb: "A fair fight: tight coverage, a real pass rush and defenders who tackle." },
   { id: "allstar", label: "All-Star", blurb: "Fast defenders, tight coverage, quick pressure and sure tackles. Good luck." },
 ];
+
+// ---------- phones and tablets: on-screen controls, played in landscape ----------
+function useMedia(query: string, initial = false) {
+  const [matches, setMatches] = useState(initial);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const update = () => setMatches(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [query]);
+  return matches;
+}
+
+/** Full screen and a landscape lock, where the browser allows them (it must run from a tap, like Kick off). */
+function enterTouchMode() {
+  if (typeof window === "undefined" || !window.matchMedia("(pointer: coarse)").matches) return;
+  const orientation = screen.orientation as unknown as { lock?: (o: string) => Promise<void> };
+  void document.documentElement
+    .requestFullscreen?.()
+    .then(() => orientation.lock?.("landscape"))
+    .catch(() => {});
+}
+
+/** A thumb pad on the left (8 directions) and the buttons on the right: snap / sprint, and throws to receivers A, S, D. */
+function TouchControls({ hud, onDirs, onAction }: { hud: Hud; onDirs: (dirs: Set<string>) => void; onAction: (a: Parameters<FootballGame["press"]>[0]) => void }) {
+  const padRef = useRef<HTMLDivElement>(null);
+  const [knob, setKnob] = useState<{ x: number; y: number } | null>(null);
+  const fromPointer = (e: React.PointerEvent) => {
+    const r = padRef.current!.getBoundingClientRect();
+    const x = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+    const y = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+    const m = Math.hypot(x, y) || 1;
+    const k = Math.min(1, m);
+    setKnob({ x: (x / m) * k, y: (y / m) * k });
+    const t = 0.32;
+    const dirs = new Set<string>();
+    if (x < -t) dirs.add("left");
+    if (x > t) dirs.add("right");
+    if (y < -t) dirs.add("up");
+    if (y > t) dirs.add("down");
+    onDirs(dirs);
+  };
+  const release = () => {
+    setKnob(null);
+    onDirs(new Set());
+  };
+  const tap = (a: Parameters<FootballGame["press"]>[0]) => (e: React.PointerEvent) => {
+    e.preventDefault();
+    onAction(a);
+  };
+  const live = hud.phase === "live";
+  const playing = hud.phase === "presnap" || live;
+  if (!playing) return null;
+  return (
+    <div className="pointer-events-none absolute inset-0 touch-none select-none" onContextMenu={(e) => e.preventDefault()}>
+      <div
+        ref={padRef}
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          fromPointer(e);
+        }}
+        onPointerMove={(e) => e.currentTarget.hasPointerCapture(e.pointerId) && fromPointer(e)}
+        onPointerUp={release}
+        onPointerCancel={release}
+        className="pointer-events-auto absolute bottom-2 left-2 h-24 w-24 touch-none rounded-full bg-black/30 ring-2 ring-white/50 sm:h-28 sm:w-28"
+        aria-label="Move"
+      >
+        <span className="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] text-white/70">▲</span>
+        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] text-white/70">▼</span>
+        <span className="absolute top-1/2 left-1.5 -translate-y-1/2 text-[10px] text-white/70">◀</span>
+        <span className="absolute top-1/2 right-1.5 -translate-y-1/2 text-[10px] text-white/70">▶</span>
+        <span
+          className="absolute top-1/2 left-1/2 h-9 w-9 rounded-full bg-white/50 ring-2 ring-white/80"
+          style={{ transform: `translate(calc(-50% + ${(knob?.x ?? 0) * 34}%), calc(-50% + ${(knob?.y ?? 0) * 34}%))` }}
+        />
+      </div>
+      <div className="pointer-events-none absolute right-2 bottom-2 flex flex-col items-end gap-2">
+        {hud.canThrow && (
+          <div className="flex gap-2">
+            {["A", "S", "D"].map((k, i) => (
+              <button
+                key={k}
+                onPointerDown={tap(`throw${i + 1}` as "throw1" | "throw2" | "throw3")}
+                className="font-pixel pointer-events-auto flex h-12 w-12 touch-none items-center justify-center rounded-full bg-yellow-300/85 text-sm text-black ring-2 ring-white/80 active:bg-yellow-200"
+                aria-label={`Throw to receiver ${k}`}
+              >
+                {k}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          onPointerDown={tap(live ? "boost" : "snap")}
+          className={`font-pixel pointer-events-auto flex h-16 w-16 touch-none items-center justify-center rounded-full text-[9px] text-black ring-2 ring-white/80 sm:h-[4.5rem] sm:w-[4.5rem] ${live && hud.boost < 1 ? "bg-white/50" : "bg-emerald-400/90 active:bg-emerald-300"}`}
+        >
+          {live ? "SPRINT" : "SNAP"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ---------- the uniform preview: opens over its team card, a pixel player in each uniform, cycle with the arrows ----------
 function UniformPicker({ team, teamName, value, onChange, onClose }: { team: string; teamName: string; value: Jersey; onChange: (j: Jersey) => void; onClose: () => void }) {
@@ -422,7 +526,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         Run the offense. Throw to your receivers, scramble, pick your plays and go for the end zone. Between your drives the other team&apos;s
         possessions are simulated from the two teams&apos; ratings, so a stronger team has a real edge. Two short halves, about two minutes each.
       </p>
-      <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">You need a keyboard to play this: open it on a computer.</p>
+      <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">On a phone? Turn it sideways: the game plays in landscape with on-screen controls. A keyboard works on a computer.</p>
       <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use the arrow keys).</p>
       <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-5">
         <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} jersey={userJersey} onJersey={setUserJersey} />
@@ -456,7 +560,11 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         </div>
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-4">
-        <button onClick={() => onStart(user, opp, level, userJersey, oppJersey)} disabled={user === opp} className="btn btn-primary text-2xl">
+        <button
+          onClick={() => {
+            enterTouchMode();
+            onStart(user, opp, level, userJersey, oppJersey);
+          }} disabled={user === opp} className="btn btn-primary text-2xl">
           Kick off
         </button>
         <div>
@@ -534,7 +642,10 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
   const rootRef = useRef<HTMLDivElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [manualPause, setManualPause] = useState(false); // the Pause button (or Esc)
-  const stopped = paused || manualPause; // paused by the help panel or by the player
+  const touch = useMedia("(pointer: coarse)"); // a phone or tablet: on-screen controls, full-viewport layout
+  const landscape = useMedia("(orientation: landscape)", true);
+  const rotate = touch && !landscape; // held in portrait: ask for landscape and stand still
+  const stopped = paused || manualPause || rotate; // paused by the help panel, the player, or a phone held upright
   const pausedRef = useRef(stopped);
   const [game, setGame] = useState(() => new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo }, Math.random, level));
   const [hud, setHud] = useState<Hud>(() => snapshot(game));
@@ -817,6 +928,22 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
     (document.activeElement as HTMLElement | null)?.blur?.();
     setHud(snapshot(game));
   };
+  /** The on-screen pad: set the held directions (like holding arrow keys). Before the snap a new direction picks pass/run or a play. */
+  const setDirs = (next: Set<string>) => {
+    if (pausedRef.current) next = new Set();
+    const prev = keys.current;
+    if (game.phase === "presnap") {
+      if (next.has("left") && !prev.has("left")) game.press("selectPass");
+      if (next.has("right") && !prev.has("right")) game.press("selectRun");
+      if (next.has("up") && !prev.has("up")) game.press("prevPlay");
+      if (next.has("down") && !prev.has("down")) game.press("nextPlay");
+    }
+    keys.current = next;
+    game.setMove((next.has("right") ? 1 : 0) - (next.has("left") ? 1 : 0), (next.has("down") ? 1 : 0) - (next.has("up") ? 1 : 0));
+  };
+  const touchAct = (a: Parameters<FootballGame["press"]>[0]) => {
+    if (!pausedRef.current) act(a);
+  };
 
   const d = hud.oppDrive;
   const final = hud.phase === "final";
@@ -827,19 +954,39 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
       ref={rootRef}
       data-phase={hud.phase}
       data-half={hud.half}
-      className={fullscreen ? "flex h-screen w-screen flex-col items-center justify-center overflow-auto p-3" : ""}
-      style={fullscreen ? { background: "var(--background)" } : undefined}
+      className={touch ? "fixed inset-0 z-[70] flex flex-col items-center justify-center overflow-hidden" : fullscreen ? "flex h-screen w-screen flex-col items-center justify-center overflow-auto p-3" : ""}
+      style={
+        touch
+          ? { background: "var(--background)", height: "100dvh", paddingLeft: "max(0.5rem, env(safe-area-inset-left))", paddingRight: "max(0.5rem, env(safe-area-inset-right))", paddingTop: "max(0.25rem, env(safe-area-inset-top))", paddingBottom: "max(0.25rem, env(safe-area-inset-bottom))" }
+          : fullscreen
+            ? { background: "var(--background)" }
+            : undefined
+      }
     >
+      {rotate && (
+        <div className="fixed inset-0 z-[90] flex flex-col items-center justify-center gap-4 bg-black/90 p-6 text-center text-white" role="alert">
+          <svg viewBox="0 0 64 64" className="h-20 w-20 animate-pulse" fill="none" stroke="currentColor" strokeWidth={3} aria-hidden>
+            <rect x="22" y="8" width="20" height="36" rx="4" />
+            <path d="M14 50a22 22 0 0 0 36 0M50 50l-1-8m1 8-8-1" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div className="font-pixel text-sm leading-relaxed text-yellow-300">TURN YOUR PHONE SIDEWAYS</div>
+          <div className="text-sm text-white/80">The game plays in landscape. It&apos;s paused until you rotate.</div>
+          <button onClick={onExit} className="btn btn-ghost mt-2 text-lg">
+            Quit game
+          </button>
+        </div>
+      )}
       {/* the game is as wide as the screen's height allows, so the whole field stays on screen (without scrolling) */}
       <div
         className="mx-auto w-full"
-        style={{ maxWidth: fullscreen ? "calc((100vh - 11rem) * 16 / 9 + 16rem)" : "min(78rem, max(46rem, calc((100vh - 17.5rem) * 16 / 9 + 16rem)))" }}
+        style={{ maxWidth: touch ? "calc((100dvh - 4.6rem) * 16 / 9 + 11.5rem)" : fullscreen ? "calc((100vh - 11rem) * 16 / 9 + 16rem)" : "min(78rem, max(46rem, calc((100vh - 17.5rem) * 16 / 9 + 16rem)))" }}
       >
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="font-pixel text-[10px] text-muted sm:text-xs">
+        <div className={`flex items-center justify-between gap-2 ${touch ? "mb-1" : "mb-2"}`}>
+          <div className={`font-pixel text-muted ${touch ? "text-[8px]" : "text-[10px] sm:text-xs"}`}>
             {hud.half === 1 ? "1ST HALF" : "2ND HALF"} · {LEVELS.find((l) => l.id === level)!.label.toUpperCase()}
           </div>
           <div className="flex gap-2">
+            {!touch && (
             <button
               onClick={toggleFullscreen}
               aria-pressed={fullscreen}
@@ -847,6 +994,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
             >
               {fullscreen ? "EXIT FULL SCREEN" : "FULL SCREEN"}
             </button>
+            )}
             {!final && (
               <button
                 onClick={() => {
@@ -854,41 +1002,42 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
                   (document.activeElement as HTMLElement | null)?.blur?.();
                 }}
                 aria-pressed={manualPause}
-                className="font-pixel rounded bg-head px-3 py-2 text-[10px] text-strong ring-1 ring-line hover:bg-hover"
+                className={`font-pixel rounded bg-head text-strong ring-1 ring-line hover:bg-hover ${touch ? "px-2 py-1 text-[8px]" : "px-3 py-2 text-[10px]"}`}
               >
                 {manualPause ? "RESUME" : "PAUSE"}
               </button>
             )}
-            <button onClick={onExit} className="font-pixel rounded bg-head px-3 py-2 text-[10px] text-strong ring-1 ring-line hover:bg-hover">
+            <button onClick={onExit} className={`font-pixel rounded bg-head text-strong ring-1 ring-line hover:bg-hover ${touch ? "px-2 py-1 text-[8px]" : "px-3 py-2 text-[10px]"}`}>
               QUIT
             </button>
           </div>
         </div>
-        <div className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]">
+        <div className={`grid items-stretch ${touch ? "gap-2" : "gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]"}`} style={touch ? { gridTemplateColumns: "minmax(0, 1fr) 10.5rem" } : undefined}>
         <div className="overflow-hidden rounded-lg border-4 border-white/70 bg-black shadow-2xl shadow-black/40">
           <div className="font-pixel flex items-stretch justify-between bg-[#111827] text-white">
-            <div className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2" style={{ borderColor: uInfo.primary }}>
-              <span className="text-[10px] sm:text-sm">{user.team}</span>
-              <span className="text-lg text-yellow-300 tabular-nums sm:text-3xl" data-testid="score-user">
+            <div className={`flex flex-1 items-center justify-between gap-2 border-b-4 ${touch ? "px-2 py-0.5" : "px-3 py-2"}`} style={{ borderColor: uInfo.primary }}>
+              <span className={touch ? "text-[9px]" : "text-[10px] sm:text-sm"}>{user.team}</span>
+              <span className={`text-yellow-300 tabular-nums ${touch ? "text-lg" : "text-lg sm:text-3xl"}`} data-testid="score-user">
                 {String(hud.user).padStart(2, "0")}
               </span>
             </div>
-            <div className="flex min-w-[8.5rem] flex-col items-center justify-center px-2 text-center">
-              <span className="text-sm tabular-nums sm:text-xl" data-testid="clock">
+            <div className={`flex flex-col items-center justify-center px-2 text-center ${touch ? "min-w-[6.5rem]" : "min-w-[8.5rem]"}`}>
+              <span className={`tabular-nums ${touch ? "text-sm" : "text-sm sm:text-xl"}`} data-testid="clock">
                 {hud.clock}
               </span>
               <span className="text-[7px] text-white/70 sm:text-[9px]">{hud.situation}</span>
             </div>
-            <div className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2" style={{ borderColor: oInfo.primary }}>
-              <span className="text-lg text-yellow-300 tabular-nums sm:text-3xl" data-testid="score-opp">
+            <div className={`flex flex-1 items-center justify-between gap-2 border-b-4 ${touch ? "px-2 py-0.5" : "px-3 py-2"}`} style={{ borderColor: oInfo.primary }}>
+              <span className={`text-yellow-300 tabular-nums ${touch ? "text-lg" : "text-lg sm:text-3xl"}`} data-testid="score-opp">
                 {String(hud.opp).padStart(2, "0")}
               </span>
-              <span className="text-[10px] sm:text-sm">{opp.team}</span>
+              <span className={touch ? "text-[9px]" : "text-[10px] sm:text-sm"}>{opp.team}</span>
             </div>
           </div>
 
           <div className="relative">
             <canvas ref={canvasRef} width={W} height={H} className="block w-full" style={{ imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }} />
+            {touch && !manualPause && !rotate && <TouchControls hud={hud} onDirs={setDirs} onAction={touchAct} />}
 
             {(hud.phase === "result" || hud.phase === "kick") && (hud.message || hud.phase === "kick") && (
               <div className="font-pixel pointer-events-none absolute inset-x-0 top-[28%] flex justify-center px-2">
@@ -918,7 +1067,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
             )}
 
             {hud.phase === "opp" && d && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/75 p-3 text-center">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/75 p-3 text-center" onClick={touch ? () => act("continue") : undefined}>
                 <div className="font-pixel text-[9px] text-white/80 sm:text-xs">{opp.name.toUpperCase()} HAVE THE BALL</div>
                 <div className="font-pixel text-[8px] text-white/60 sm:text-[10px]">STARTING AT THEIR {d.start}</div>
                 <div className="h-2 w-2/3 overflow-hidden rounded bg-white/15">
@@ -935,7 +1084,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
                     </div>
                   </>
                 )}
-                <div className="font-pixel mt-1 text-[8px] text-white/50">ENTER: SKIP</div>
+                <div className="font-pixel mt-1 text-[8px] text-white/50">{touch ? "TAP TO SKIP" : "ENTER: SKIP"}</div>
               </div>
             )}
 
@@ -978,14 +1127,14 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
 
         </div>
         {/* the play picker and snap controls: a column beside the field, so the whole field stays on screen */}
-        <aside className="relative min-h-[26rem] lg:min-h-0">
-          <div className="flex flex-col rounded-lg bg-[#111827] p-2.5 text-white lg:absolute lg:inset-0">
+        <aside className={`relative ${touch ? "" : "min-h-[26rem] lg:min-h-0"}`}>
+          <div className={`flex flex-col rounded-lg bg-[#111827] text-white ${touch ? "absolute inset-0 p-1.5" : "p-2.5 lg:absolute lg:inset-0"}`}>
             {/* the pre-snap controls and the live hints share one spot, so nothing moves when the play starts */}
             <div className={`flex min-h-0 flex-1 flex-col gap-2 ${hud.phase === "presnap" ? "" : "invisible"}`} aria-hidden={hud.phase !== "presnap"}>
               <div className="font-pixel text-center text-[7px] leading-snug text-white/70 sm:text-[8px]">
-                {hud.down >= 4 ? "4TH DOWN: GO FOR IT WITH A PLAY, OR KICK" : "PICK A PLAY (1 2 3 OR ↑ ↓), THEN SNAP"}
+                {hud.down >= 4 ? "4TH DOWN: GO FOR IT WITH A PLAY, OR KICK" : touch ? "TAP A PLAY, THEN SNAP" : "PICK A PLAY (1 2 3 OR ↑ ↓), THEN SNAP"}
               </div>
-              <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 lg:grid-cols-1 lg:grid-rows-3">
+              <div className={`grid min-h-0 flex-1 gap-1.5 ${touch ? "grid-cols-1 grid-rows-3" : "grid-cols-3 gap-2 lg:grid-cols-1 lg:grid-rows-3"}`}>
                 {hud.plays.map((p, i) => (
                   <button
                     key={p.id}
@@ -993,14 +1142,14 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
                     aria-pressed={hud.choice === i}
                     className={`flex min-h-0 min-w-0 flex-col overflow-hidden rounded text-left ring-2 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-white/10 text-white ring-white/15 hover:bg-white/20"}`}
                   >
-                    <span className="block h-14 min-h-0 w-full px-1 pt-1 lg:h-auto lg:flex-1">
+                    <span className={`block min-h-0 w-full px-1 pt-1 ${touch ? "h-auto flex-1" : "h-14 lg:h-auto lg:flex-1"}`}>
                       <PlayArt play={p} />
                     </span>
                     <span className="flex items-center gap-1.5 px-1.5 pb-1.5">
                       <span className={`font-pixel flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] ${hud.choice === i ? "bg-black text-yellow-300" : "bg-white/20"}`}>{i + 1}</span>
                       <span className="min-w-0">
                         <span className="font-pixel block truncate text-[7px] sm:text-[9px]">{p.name.toUpperCase()}</span>
-                        <span className={`hidden h-[1.5rem] overflow-hidden text-[9px] leading-tight lg:block ${hud.choice === i ? "text-black/70" : "text-white/60"}`}>{p.blurb}</span>
+                        <span className={`hidden h-[1.5rem] overflow-hidden text-[9px] leading-tight ${touch ? "" : "lg:block"} ${hud.choice === i ? "text-black/70" : "text-white/60"}`}>{p.blurb}</span>
                       </span>
                     </span>
                   </button>
@@ -1044,12 +1193,14 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
               )}
             </div>
             <div className={`absolute inset-0 flex flex-col items-center justify-center gap-4 p-3 text-center ${hud.phase === "live" ? "" : "invisible"}`}>
-              <span className="font-pixel text-[8px] leading-relaxed text-white/80 sm:text-[10px]">
-                ARROWS MOVE
-                <br />A S D THROW
-              </span>
+              {!touch && (
+                <span className="font-pixel text-[8px] leading-relaxed text-white/80 sm:text-[10px]">
+                  ARROWS MOVE
+                  <br />A S D THROW
+                </span>
+              )}
               <span className="font-pixel flex flex-col items-center gap-2 text-[8px] text-white/80 sm:text-[10px]">
-                SPRINT (SPACE)
+                {touch ? "SPRINT" : "SPRINT (SPACE)"}
                 <span className="inline-block h-2 w-24 overflow-hidden rounded bg-white/20">
                   <span className={`block h-full ${hud.boost >= 1 ? "bg-emerald-400" : "bg-white/50"}`} style={{ width: `${hud.boost * 100}%` }} />
                 </span>
@@ -1058,7 +1209,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
           </div>
         </aside>
         </div>
-        <p className="mt-2 text-center text-xs text-muted">The other team&apos;s drives are simulated from the two teams&apos; ratings. You play every snap of yours.</p>
+        {!touch && <p className="mt-2 text-center text-xs text-muted">The other team&apos;s drives are simulated from the two teams&apos; ratings. You play every snap of yours.</p>}
       </div>
     </div>
   );

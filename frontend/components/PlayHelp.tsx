@@ -98,6 +98,15 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
         </section>
 
         <section className="mt-4">
+          <h3 className="font-display text-2xl text-accent-ink">On a phone or tablet</h3>
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
+            <li>Turn the phone sideways: the game plays in landscape and pauses if you turn it upright.</li>
+            <li>The round pad on the left moves the player (and, before the snap, picks pass or run with ← → and a play with ↑ ↓). You can also tap a play card.</li>
+            <li>The big button on the right snaps the ball, then sprints. During a pass the A, S and D buttons throw to the receivers with those letters.</li>
+          </ul>
+        </section>
+
+        <section className="mt-4">
           <h3 className="font-display text-2xl text-accent-ink">4th down and tips</h3>
           <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
             <li>On 4th down you choose: go for it, kick a field goal (up to about 62 yards, and longer kicks miss more) or punt.</li>
