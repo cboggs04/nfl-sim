@@ -640,38 +640,13 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
         g.drawImage(sprite, x - 4, y - sprite.height + 6);
       }
 
-      // Rookie: the receiver with the most room around him glows, so you know who to throw to
-      let openId: string | null = null;
-      if (level === "rookie" && game.phase === "live" && game.playKind === "pass" && !game.caught && !game.ball.flight && !game.pastLine) {
-        let best = -1;
-        for (const e of game.ents) {
-          if (!e.num) continue;
-          let near = 1e9;
-          for (const d of game.ents) if (d.side === "def") near = Math.min(near, Math.hypot(d.x - e.x, d.y - e.y));
-          if (near > best) {
-            best = near;
-            openId = e.id;
-          }
-        }
-      }
-
       // receiver numbers and a marker over the player you control
       if ((game.phase === "presnap" || game.phase === "live") && (game.phase === "presnap" ? game.selected : game.playKind) === "pass" && !game.caught && !game.ball.flight && !game.pastLine) {
         for (const e of game.ents) {
           if (!e.num) continue;
           const x = sx(e.x) - 3;
           const y = Math.round(e.y) - 22;
-          if (e.id === openId) {
-            // a green box around the open receiver, and a green number tile
-            g.fillStyle = "#4ade80";
-            const bx0 = sx(e.x) - 8;
-            const by0 = Math.round(e.y) - 9;
-            g.fillRect(bx0, by0, 17, 1);
-            g.fillRect(bx0, by0 + 16, 17, 1);
-            g.fillRect(bx0, by0, 1, 17);
-            g.fillRect(bx0 + 16, by0, 1, 17);
-          }
-          g.fillStyle = e.id === openId ? "#4ade80" : "#facc15";
+          g.fillStyle = "#facc15";
           g.fillRect(x - 2, y - 1, 9, 9);
           drawDigits(g, "ASD"[e.num - 1], x + 1, y + 1, "#111827"); // the key that throws to him
         }
@@ -861,11 +836,12 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
           </div>
 
           {/* controls for the moment you're in */}
-          <div className="bg-[#111827] px-3 py-3 text-white">
-            {hud.phase === "presnap" && (
+          <div className="grid bg-[#111827] px-3 py-3 text-white">
+            {/* the pre-snap controls and the live hints share one spot, so the box never changes size when the play starts */}
+            <div className={`col-start-1 row-start-1 ${hud.phase === "presnap" ? "" : "invisible"}`} aria-hidden={hud.phase !== "presnap"}>
               <div className="mb-3">
                 <div className="font-pixel mb-1.5 text-center text-[7px] text-white/70 sm:text-[9px]">
-                  {hud.down === 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3 OR ← →), THEN SNAP"}
+                  {hud.down >= 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3 OR ← →), THEN SNAP"}
                 </div>
                 <div className="mx-auto flex max-w-3xl justify-center gap-1.5 sm:gap-2">
                   {hud.plays.map((p, i) => (
@@ -882,15 +858,14 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
                         <span className={`font-pixel flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] sm:h-6 sm:w-6 sm:text-xs ${hud.choice === i ? "bg-black text-yellow-300" : "bg-white/20"}`}>{i + 1}</span>
                         <span className="min-w-0">
                           <span className="font-pixel block truncate text-[7px] sm:text-[10px]">{p.name.toUpperCase()}</span>
-                          <span className={`hidden text-[10px] leading-tight sm:block ${hud.choice === i ? "text-black/70" : "text-white/60"}`}>{p.blurb}</span>
+                          <span className={`hidden h-[1.9rem] overflow-hidden text-[10px] leading-tight sm:block ${hud.choice === i ? "text-black/70" : "text-white/60"}`}>{p.blurb}</span>
                         </span>
                       </span>
                     </button>
                   ))}
                 </div>
               </div>
-            )}
-            {hud.phase === "presnap" && hud.down < 4 && (
+            {hud.down < 4 && (
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {(["pass", "run"] as const).map((k) => (
                   <button
@@ -907,7 +882,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
                 </button>
               </div>
             )}
-            {hud.phase === "presnap" && hud.down === 4 && (
+            {hud.down >= 4 && (
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-3 py-2 text-[10px] text-black hover:bg-emerald-300">
                   GO FOR IT (SPACE)
@@ -924,7 +899,8 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
                 </button>
               </div>
             )}
-            {hud.phase === "live" && (
+            </div>
+            <div className={`col-start-1 row-start-1 flex items-center justify-center ${hud.phase === "live" ? "" : "invisible"}`}>
               <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
                 <span className="font-pixel text-[8px] text-white/80 sm:text-[10px]">ARROWS MOVE · A S D THROW</span>
                 <span className="font-pixel flex items-center gap-2 text-[8px] text-white/80 sm:text-[10px]">
@@ -934,8 +910,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
                   </span>
                 </span>
               </div>
-            )}
-            {hud.phase !== "presnap" && hud.phase !== "live" && <div className="font-pixel h-4 text-center text-[8px] text-white/40">&nbsp;</div>}
+            </div>
           </div>
         </div>
         <p className="mt-2 text-center text-xs text-muted">The other team&apos;s drives are simulated from the two teams&apos; ratings. You play every snap of yours.</p>
