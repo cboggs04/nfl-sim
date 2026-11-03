@@ -2,6 +2,7 @@ import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import ContenderCards from "@/components/ContenderCards";
 import FeatureCards from "@/components/FeatureCards";
+import { WakeNote } from "@/components/LoadingSkeleton";
 import PageHeader from "@/components/PageHeader";
 import SeasonTable from "@/components/SeasonTable";
 import { getSeason } from "@/lib/api";
@@ -57,9 +58,14 @@ async function Dashboard() {
 
 function Skeleton() {
   return (
-    <div className="animate-pulse" aria-busy="true" aria-label="Loading season data">
-      <div className="h-24 w-96 max-w-full rounded bg-panel-2" />
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div aria-busy="true" aria-label="Loading season data">
+      <div className="animate-pulse">
+        <div className="h-24 w-96 max-w-full rounded bg-panel-2" />
+      </div>
+      <div className="mt-4">
+        <WakeNote />
+      </div>
+      <div className="mt-8 grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {Array.from({ length: 5 }, (_, i) => (
           <div key={i} className="h-72 rounded bg-panel-2" />
         ))}

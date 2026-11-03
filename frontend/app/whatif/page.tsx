@@ -1,3 +1,4 @@
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 import PageHeader from "@/components/PageHeader";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
@@ -24,7 +25,7 @@ export default function WhatIfPage(props: PageProps<"/whatif">) {
           }
           subtitle="Change the world and re-run the season. Boost a team (say they signed a star quarterback), hurt one, or force the result of a game, then see how every team's playoff and Super Bowl odds move."
         />
-        <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
+        <Suspense fallback={<LoadingSkeleton />}>
           <Sandbox searchParams={props.searchParams} />
         </Suspense>
       </ResetOnLeave>

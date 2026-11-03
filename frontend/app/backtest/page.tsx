@@ -1,3 +1,4 @@
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 import PageHeader from "@/components/PageHeader";
 import SectionNav from "@/components/SectionNav";
 import ResetOnLeave from "@/components/ResetOnLeave";
@@ -272,7 +273,7 @@ export default function BacktestPage() {
           }
           subtitle="How well the model predicted past seasons it was never tuned on, and how each improvement scored."
         />
-        <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
+        <Suspense fallback={<LoadingSkeleton />}>
           <Backtest />
         </Suspense>
       </ResetOnLeave>

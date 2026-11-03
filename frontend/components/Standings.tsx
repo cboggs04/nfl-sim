@@ -227,7 +227,7 @@ export default function Standings({ teams, bracket }: { teams: TeamOdds[]; brack
       </div>
       {error && (
         <p role="alert" className="mt-3 rounded-md bg-bad/15 px-4 py-2 text-sm text-bad-ink ring-1 ring-bad/40">
-          {error}. Is the API running on port 8000?
+          {error}. The server may be waking up: wait a few seconds and try again.
         </p>
       )}
       <p className="mt-3 max-w-3xl text-sm text-muted">

@@ -1,3 +1,4 @@
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 import PageHeader from "@/components/PageHeader";
 import { Suspense } from "react";
 import PlayNow from "@/components/PlayNow";
@@ -27,7 +28,7 @@ export default function PlayPage(props: PageProps<"/play">) {
                   </>
                 }
               />
-              <div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />
+              <LoadingSkeleton />
             </div>
           }
         >

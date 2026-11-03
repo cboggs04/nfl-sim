@@ -1,3 +1,4 @@
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -256,7 +257,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
             roster ? (
               <SeasonSimulator roster={roster} color={info.primary} wins={odds.record.wins} losses={odds.record.losses} ties={odds.record.ties} likelyWins={modeWins} />
             ) : (
-              <p className="mt-6 text-muted">Simulator data isn&apos;t available. Is the API running, and has `python -m scripts.precompute` been run?</p>
+              <p className="mt-6 text-muted">Simulator data isn&apos;t available right now. The server may still be waking up: wait a few seconds and reload.</p>
             )
           }
         />
@@ -268,7 +269,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
 export default function TeamPage(props: PageProps<"/teams/[abbr]">) {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-      <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
+      <Suspense fallback={<LoadingSkeleton />}>
         <TeamContent params={props.params} />
       </Suspense>
     </main>

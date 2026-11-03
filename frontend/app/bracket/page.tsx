@@ -1,3 +1,4 @@
+import LoadingSkeleton from "@/components/LoadingSkeleton";
 import PageHeader from "@/components/PageHeader";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
@@ -55,7 +56,7 @@ export default function BracketPage() {
           }
           subtitle="Play out the rest of the season, see the standings it produces, then play the playoffs round by round."
         />
-        <Suspense fallback={<div className="h-96 animate-pulse bg-panel-2" aria-busy="true" />}>
+        <Suspense fallback={<LoadingSkeleton />}>
           <PlayoffTabs />
         </Suspense>
       </ResetOnLeave>

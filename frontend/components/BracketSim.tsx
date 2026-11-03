@@ -524,7 +524,7 @@ function BracketBoard({
       </div>
       {error && (
         <p role="alert" className="mt-4 rounded-md bg-bad/15 px-4 py-2 text-sm text-bad-ink ring-1 ring-bad/40">
-          {error}. Is the API running on port 8000?
+          {error}. The server may be waking up: wait a few seconds and try again.
         </p>
       )}
 
