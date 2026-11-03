@@ -26,6 +26,9 @@ const DIGITS: Record<string, string[]> = {
   "7": ["111", "001", "010", "010", "010"],
   "8": ["111", "101", "111", "101", "111"],
   "9": ["111", "101", "111", "001", "111"],
+  Z: ["111", "001", "010", "100", "111"],
+  X: ["101", "101", "010", "101", "101"],
+  C: ["111", "100", "100", "100", "111"],
 };
 
 function drawDigits(g: CanvasRenderingContext2D, text: string, x: number, y: number, color: string, scale = 1) {
@@ -497,16 +500,22 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
           game_.press("continue");
           break;
         case "Digit1":
-        case "KeyZ":
           game_.press(game_.phase === "presnap" ? "play1" : "throw1");
           break;
+        case "KeyZ":
+          game_.press("throw1");
+          break;
         case "Digit2":
-        case "KeyX":
           game_.press(game_.phase === "presnap" ? "play2" : "throw2");
           break;
+        case "KeyX":
+          game_.press("throw2");
+          break;
         case "Digit3":
-        case "KeyC":
           game_.press(game_.phase === "presnap" ? "play3" : "throw3");
+          break;
+        case "KeyC":
+          game_.press("throw3");
           break;
         case "KeyF":
           game_.press("fieldGoal");
@@ -655,7 +664,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
           }
           g.fillStyle = e.id === openId ? "#4ade80" : "#facc15";
           g.fillRect(x - 2, y - 1, 9, 9);
-          drawDigits(g, String(e.num), x + 1, y + 1, "#111827");
+          drawDigits(g, "ZXC"[e.num - 1], x + 1, y + 1, "#111827"); // the key that throws to him
         }
       }
       const me = game.ent(game.controlled);
@@ -847,7 +856,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             {hud.phase === "presnap" && (
               <div className="mb-3">
                 <div className="font-pixel mb-1.5 text-center text-[7px] text-white/70 sm:text-[9px]">
-                  {hud.down === 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (Z X C OR 1 2 3), THEN SNAP"}
+                  {hud.down === 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3), THEN SNAP"}
                 </div>
                 <div className="mx-auto flex max-w-3xl justify-center gap-1.5 sm:gap-2">
                   {hud.plays.map((p, i) => (
@@ -908,7 +917,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             )}
             {hud.phase === "live" && (
               <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
-                <span className="font-pixel text-[8px] text-white/80 sm:text-[10px]">ARROWS MOVE · Z X C (OR 1 2 3) THROW</span>
+                <span className="font-pixel text-[8px] text-white/80 sm:text-[10px]">ARROWS MOVE · Z X C THROW</span>
                 <span className="font-pixel flex items-center gap-2 text-[8px] text-white/80 sm:text-[10px]">
                   SPRINT (SPACE)
                   <span className="inline-block h-2 w-16 overflow-hidden rounded bg-white/20">
