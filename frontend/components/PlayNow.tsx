@@ -189,12 +189,12 @@ function TeamCarousel({
     <section
       className="panel relative overflow-hidden outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent"
       tabIndex={0}
-      aria-label={`${label}: ${t.name}. Use the left and right arrow keys to change team.`}
+      aria-label={`${label}: ${t.name}. Use the arrow keys to change team.`}
       onKeyDown={(e) => {
-        if (e.key === "ArrowLeft") {
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
           e.preventDefault();
           go(-1);
-        } else if (e.key === "ArrowRight") {
+        } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
           e.preventDefault();
           go(1);
         }
@@ -293,7 +293,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         possessions are simulated from the two teams&apos; ratings, so a stronger team has a real edge. Two short halves, about two minutes each.
       </p>
       <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">You need a keyboard to play this: open it on a computer.</p>
-      <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use ← →).</p>
+      <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use the arrow keys).</p>
       <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-5">
         <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} />
         <div className="flex items-center justify-center" aria-hidden>
