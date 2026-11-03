@@ -9,3 +9,6 @@ node_modules/
 # raw downloaded data (re-downloadable); precomputed JSON in backend/data/*.json is kept
 backend/data/*.parquet
 .next-build/
+
+# presentation screenshots and clips (large; not part of the app)
+presentation-assets/
