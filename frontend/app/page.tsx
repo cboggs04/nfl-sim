@@ -18,15 +18,23 @@ async function Dashboard() {
   return (
     <>
       <header className="rise">
-        <div className="text-sm font-semibold tracking-[0.25em] text-accent-ink uppercase">{season.season} season</div>
-        <PageTitle className="mt-1">
-          Super Bowl <span className="text-accent-ink">Odds</span>
+        <PageTitle>
+          NFL Season <span className="text-accent-ink">Simulator</span>
         </PageTitle>
-        <p className="mt-2 max-w-3xl text-base text-muted">
+        <p className="mt-3 max-w-3xl text-sm text-muted">
           Simulates the NFL season {season.n_sims.toLocaleString("en-US")} times to project every team&apos;s record, playoff odds and Super Bowl chances. Explore the
           what-ifs, check the stat leaders, or play a game.
         </p>
-        <div className="mt-4 flex max-w-xl items-center gap-3 text-sm text-muted">
+      </header>
+
+      <section className="mt-6" aria-label="What you can do here">
+        <FeatureCards />
+      </section>
+
+      <section className="mt-10" aria-label="Super Bowl favorites">
+        <div className="text-sm font-semibold tracking-[0.25em] text-accent-ink uppercase">{season.season} season</div>
+        <h2 className="font-display text-4xl text-strong">Super Bowl odds</h2>
+        <div className="mt-2 flex max-w-xl items-center gap-3 text-sm text-muted">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-line" role="img" aria-label={`${progress}% of the season played`}>
             <div className="h-full rounded-full bg-gradient-to-r from-[#1d4f9e] to-accent" style={{ width: `${progress}%` }} />
           </div>
@@ -34,15 +42,10 @@ async function Dashboard() {
             {season.games_played} of {season.games_total} games played
           </span>
         </div>
-        <p className="mt-2 text-sm text-muted">Updated {updated}</p>
-      </header>
-
-      <section className="mt-6" aria-label="What you can do here">
-        <FeatureCards />
-      </section>
-
-      <section className="mt-6" aria-label="Super Bowl favorites">
-        <ContenderCards teams={season.teams} />
+        <p className="mt-1 text-sm text-muted">Updated {updated}</p>
+        <div className="mt-4">
+          <ContenderCards teams={season.teams} />
+        </div>
       </section>
 
       <section id="league-board" className="mt-12 scroll-mt-20">
