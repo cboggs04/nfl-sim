@@ -723,7 +723,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
       {/* the game is as wide as the screen's height allows, so the whole field stays on screen (without scrolling) */}
       <div
         className="mx-auto w-full"
-        style={{ maxWidth: fullscreen ? "calc((100vh - 11rem) * 16 / 9 + 16rem)" : "min(66rem, max(46rem, calc((100vh - 22rem) * 16 / 9 + 16rem)))" }}
+        style={{ maxWidth: fullscreen ? "calc((100vh - 11rem) * 16 / 9 + 16rem)" : "min(78rem, max(46rem, calc((100vh - 17.5rem) * 16 / 9 + 16rem)))" }}
       >
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="font-pixel text-[10px] text-muted sm:text-xs">
@@ -975,14 +975,15 @@ export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-display text-5xl text-strong sm:text-8xl">
+        {/* while a game is on, the title shrinks to leave more room for the field */}
+        <h1 className={`font-display text-strong ${setup ? "text-4xl sm:text-5xl" : "text-5xl sm:text-8xl"}`}>
           Play <span className="text-accent-ink">Now</span>
         </h1>
         <button
           onClick={() => setHelp(true)}
           aria-label="How to play and controls"
           title="How to play and controls"
-          className="font-display mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-3xl text-on-accent shadow-md hover:brightness-110 sm:mt-4 sm:h-14 sm:w-14 sm:text-4xl"
+          className={`font-display flex shrink-0 items-center justify-center rounded-full bg-accent text-on-accent shadow-md hover:brightness-110 ${setup ? "h-9 w-9 text-2xl sm:h-10 sm:w-10" : "mt-2 h-11 w-11 text-3xl sm:mt-4 sm:h-14 sm:w-14 sm:text-4xl"}`}
         >
           ?
         </button>
