@@ -88,6 +88,9 @@ function buildWorld(userColor: string, oppColor: string): HTMLCanvasElement {
   return c;
 }
 
+/** A team's rating on a 0-100 scale: the weakest team in the league is 0 and the strongest is 100 (rounded down, so only one team is a 100). */
+const rating100 = (elo: number, range: [number, number]) => Math.floor(Math.max(0, Math.min(100, ((elo - range[0]) / (range[1] - range[0])) * 100)) + 1e-9);
+
 const clock = (secs: number) => `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`;
 
 // ---------- what the screen shows, read from the game ten times a second ----------
@@ -163,7 +166,7 @@ function TeamCarousel({
   const t = teams[index];
   const info = teamInfo(t.team);
   const go = (step: number) => onChange(teams[(index + step + teams.length) % teams.length].team);
-  const fill = Math.max(0.04, Math.min(1, (t.elo - range[0]) / (range[1] - range[0])));
+  const r100 = rating100(t.elo, range);
   const arrow = (dir: -1 | 1) => (
     <button
       onClick={() => go(dir)}
@@ -200,51 +203,39 @@ function TeamCarousel({
 
       <div className="flex items-center gap-1 px-2 pb-4 sm:gap-3 sm:px-4">
         {arrow(-1)}
-        <div key={t.team} className="rise min-w-0 flex-1">
-          <div className="grid items-center gap-3 sm:grid-cols-[auto_1fr_auto]">
-            <div className="flex items-center justify-center gap-4 sm:justify-start">
-              <TeamLogo abbr={t.team} size={128} />
-              {/* on a phone the quarterback sits next to the logo */}
-              <div className="flex flex-col items-center sm:hidden">
-                <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={84} />
-              </div>
-            </div>
-
-            <div className="min-w-0 text-center text-white sm:text-left">
-              <div className="text-xs font-semibold tracking-[0.2em] text-white/75 uppercase">{t.division}</div>
-              <h3 className="font-display text-4xl [text-shadow:0_2px_10px_rgba(0,0,0,.55)] sm:text-5xl">{t.name}</h3>
-              <div className="mt-3 flex items-end justify-center gap-3 sm:justify-start">
-                <div>
-                  <div className="text-[10px] font-semibold tracking-widest text-white/70 uppercase">Team rating</div>
-                  <div className="font-display text-6xl tabular-nums [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">{Math.round(t.elo)}</div>
-                </div>
-                <div className="pb-2 text-xs text-white/80">
-                  <div className="font-semibold text-white">#{ranks[t.team]} of {teams.length}</div>
-                  <div>
-                    {t.record.wins}-{t.record.losses}
-                    {t.record.ties ? `-${t.record.ties}` : ""} this season
-                  </div>
-                </div>
-              </div>
-              <div className="mx-auto mt-2 h-2 max-w-xs overflow-hidden rounded-full bg-black/35 sm:mx-0" role="img" aria-label={`Rating ${Math.round(t.elo)}, ranked ${ranks[t.team]} of ${teams.length}`}>
-                <div className="h-full rounded-full bg-white/90" style={{ width: `${fill * 100}%` }} />
-              </div>
-            </div>
-
-            <div className="hidden flex-col items-center gap-1 text-center text-white sm:flex">
-              <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={112} />
-              <div className="text-[10px] font-semibold tracking-widest text-white/70 uppercase">Quarterback</div>
-              <div className="font-display text-2xl leading-none [text-shadow:0_2px_8px_rgba(0,0,0,.55)]">{t.qb ?? "TBD"}</div>
-              {t.qb_adj != null && t.qb_adj !== 0 && (
-                <div className="text-[10px] text-white/80">
-                  {t.qb_adj > 0 ? "+" : "−"}
-                  {Math.abs(Math.round(t.qb_adj))} rating from the QB
-                </div>
-              )}
+        <div key={t.team} className="rise min-w-0 flex-1 text-center text-white">
+          <div className="flex items-center justify-center gap-4 sm:gap-6">
+            <TeamLogo abbr={t.team} size={120} />
+            <div className="flex w-28 flex-col items-center gap-1 sm:w-32">
+              <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={96} />
+              <div className="text-[9px] font-semibold tracking-widest text-white/70 uppercase">Quarterback</div>
+              <div className="font-display text-xl leading-none [text-shadow:0_2px_8px_rgba(0,0,0,.55)]">{t.qb ?? "TBD"}</div>
             </div>
           </div>
-          <div className="mt-2 text-center text-xs text-white/85 sm:hidden">
-            QB <b className="text-white">{t.qb ?? "TBD"}</b>
+
+          <div className="mt-2 text-xs font-semibold tracking-[0.2em] text-white/75 uppercase">{t.division}</div>
+          <h3 className="font-display text-4xl [text-shadow:0_2px_10px_rgba(0,0,0,.55)] sm:text-5xl">{t.name}</h3>
+
+          <div className="mt-2 flex items-end justify-center gap-3">
+            <div>
+              <div className="text-[10px] font-semibold tracking-widest text-white/70 uppercase">Team rating</div>
+              <div className="font-display text-6xl tabular-nums [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">
+                {r100}
+                <span className="ml-1 text-2xl text-white/70">/100</span>
+              </div>
+            </div>
+            <div className="pb-2 text-left text-xs text-white/80">
+              <div className="font-semibold text-white">
+                #{ranks[t.team]} of {teams.length}
+              </div>
+              <div>
+                {t.record.wins}-{t.record.losses}
+                {t.record.ties ? `-${t.record.ties}` : ""} this season
+              </div>
+            </div>
+          </div>
+          <div className="mx-auto mt-2 h-2 max-w-xs overflow-hidden rounded-full bg-black/35" role="img" aria-label={`Rating ${r100} out of 100, ranked ${ranks[t.team]} of ${teams.length}`}>
+            <div className="h-full rounded-full bg-white/90" style={{ width: `${Math.max(3, r100)}%` }} />
           </div>
         </div>
         {arrow(1)}
@@ -263,7 +254,15 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
   const u = teams.find((t) => t.team === user)!;
   const o = teams.find((t) => t.team === opp)!;
   const diff = u.elo - o.elo;
-  const matchup = user === opp ? "Pick two different teams" : Math.abs(diff) < 40 ? "An even matchup" : diff > 0 ? `You're the favorite (+${Math.round(diff)} rating)` : `You're the underdog (${Math.round(diff)} rating)`;
+  const diff100 = rating100(u.elo, range) - rating100(o.elo, range);
+  const matchup =
+    user === opp
+      ? "Pick two different teams"
+      : Math.abs(diff) < 40
+        ? "An even matchup"
+        : diff > 0
+          ? `You're the favorite (+${diff100} rating points)`
+          : `You're the underdog (${diff100} rating points)`;
   const winPct = Math.round(100 / (1 + 10 ** (-diff / 400)));
 
   return (
@@ -274,7 +273,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
       </p>
       <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">You need a keyboard to play this: open it on a computer.</p>
       <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use ← →).</p>
-      <div className="mt-3 grid gap-4">
+      <div className="mt-3 grid gap-4 lg:grid-cols-2">
         <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} range={range} ranks={ranks} />
         <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} range={range} ranks={ranks} />
       </div>
@@ -458,7 +457,7 @@ function GameScreen({ user, opp, teams, onExit, paused, onHelp }: { user: TeamOd
       }
 
       // route lines for the receivers
-      if (game.playKind === "pass" || game.phase === "presnap") {
+      if ((game.phase === "presnap" ? game.selected : game.playKind) === "pass") {
         g.fillStyle = "rgba(255,255,255,0.55)";
         for (const e of game.ents) {
           if (!e.route || e.side !== "off" || (game.phase === "live" && (game.ball.flight || game.caught))) continue;
@@ -490,7 +489,7 @@ function GameScreen({ user, opp, teams, onExit, paused, onHelp }: { user: TeamOd
       }
 
       // receiver numbers and a marker over the player you control
-      if ((game.phase === "presnap" || game.phase === "live") && game.playKind === "pass" && !game.caught && !game.ball.flight && !game.pastLine) {
+      if ((game.phase === "presnap" || game.phase === "live") && (game.phase === "presnap" ? game.selected : game.playKind) === "pass" && !game.caught && !game.ball.flight && !game.pastLine) {
         for (const e of game.ents) {
           if (!e.num) continue;
           const x = sx(e.x) - 3;

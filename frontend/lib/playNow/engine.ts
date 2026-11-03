@@ -43,6 +43,8 @@ export interface Ent {
   err: [number, number]; // how loosely this defender plays his man, in px
   cooldown: number; // time before he can try another tackle
   num?: number; // receiver number shown above the head (1-3)
+  blocking?: string; // the defender this lineman or receiver is blocking
+  engaged: boolean; // this defender is tied up by a blocker
 }
 
 interface Flight {
@@ -231,8 +233,8 @@ export class FootballGame {
   press(a: Action) {
     switch (this.phase) {
       case "presnap":
-        if (a === "selectPass") this.selected = "pass";
-        else if (a === "selectRun") this.selected = "run";
+        if (a === "selectPass") this.selected = this.playKind = "pass";
+        else if (a === "selectRun") this.selected = this.playKind = "run";
         else if (a === "snap") this.snap();
         else if (a === "fieldGoal" && this.down === 4 && this.canKick) this.startFieldGoal();
         else if (a === "punt" && this.down === 4) this.startPunt();
@@ -287,12 +289,13 @@ export class FootballGame {
     this.pressured = false;
     this.scoredTD = false;
     this.kick = null;
+    this.playKind = this.selected; // what the field shows (route lines, receiver numbers) follows your choice
     this.buildFormation();
   }
 
   private mkEnt(id: string, side: "off" | "def", role: string, x: number, y: number, speed: number): Ent {
     return {
-      id, side, role, x, y, vx: 0, vy: 0, speed, moving: false, face: side === "off" ? 1 : -1, breakAt: 0, cooldown: 0,
+      id, side, role, x, y, vx: 0, vy: 0, speed, moving: false, face: side === "off" ? 1 : -1, breakAt: 0, cooldown: 0, engaged: false,
       err: [(this.rng() - 0.35) * 14, (this.rng() - 0.5) * 18],
     };
   }
@@ -305,18 +308,18 @@ export class FootballGame {
       this.mkEnt("ol2", "off", "ol", L - 2, Y_MID, 30),
       this.mkEnt("ol3", "off", "ol", L - 2, Y_MID + 10, 30),
       this.mkEnt("qb", "off", "qb", L - 24, Y_MID, 50),
-      this.mkEnt("rb", "off", "rb", L - 36, Y_MID + 10, 67),
+      this.mkEnt("rb", "off", "rb", L - 30, Y_MID + 10, 61),
       this.mkEnt("wr1", "off", "wr", L - 3, 72, 62),
       this.mkEnt("wr2", "off", "wr", L - 3, 154, 62),
       this.mkEnt("wr3", "off", "wr", L - 9, 134, 62),
-      this.mkEnt("dl1", "def", "dl", L + 3, Y_MID - 10, 56 * dm),
-      this.mkEnt("dl2", "def", "dl", L + 3, Y_MID, 56 * dm),
-      this.mkEnt("dl3", "def", "dl", L + 3, Y_MID + 10, 56 * dm),
-      this.mkEnt("lb1", "def", "lb", L + 16, 96, 58 * dm),
-      this.mkEnt("lb2", "def", "lb", L + 16, 130, 58 * dm),
-      this.mkEnt("cb1", "def", "cb", L + 8, 74, 62 * dm),
-      this.mkEnt("cb2", "def", "cb", L + 8, 152, 62 * dm),
-      this.mkEnt("s", "def", "s", L + 44, Y_MID, 60 * dm),
+      this.mkEnt("dl1", "def", "dl", L + 3, Y_MID - 10, 58 * dm),
+      this.mkEnt("dl2", "def", "dl", L + 3, Y_MID, 58 * dm),
+      this.mkEnt("dl3", "def", "dl", L + 3, Y_MID + 10, 58 * dm),
+      this.mkEnt("lb1", "def", "lb", L + 16, 96, 62 * dm),
+      this.mkEnt("lb2", "def", "lb", L + 16, 130, 62 * dm),
+      this.mkEnt("cb1", "def", "cb", L + 8, 74, 64 * dm),
+      this.mkEnt("cb2", "def", "cb", L + 8, 152, 64 * dm),
+      this.mkEnt("s", "def", "s", L + 44, Y_MID, 63 * dm),
     ];
     // three different routes for the three receivers
     const names = [...ROUTE_NAMES];
@@ -327,6 +330,7 @@ export class FootballGame {
       e.route = { pts: ROUTES[name].map(([dx, dy]) => [e.x + dx, clamp(e.y + dy * toMid, Y_MIN, Y_MAX)] as [number, number]), i: 0 };
       e.num = Number(id.slice(-1));
     }
+    for (const [ol, dl] of [["ol1", "dl1"], ["ol2", "dl2"], ["ol3", "dl3"]]) ents.find((x) => x.id === ol)!.blocking = dl;
     ents.find((x) => x.id === "cb1")!.cover = "wr1";
     ents.find((x) => x.id === "cb2")!.cover = "wr2";
     ents.find((x) => x.id === "lb2")!.cover = "wr3";
@@ -344,6 +348,19 @@ export class FootballGame {
     if (this.playKind === "run") {
       this.controlled = "rb";
       this.ball.holder = "rb";
+      // on a run the receivers block downfield instead of running routes, and the line holds its men longer
+      for (const [wr, d] of [["wr1", "cb1"], ["wr2", "cb2"], ["wr3", "lb2"]]) {
+        const e = this.ent(wr)!;
+        e.route = undefined;
+        e.num = undefined;
+        e.blocking = d;
+      }
+      for (const d of this.ents) {
+        if (d.side !== "def" || !["dl", "cb", "lb"].includes(d.role) || d.id === "lb1") continue;
+        const held = d.role === "dl" ? 0.6 + this.rng() * 0.7 : d.role === "cb" ? 0.7 + this.rng() * 0.6 : 0.8 + this.rng() * 0.7;
+        // some blocks simply fail: the defender beats his man right away and the run is stuffed
+        d.breakAt = (this.rng() < 0.35 ? 0.15 + this.rng() * 0.25 : held) * (1 + 0.2 * this.edge);
+      }
     } else {
       this.controlled = "qb";
       this.ball.holder = "qb";
@@ -391,6 +408,7 @@ export class FootballGame {
     this.moveControlled(dt);
     if (this.phase !== "live") return;
     this.updateReceivers(dt);
+    this.updateBlockers(dt);
     this.updateDefense(dt);
     this.updateBall(dt);
     if (this.phase !== "live") return;
@@ -441,6 +459,29 @@ export class FootballGame {
     }
   }
 
+  /** Linemen (and, on runs, receivers) latch onto their man and hold him until he beats the block. */
+  private updateBlockers(dt: number) {
+    for (const b of this.ents) {
+      if (b.side !== "off" || !b.blocking) continue;
+      if (b.role === "wr" && this.playKind !== "run") continue;
+      const target = this.ent(b.blocking);
+      if (!target) continue;
+      if (this.t >= target.breakAt) {
+        b.moving = false;
+        b.vx = b.vy = 0;
+        continue; // he got off the block
+      }
+      if (dist(b.x, b.y, target.x, target.y) > 9) {
+        this.step(b, target.x - 6, target.y, b.role === "ol" ? 44 : 58, dt);
+      } else {
+        target.engaged = true;
+        b.x = target.x - 6;
+        b.y = target.y;
+        b.moving = false;
+      }
+    }
+  }
+
   private updateDefense(dt: number) {
     const carrier = this.holder();
     const post = this.caught || this.playKind === "run" || (carrier && carrier.role !== "qb"); // the ball is being carried downfield
@@ -449,6 +490,14 @@ export class FootballGame {
     for (const d of this.ents) {
       if (d.side !== "def") continue;
       d.cooldown = Math.max(0, d.cooldown - dt);
+      if (d.engaged && this.t >= d.breakAt) d.engaged = false;
+      if (d.engaged) {
+        // tied up by a blocker: on a run he is driven downfield, which opens a lane
+        if (this.playKind === "run" && !this.caught) d.x += 4 * dt;
+        d.moving = false;
+        d.vx = d.vy = 0;
+        continue;
+      }
       const chase = (sp: number) => {
         if (!carrier) return;
         this.step(d, carrier.x + carrier.vx * 0.22, carrier.y + carrier.vy * 0.22, sp, dt);
@@ -458,10 +507,10 @@ export class FootballGame {
         continue;
       }
       if (this.playKind === "run") {
-        const delay = d.role === "dl" ? 1.05 : d.role === "lb" ? 0.8 : d.role === "s" ? 1.0 : 1.15;
+        const delay = d.role === "dl" ? 0.4 : d.role === "lb" ? 0.3 : d.role === "s" ? 0.35 : 0.5;
         if (this.t < delay) {
           this.step(d, d.x, d.y, 0, dt);
-        } else chase(d.speed * 0.95);
+        } else chase(d.speed);
         continue;
       }
       // a pass play
@@ -577,8 +626,13 @@ export class FootballGame {
     for (const d of this.ents) {
       if (d.side !== "def" || d.cooldown > 0) continue;
       if (dist(d.x, d.y, h.x, h.y) > 6.5) continue;
-      if (h.role === "qb" && !this.pastLine) return this.endPlay("sack", h.x);
-      if (this.rng() < (boosting ? 0.4 : 0.72)) return this.endPlay("tackle", h.x);
+      if (h.role === "qb" && !this.pastLine) {
+        if (d.engaged) continue; // a blocked rusher can't get to the quarterback
+        return this.endPlay("sack", h.x);
+      }
+      // a blocked defender can still arm-tackle a runner who goes right past him, just much less often
+      const p = d.engaged ? (boosting ? 0.28 : 0.55) : boosting ? 0.42 : 0.74;
+      if (this.rng() < p) return this.endPlay("tackle", h.x);
       d.cooldown = 0.7; // he whiffed
     }
   }
