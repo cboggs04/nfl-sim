@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Headshot from "@/components/Headshot";
 import PlayHelp from "@/components/PlayHelp";
@@ -172,12 +171,17 @@ const LEVELS: { id: Difficulty; label: string; blurb: string }[] = [
   { id: "allstar", label: "All-Star", blurb: "Fast defenders, tight coverage, quick pressure and sure tackles. Good luck." },
 ];
 
-// ---------- the uniform preview: a pixel player in each uniform, cycle with the arrows ----------
+// ---------- the uniform preview: opens over its team card, a pixel player in each uniform, cycle with the arrows ----------
 function UniformPicker({ team, teamName, value, onChange, onClose }: { team: string; teamName: string; value: Jersey; onChange: (j: Jersey) => void; onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
   const idx = JERSEYS.findIndex((j) => j.id === value);
   const colors = jerseyColors(team, value);
-  const go = useCallback((step: number) => onChange(JERSEYS[(idx + step + JERSEYS.length) % JERSEYS.length].id), [idx, onChange]);
+  const go = (step: number) => onChange(JERSEYS[(idx + step + JERSEYS.length) % JERSEYS.length].id);
+
+  useEffect(() => {
+    boxRef.current?.focus(); // so the arrow keys work for this card (the other card's preview can be open at the same time)
+  }, []);
 
   useEffect(() => {
     const c = canvasRef.current;
@@ -185,11 +189,11 @@ function UniformPicker({ team, teamName, value, onChange, onClose }: { team: str
     const g = c.getContext("2d")!;
     g.imageSmoothingEnabled = false;
     const set = buildSprites(colors.primary, colors.secondary, false, "#e0ac69");
-    const scale = 14;
+    const scale = 12;
     g.clearRect(0, 0, c.width, c.height);
     // three poses side by side: standing, running, celebrating
     [set.stand, set.run1, set.cheer].forEach((sprite, i) => {
-      const x = 12 + i * (8 * scale + 20);
+      const x = 14 + i * (8 * scale + 22);
       const y = c.height - sprite.height * scale - 14;
       g.fillStyle = "rgba(0,0,0,0.25)";
       g.fillRect(x + scale, c.height - 14, 6 * scale, scale / 2);
@@ -197,59 +201,57 @@ function UniformPicker({ team, teamName, value, onChange, onClose }: { team: str
     });
   }, [colors.primary, colors.secondary]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code === "ArrowLeft" || e.code === "ArrowUp") go(-1);
-      else if (e.code === "ArrowRight" || e.code === "ArrowDown") go(1);
-      else if (e.code === "Escape" || e.code === "Enter") onClose();
-      else return;
-      e.preventDefault();
-      e.stopPropagation();
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [go, onClose]);
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.code === "ArrowLeft" || e.code === "ArrowUp") go(-1);
+    else if (e.code === "ArrowRight" || e.code === "ArrowDown") go(1);
+    else if (e.code === "Escape" || e.code === "Enter") onClose();
+    else return;
+    e.preventDefault();
+    e.stopPropagation(); // (the card behind flips teams with the arrow keys; not while this is open)
+  };
 
-  return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={`${teamName} uniform`} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm" onClick={onClose}>
-      <div className="panel w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="px-5 pt-4">
-          <div className="text-xs font-semibold tracking-widest text-muted uppercase">{teamName}</div>
-          <h2 className="font-display text-4xl text-strong">Uniform</h2>
-        </div>
-        <div className="mt-2 flex items-center gap-2 px-2 py-3" style={{ backgroundColor: "#2f9e44", backgroundImage: "repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0 28px, transparent 28px 56px)" }}>
-          <button onClick={() => go(-1)} aria-label="Previous uniform" className="font-display flex h-12 w-10 shrink-0 items-center justify-center bg-black/40 text-2xl text-white hover:bg-black/60">
-            ◂
-          </button>
-          <canvas ref={canvasRef} width={400} height={250} className="min-w-0 flex-1" style={{ imageRendering: "pixelated" }} />
-          <button onClick={() => go(1)} aria-label="Next uniform" className="font-display flex h-12 w-10 shrink-0 items-center justify-center bg-black/40 text-2xl text-white hover:bg-black/60">
-            ▸
-          </button>
-        </div>
-        <div className="px-5 py-4">
-          <div className="flex items-center justify-center gap-2" role="radiogroup" aria-label="Uniform">
-            {JERSEYS.map((j) => (
-              <button
-                key={j.id}
-                role="radio"
-                aria-checked={value === j.id}
-                onClick={() => onChange(j.id)}
-                className={`rounded-full px-3 py-1 text-sm font-semibold tracking-wide uppercase ring-1 ${value === j.id ? "bg-accent text-on-accent ring-accent" : "bg-head text-strong ring-line hover:bg-hover"}`}
-              >
-                {j.label}
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-center text-xs text-muted">Use ← → to switch. Enter to confirm.</p>
-          <div className="mt-3 flex justify-center">
-            <button onClick={onClose} className="btn btn-primary text-xl">
-              Done
-            </button>
-          </div>
-        </div>
+  return (
+    <div
+      ref={boxRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-label={`${teamName} uniform`}
+      onKeyDown={onKey}
+      className="absolute inset-0 z-20 flex flex-col text-white outline-none"
+      style={{ backgroundColor: "var(--card-end)", backgroundImage: `linear-gradient(135deg, ${teamInfo(team).primary}ee 0%, ${teamInfo(team).primary}66 48%, var(--card-end) 100%)` }}
+    >
+      <div className="px-4 pt-3">
+        <div className="text-xs font-semibold tracking-widest text-white/70 uppercase">{teamName}</div>
+        <h3 className="font-display text-3xl">Uniform</h3>
       </div>
-    </div>,
-    document.body,
+      <div className="mt-2 flex flex-1 items-center gap-2 px-2" style={{ backgroundColor: "#2f9e44", backgroundImage: "repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0 28px, transparent 28px 56px)" }}>
+        <button onClick={() => go(-1)} aria-label="Previous uniform" className="font-display flex h-12 w-10 shrink-0 items-center justify-center bg-black/40 text-2xl text-white hover:bg-black/60">
+          ◂
+        </button>
+        <canvas ref={canvasRef} width={400} height={230} className="min-h-0 min-w-0 flex-1" style={{ imageRendering: "pixelated" }} />
+        <button onClick={() => go(1)} aria-label="Next uniform" className="font-display flex h-12 w-10 shrink-0 items-center justify-center bg-black/40 text-2xl text-white hover:bg-black/60">
+          ▸
+        </button>
+      </div>
+      <div className="flex flex-col items-center gap-2 px-4 py-3">
+        <div className="flex items-center justify-center gap-2" role="radiogroup" aria-label="Uniform">
+          {JERSEYS.map((j) => (
+            <button
+              key={j.id}
+              role="radio"
+              aria-checked={value === j.id}
+              onClick={() => onChange(j.id)}
+              className={`rounded-full px-3 py-1 text-sm font-semibold tracking-wide uppercase ring-1 ${value === j.id ? "bg-white text-black ring-white" : "bg-white/10 text-white ring-white/30 hover:bg-white/20"}`}
+            >
+              {j.label}
+            </button>
+          ))}
+        </div>
+        <button onClick={onClose} className="btn btn-primary text-xl">
+          Select uniform
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -374,17 +376,18 @@ function TeamCarousel({
                 <span className="h-full flex-[3]" style={{ backgroundColor: jerseyColors(t.team, jersey).primary }} />
                 <span className="h-full flex-1" style={{ backgroundColor: jerseyColors(t.team, jersey).secondary }} />
               </span>
-              Uniform: {JERSEYS.find((j) => j.id === jersey)!.label}
-              <span aria-hidden>▸</span>
+              Edit uniforms
+              <span className="font-normal text-white/70 normal-case">({JERSEYS.find((j) => j.id === jersey)!.label})</span>
             </button>
           </div>
-          {picking && <UniformPicker team={t.team} teamName={t.name} value={jersey} onChange={onJersey} onClose={() => setPicking(false)} />}
         </div>
         <div className={`flex shrink-0 flex-col gap-24 sm:gap-32 ${arrowsNearVs ? "lg:order-first" : ""}`}>
           {arrow(-1)}
           {arrow(1)}
         </div>
       </div>
+      {/* the uniform preview covers this card (and the other team's can be open too) */}
+      {picking && <UniformPicker team={t.team} teamName={t.name} value={jersey} onChange={onJersey} onClose={() => setPicking(false)} />}
     </section>
   );
 }
