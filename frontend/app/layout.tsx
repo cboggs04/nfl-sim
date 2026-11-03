@@ -36,9 +36,19 @@ const pixel = Press_Start_2P({
   weight: "400",
 });
 
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "NFL Season Simulator",
+  metadataBase: new URL(siteUrl), // (so the share-preview image gets a full address)
+  title: { default: "NFL Season Simulator", template: "%s" },
   description: "Monte Carlo projections of every team's record, playoff odds, and Super Bowl odds.",
+  openGraph: {
+    title: "NFL Season Simulator",
+    description: "Super Bowl odds from 20,000 simulated seasons, what-ifs, stat leaders, and a football game you can play.",
+    siteName: "NFL Season Simulator",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image", title: "NFL Season Simulator", description: "Super Bowl odds from 20,000 simulated seasons, what-ifs, and a football game you can play." },
   // "Add to Home Screen" on an iPhone opens the site with no Safari address bar (a web page can't hide it any other way).
   // "default" keeps the page below the status bar (the clock and battery), so nothing is drawn or blurred behind it.
   appleWebApp: { capable: true, title: "NFL Sim", statusBarStyle: "default" },
