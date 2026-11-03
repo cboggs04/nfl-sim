@@ -26,6 +26,7 @@ class TeamOdds(BaseModel):
     p_conference: float             # wins the conference title (reaches the Super Bowl)
     p_super_bowl: float             # wins the Super Bowl
     qb: str | None = None           # projected starting quarterback
+    qb_headshot: str | None = None  # URL of his photo
     qb_adj: float = 0.0             # Elo points the QB adds to (or takes from) the team's rating
 
 

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Headshot from "@/components/Headshot";
+import PlayHelp from "@/components/PlayHelp";
 import TeamLogo from "@/components/TeamLogo";
 import { buildSprites, type Sprites } from "@/lib/pixelSprites";
 import { FootballGame, GOAL_L, GOAL_R, WORLD_W, Y_MID, type OppDrive, type Phase } from "@/lib/playNow/engine";
@@ -141,38 +143,128 @@ const RESULT_TEXT: Record<OppDrive["result"], string> = {
   TIME: "TIME RUNS OUT",
 };
 
-// ---------- the team picker ----------
+// ---------- the team picker: flip through the teams one at a time ----------
+function TeamCarousel({
+  label,
+  teams,
+  value,
+  onChange,
+  range,
+  ranks,
+}: {
+  label: string;
+  teams: TeamOdds[]; // in the order they are browsed
+  value: string;
+  onChange: (abbr: string) => void;
+  range: [number, number]; // lowest and highest rating in the league
+  ranks: Record<string, number>;
+}) {
+  const index = Math.max(0, teams.findIndex((t) => t.team === value));
+  const t = teams[index];
+  const info = teamInfo(t.team);
+  const go = (step: number) => onChange(teams[(index + step + teams.length) % teams.length].team);
+  const fill = Math.max(0.04, Math.min(1, (t.elo - range[0]) / (range[1] - range[0])));
+  const arrow = (dir: -1 | 1) => (
+    <button
+      onClick={() => go(dir)}
+      aria-label={dir === -1 ? `Previous team (${label})` : `Next team (${label})`}
+      className="font-display flex h-14 w-10 shrink-0 items-center justify-center bg-black/35 text-4xl text-white hover:bg-black/55 sm:h-20 sm:w-14"
+      style={{ clipPath: dir === -1 ? "polygon(0 50%, 100% 0, 100% 100%)" : "polygon(0 0, 100% 50%, 0 100%)" }}
+    >
+      <span className="sr-only">{dir === -1 ? "Previous" : "Next"}</span>
+    </button>
+  );
+
+  return (
+    <section
+      className="panel overflow-hidden outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent"
+      tabIndex={0}
+      aria-label={`${label}: ${t.name}. Use the left and right arrow keys to change team.`}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          go(-1);
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          go(1);
+        }
+      }}
+      style={{ backgroundColor: "var(--card-end)", backgroundImage: `linear-gradient(135deg, ${info.primary}ee 0%, ${info.primary}66 48%, var(--card-end) 100%)` }}
+    >
+      <div className="flex items-center justify-between px-4 pt-3 text-white">
+        <span className="text-xs font-semibold tracking-widest text-white/80 uppercase">{label}</span>
+        <span className="font-pixel text-[9px] text-white/80 tabular-nums">
+          {index + 1} / {teams.length}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-1 px-2 pb-4 sm:gap-3 sm:px-4">
+        {arrow(-1)}
+        <div key={t.team} className="rise min-w-0 flex-1">
+          <div className="grid items-center gap-3 sm:grid-cols-[auto_1fr_auto]">
+            <div className="flex items-center justify-center gap-4 sm:justify-start">
+              <TeamLogo abbr={t.team} size={128} />
+              {/* on a phone the quarterback sits next to the logo */}
+              <div className="flex flex-col items-center sm:hidden">
+                <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={84} />
+              </div>
+            </div>
+
+            <div className="min-w-0 text-center text-white sm:text-left">
+              <div className="text-xs font-semibold tracking-[0.2em] text-white/75 uppercase">{t.division}</div>
+              <h3 className="font-display text-4xl [text-shadow:0_2px_10px_rgba(0,0,0,.55)] sm:text-5xl">{t.name}</h3>
+              <div className="mt-3 flex items-end justify-center gap-3 sm:justify-start">
+                <div>
+                  <div className="text-[10px] font-semibold tracking-widest text-white/70 uppercase">Team rating</div>
+                  <div className="font-display text-6xl tabular-nums [text-shadow:0_2px_10px_rgba(0,0,0,.55)]">{Math.round(t.elo)}</div>
+                </div>
+                <div className="pb-2 text-xs text-white/80">
+                  <div className="font-semibold text-white">#{ranks[t.team]} of {teams.length}</div>
+                  <div>
+                    {t.record.wins}-{t.record.losses}
+                    {t.record.ties ? `-${t.record.ties}` : ""} this season
+                  </div>
+                </div>
+              </div>
+              <div className="mx-auto mt-2 h-2 max-w-xs overflow-hidden rounded-full bg-black/35 sm:mx-0" role="img" aria-label={`Rating ${Math.round(t.elo)}, ranked ${ranks[t.team]} of ${teams.length}`}>
+                <div className="h-full rounded-full bg-white/90" style={{ width: `${fill * 100}%` }} />
+              </div>
+            </div>
+
+            <div className="hidden flex-col items-center gap-1 text-center text-white sm:flex">
+              <Headshot src={t.qb_headshot ?? null} name={t.qb ?? t.name} color="#ffffff" size={112} />
+              <div className="text-[10px] font-semibold tracking-widest text-white/70 uppercase">Quarterback</div>
+              <div className="font-display text-2xl leading-none [text-shadow:0_2px_8px_rgba(0,0,0,.55)]">{t.qb ?? "TBD"}</div>
+              {t.qb_adj != null && t.qb_adj !== 0 && (
+                <div className="text-[10px] text-white/80">
+                  {t.qb_adj > 0 ? "+" : "−"}
+                  {Math.abs(Math.round(t.qb_adj))} rating from the QB
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-2 text-center text-xs text-white/85 sm:hidden">
+            QB <b className="text-white">{t.qb ?? "TBD"}</b>
+          </div>
+        </div>
+        {arrow(1)}
+      </div>
+    </section>
+  );
+}
+
 function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: string, opp: string) => void }) {
-  const sorted = useMemo(() => [...teams].sort((a, b) => a.name.localeCompare(b.name)), [teams]);
+  const alphabetical = useMemo(() => [...teams].sort((a, b) => a.name.localeCompare(b.name)), [teams]);
   const byStrength = useMemo(() => [...teams].sort((a, b) => b.elo - a.elo), [teams]);
+  const ranks = useMemo(() => Object.fromEntries(byStrength.map((t, i) => [t.team, i + 1])), [byStrength]);
+  const range = useMemo<[number, number]>(() => [byStrength[byStrength.length - 1].elo, byStrength[0].elo], [byStrength]);
   const [user, setUser] = useState(byStrength[0].team);
   const [opp, setOpp] = useState(byStrength[1].team);
   const u = teams.find((t) => t.team === user)!;
   const o = teams.find((t) => t.team === opp)!;
   const diff = u.elo - o.elo;
   const matchup = user === opp ? "Pick two different teams" : Math.abs(diff) < 40 ? "An even matchup" : diff > 0 ? `You're the favorite (+${Math.round(diff)} rating)` : `You're the underdog (${Math.round(diff)} rating)`;
-
-  const pick = (label: string, value: string, set: (v: string) => void, t: TeamOdds) => (
-    <div className="panel p-5">
-      <div className="text-xs font-semibold tracking-widest text-muted uppercase">{label}</div>
-      <div className="mt-3 flex items-center gap-4">
-        <TeamLogo abbr={t.team} size={88} />
-        <div className="min-w-0 flex-1">
-          <select value={value} onChange={(e) => set(e.target.value)} className="w-full rounded-md border border-line bg-panel px-3 py-2 text-sm font-semibold text-strong" aria-label={label}>
-            {sorted.map((x) => (
-              <option key={x.team} value={x.team}>
-                {x.name}
-              </option>
-            ))}
-          </select>
-          <div className="mt-2 text-sm text-muted">
-            Rating <b className="text-strong tabular-nums">{Math.round(t.elo)}</b>
-            {t.qb ? <> · QB {t.qb}</> : null}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const winPct = Math.round(100 / (1 + 10 ** (-diff / 400)));
 
   return (
     <div>
@@ -181,50 +273,33 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         possessions are simulated from the two teams&apos; ratings, so a stronger team has a real edge. Two short halves, about two minutes each.
       </p>
       <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">You need a keyboard to play this: open it on a computer.</p>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {pick("Your team (offense)", user, setUser, u)}
-        {pick("Opponent", opp, setOpp, o)}
+      <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use ← →).</p>
+      <div className="mt-3 grid gap-4">
+        <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} range={range} ranks={ranks} />
+        <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} range={range} ranks={ranks} />
       </div>
-      <p className="mt-3 text-sm font-semibold text-strong">{matchup}</p>
       <div className="mt-5 flex flex-wrap items-center gap-4">
         <button onClick={() => onStart(user, opp)} disabled={user === opp} className="btn btn-primary text-2xl">
           Kick off
         </button>
+        <div>
+          <div className="text-sm font-semibold text-strong">{matchup}</div>
+          {user !== opp && <div className="text-xs text-muted">The ratings give {u.team} about a {winPct}% chance in a normal game.</div>}
+        </div>
       </div>
-      <section className="panel-flat mt-8 p-5">
-        <h2 className="font-display text-3xl text-strong">Controls</h2>
-        <ul className="mt-2 grid gap-x-8 gap-y-1 text-sm text-muted sm:grid-cols-2">
-          <li>
-            <b className="text-strong">← →</b> (before the snap): choose a pass or a run
-          </li>
-          <li>
-            <b className="text-strong">Space</b>: snap the ball, and sprint while running
-          </li>
-          <li>
-            <b className="text-strong">Arrow keys or WASD</b>: move the quarterback or the ball carrier
-          </li>
-          <li>
-            <b className="text-strong">1 2 3</b>: throw to the receiver with that number
-          </li>
-          <li>
-            <b className="text-strong">F / P</b> on 4th down: kick a field goal or punt (Space goes for it)
-          </li>
-          <li>
-            <b className="text-strong">Enter</b>: skip ahead during the other team&apos;s drive
-          </li>
-        </ul>
-        <p className="mt-3 text-xs text-muted">
-          Tips: don&apos;t hold the ball too long, or the pass rush gets you. Throw to the receiver who is furthest from his defender. You can&apos;t throw once
-          you cross the line of scrimmage.
-        </p>
-      </section>
+      <p className="mt-6 text-sm text-muted">
+        New to it? Click the <b className="text-strong">?</b> at the top right for the controls and how to play.
+      </p>
     </div>
   );
 }
 
 // ---------- the game ----------
-function GameScreen({ user, opp, teams, onExit }: { user: TeamOdds; opp: TeamOdds; teams: TeamOdds[]; onExit: () => void }) {
+function GameScreen({ user, opp, teams, onExit, paused, onHelp }: { user: TeamOdds; opp: TeamOdds; teams: TeamOdds[]; onExit: () => void; paused: boolean; onHelp: () => void }) {
   void teams;
+  const [manualPause, setManualPause] = useState(false); // the Pause button (or Esc)
+  const stopped = paused || manualPause; // paused by the help panel or by the player
+  const pausedRef = useRef(stopped);
   const [game, setGame] = useState(() => new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo }));
   const [hud, setHud] = useState<Hud>(() => snapshot(game));
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -236,8 +311,27 @@ function GameScreen({ user, opp, teams, onExit }: { user: TeamOdds; opp: TeamOdd
     const g = new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo });
     setGame(g);
     setHud(snapshot(g));
+    setManualPause(false);
     keys.current.clear();
   };
+
+  // While paused (help open, or the Pause button) the game stands still and ignores the keyboard.
+  useEffect(() => {
+    pausedRef.current = stopped;
+    if (stopped) {
+      keys.current.clear();
+      game.setMove(0, 0);
+    }
+  }, [stopped, game]);
+
+  // Leaving the tab pauses the game so a play isn't lost.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.hidden) setManualPause(true);
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, []);
 
   // (development only) lets tests look at the game while it is being played
   useEffect(() => {
@@ -256,6 +350,13 @@ function GameScreen({ user, opp, teams, onExit }: { user: TeamOdds; opp: TeamOdd
     const dirOf = (code: string) =>
       code === "ArrowLeft" || code === "KeyA" ? "left" : code === "ArrowRight" || code === "KeyD" ? "right" : code === "ArrowUp" || code === "KeyW" ? "up" : code === "ArrowDown" || code === "KeyS" ? "down" : null;
     const onDown = (e: KeyboardEvent) => {
+      if (e.code === "Escape" && !paused && !e.repeat) {
+        // (when the help is open, Esc closes the help instead)
+        e.preventDefault();
+        setManualPause((p) => !p);
+        return;
+      }
+      if (pausedRef.current) return;
       if ((e.target as HTMLElement)?.closest?.("select, input, textarea")) return;
       const dir = dirOf(e.code);
       const game_ = game;
@@ -315,7 +416,7 @@ function GameScreen({ user, opp, teams, onExit }: { user: TeamOdds; opp: TeamOdd
       window.removeEventListener("keyup", onUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [game]);
+  }, [game, paused]);
 
   // ---- the loop: advance the game, draw it, and keep the scoreboard in step ----
   useEffect(() => {
@@ -334,7 +435,7 @@ function GameScreen({ user, opp, teams, onExit }: { user: TeamOdds; opp: TeamOdd
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      game.update(dt);
+      if (!pausedRef.current) game.update(dt);
 
       // camera: follow the ball, or look at the line of scrimmage before the snap
       const holder = game.ball.holder ? game.ent(game.ball.holder) : undefined;
@@ -452,9 +553,23 @@ function GameScreen({ user, opp, teams, onExit }: { user: TeamOdds; opp: TeamOdd
       <div className="mx-auto max-w-4xl">
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="font-pixel text-[10px] text-muted sm:text-xs">{hud.half === 1 ? "1ST HALF" : "2ND HALF"}</div>
-          <button onClick={onExit} className="font-pixel rounded bg-head px-3 py-2 text-[10px] text-strong ring-1 ring-line hover:bg-hover">
-            QUIT
-          </button>
+          <div className="flex gap-2">
+            {!final && (
+              <button
+                onClick={() => {
+                  setManualPause((p) => !p);
+                  (document.activeElement as HTMLElement | null)?.blur?.();
+                }}
+                aria-pressed={manualPause}
+                className="font-pixel rounded bg-head px-3 py-2 text-[10px] text-strong ring-1 ring-line hover:bg-hover"
+              >
+                {manualPause ? "RESUME" : "PAUSE"}
+              </button>
+            )}
+            <button onClick={onExit} className="font-pixel rounded bg-head px-3 py-2 text-[10px] text-strong ring-1 ring-line hover:bg-hover">
+              QUIT
+            </button>
+          </div>
         </div>
         <div className="overflow-hidden rounded-lg border-4 border-white/70 bg-black shadow-2xl shadow-black/40">
           <div className="font-pixel flex items-stretch justify-between bg-[#111827] text-white">
@@ -492,6 +607,25 @@ function GameScreen({ user, opp, teams, onExit }: { user: TeamOdds; opp: TeamOdd
             {hud.phase === "presnap" && (
               <div className="pointer-events-none absolute inset-x-0 top-2 flex justify-center">
                 <span className="font-pixel rounded bg-black/60 px-2 py-1 text-[8px] text-white sm:text-[10px]">{hud.down === 4 ? "4TH DOWN: CHOOSE" : "PICK A PLAY, THEN SNAP"}</span>
+              </div>
+            )}
+
+            {manualPause && !final && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/75 p-3 text-center" role="status" aria-live="polite">
+                <div className="font-pixel text-lg text-yellow-300 sm:text-4xl">PAUSED</div>
+                <div className="font-pixel text-[8px] text-white/70 sm:text-[10px]">THE CLOCK IS STOPPED</div>
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                  <button onClick={() => setManualPause(false)} className="btn btn-primary text-lg">
+                    Resume
+                  </button>
+                  <button onClick={onHelp} className="btn btn-ghost text-lg">
+                    How to play
+                  </button>
+                  <button onClick={onExit} className="btn btn-ghost text-lg">
+                    Quit game
+                  </button>
+                </div>
+                <div className="font-pixel mt-1 text-[8px] text-white/50">OR PRESS ESC</div>
               </div>
             )}
 
@@ -612,8 +746,43 @@ function GameScreen({ user, opp, teams, onExit }: { user: TeamOdds; opp: TeamOdd
 
 export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
   const [setup, setSetup] = useState<{ user: string; opp: string } | null>(null);
+  const [help, setHelp] = useState(false);
+  const closeHelp = useCallback(() => setHelp(false), []);
   const user = setup ? teams.find((t) => t.team === setup.user) : undefined;
   const opp = setup ? teams.find((t) => t.team === setup.opp) : undefined;
-  if (setup && user && opp) return <GameScreen user={user} opp={opp} teams={teams} onExit={() => setSetup(null)} />;
-  return <TeamSelect teams={teams} onStart={(u, o) => setSetup({ user: u, opp: o })} />;
+
+  // "?" opens the help from anywhere on the page (unless you are typing in a field)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "?" || (e.target as HTMLElement)?.closest?.("select, input, textarea")) return;
+      e.preventDefault();
+      setHelp(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="font-display text-5xl text-strong sm:text-8xl">
+          Play <span className="text-accent-ink">Now</span>
+        </h1>
+        <button
+          onClick={() => setHelp(true)}
+          aria-label="How to play and controls"
+          title="How to play and controls"
+          className="font-display mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-3xl text-on-accent shadow-md hover:brightness-110 sm:mt-4 sm:h-14 sm:w-14 sm:text-4xl"
+        >
+          ?
+        </button>
+      </div>
+      {setup && user && opp ? (
+        <GameScreen user={user} opp={opp} teams={teams} onExit={() => setSetup(null)} paused={help} onHelp={() => setHelp(true)} />
+      ) : (
+        <TeamSelect teams={teams} onStart={(u, o) => setSetup({ user: u, opp: o })} />
+      )}
+      {help && <PlayHelp onClose={closeHelp} />}
+    </div>
+  );
 }

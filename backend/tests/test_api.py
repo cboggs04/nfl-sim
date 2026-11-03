@@ -177,3 +177,10 @@ def test_playoff_game_returns_a_score_that_matches_the_winner():
         assert (h > a) == (d["winner"] == "BUF") and h != a
     odds = client.post("/api/sim/game", json={"home": "BUF", "away": "SEA", "play": False}).json()
     assert odds["home_score"] is None and odds["away_score"] is None and odds["winner"] is None
+
+
+@needs_data
+def test_season_teams_include_the_starting_qb_photo():
+    teams = client.get("/api/season").json()["teams"]
+    with_photo = [t for t in teams if t["qb_headshot"]]
+    assert len(with_photo) >= 28 and all(t["qb_headshot"].startswith("http") and t["qb"] for t in with_photo)

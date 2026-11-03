@@ -59,6 +59,8 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False, a
     starters = projected_starters(schedule) if tracker else {}
     qb_adj = {t: tracker.adjustment(t, starters[t][0]) if t in starters else 0.0 for t in TEAMS} if tracker else dict.fromkeys(TEAMS, 0.0)
     ratings = {t: team_elo[t] + qb_adj[t] for t in TEAMS}
+    heads = {r["gsis_id"]: r["headshot_url"] for r in load_roster(season, refresh).select("gsis_id", "headshot_url").to_dicts()}
+    qb_photo = {t: heads.get(starters[t][0]) if t in starters else None for t in TEAMS}
     league = simulate_league(schedule, ratings, n_sims, cfg, seed)
 
     records = {t: Record(wins=0, losses=0, ties=0) for t in TEAMS}
@@ -80,7 +82,7 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False, a
             elo=round(ratings[t], 1), record=records[t], exp_wins=r["exp_wins"],
             win_dist=list(r["win_dist"]), p_division=r["p_division"], p_playoffs=r["p_playoffs"],
             p_top_seed=r["p_top_seed"], p_conference=r["p_conference"], p_super_bowl=r["p_super_bowl"],
-            qb=starters[t][1] if t in starters else None, qb_adj=round(qb_adj[t], 1))
+            qb=starters[t][1] if t in starters else None, qb_headshot=qb_photo[t], qb_adj=round(qb_adj[t], 1))
 
     season_resp = SeasonResponse(
         season=season, n_sims=n_sims, generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),

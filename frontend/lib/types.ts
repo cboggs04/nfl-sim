@@ -23,6 +23,7 @@ export interface TeamOdds {
   p_conference: number;
   p_super_bowl: number;
   qb?: string | null; // projected starting quarterback
+  qb_headshot?: string | null; // his photo
   qb_adj?: number; // Elo points the QB adds to (or takes from) the team rating
 }
 
