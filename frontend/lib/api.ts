@@ -1,5 +1,5 @@
 // The ONLY place the frontend talks to the backend. Components import from here.
-import type { BacktestResponse, BracketResponse, LeadersResponse, SimTeamResult, TeamRoster, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, TeamDrives, WhatIfRequest } from "./types";
+import type { BacktestResponse, BracketResponse, LeadersResponse, SimTeamResult, TeamRoster, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, TeamDrives, TradeCandidate, WhatIfRequest } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Set NEXT_PUBLIC_USE_MOCK=1 to build the UI without the API running.
@@ -83,6 +83,12 @@ export const rollGame = (home: string, away: string, neutral: boolean, play = tr
   post<PlayoffGameResponse>("/api/sim/game", { home, away, neutral, play });
 
 /** Re-run the season simulation with changed team ratings and/or forced game results (~1 second). */
+/** A team's players who can be traded, with the Elo value the model puts on each. */
+export async function getTradeCandidates(abbr: string): Promise<TradeCandidate[]> {
+  if (USE_MOCK) return [];
+  return get<TradeCandidate[]>(`/api/trade/${encodeURIComponent(abbr)}/players`);
+}
+
 export const runWhatIf = (req: WhatIfRequest) => post<SeasonResponse>("/api/whatif", req);
 
 /** Simulate one team's season: its game results and every player's resulting stats. "rest" plays out the remaining games; "full" replays all of them, ignoring results so far. */

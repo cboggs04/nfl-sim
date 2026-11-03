@@ -8,6 +8,7 @@ from engine.teams import CONFERENCE_OF, DIVISION_OF, TEAM_NAMES, TEAMS
 
 from .schemas import Record, SeasonResponse, TeamOdds, WhatIfRequest
 from .sim import _state
+from .trade import trade_adjustments
 
 router = APIRouter(prefix="/api")
 
@@ -23,7 +24,8 @@ def whatif(req: WhatIfRequest):
             raise HTTPException(422, f"Unknown team '{team}'")
         if abs(delta) > MAX_ADJUSTMENT:
             raise HTTPException(422, f"Rating adjustment for {team} must be within ±{MAX_ADJUSTMENT}")
-    ratings = {t: r + req.rating_adjustments.get(t, 0.0) for t, r in state.ratings.items()}
+    trade_adj, trade_effects = trade_adjustments(req.trades)
+    ratings = {t: r + req.rating_adjustments.get(t, 0.0) + trade_adj.get(t, 0.0) for t, r in state.ratings.items()}
 
     by_id = {g["game_id"]: g for g in schedule}
     games = [dict(g) for g in schedule]
@@ -64,5 +66,5 @@ def whatif(req: WhatIfRequest):
         season=state.season, n_sims=req.n_sims,
         generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
         games_played=sum(g["result"] is not None for g in schedule), games_total=len(schedule),
-        teams=teams,
+        teams=teams, trade_effects=trade_effects,
     )

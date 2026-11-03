@@ -38,6 +38,7 @@ class SeasonResponse(BaseModel):
     games_played: int
     games_total: int
     teams: list[TeamOdds]
+    trade_effects: list["TradeEffect"] = []     # only on what-if responses that include trades
 
 
 class GameView(BaseModel):
@@ -103,9 +104,39 @@ class GameOverride(BaseModel):
     home_win: bool
 
 
+class Trade(BaseModel):
+    """Move one player from one team to another."""
+    player_id: str
+    from_team: str
+    to_team: str
+
+
+class TradeEffect(BaseModel):
+    """What one trade did to the two teams' ratings (Elo points), so the page can show it."""
+    player_id: str
+    name: str
+    position: str
+    from_team: str
+    to_team: str
+    from_delta: float                # change for the team that gave him up (<= 0)
+    to_delta: float                  # change for the team that got him (>= 0)
+
+
+class TradeCandidate(BaseModel):
+    """A player who can be traded, with his estimated Elo value to his team."""
+    id: str
+    name: str
+    position: str
+    headshot: str | None
+    jersey: int | None
+    value: float                     # Elo points his team would lose without him
+    note: str                        # one line on what the number is based on
+
+
 class WhatIfRequest(BaseModel):
     """POST /api/whatif: tweak the world, rerun a small live simulation."""
     rating_adjustments: dict[str, float] = {}   # team -> Elo points to add (negative = subtract)
+    trades: list[Trade] = []
     game_overrides: list[GameOverride] = []     # force specific unplayed games
     n_sims: int = Field(2000, ge=200, le=5000)
 

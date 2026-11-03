@@ -34,6 +34,7 @@ export interface SeasonResponse {
   games_played: number;
   games_total: number;
   teams: TeamOdds[];
+  trade_effects?: TradeEffect[]; // on what-if responses that included trades
 }
 
 export interface GameView {
@@ -90,7 +91,34 @@ export interface PlayoffGameResponse {
   away_score?: number | null;
 }
 
+export interface Trade {
+  player_id: string;
+  from_team: string;
+  to_team: string;
+}
+
+export interface TradeEffect {
+  player_id: string;
+  name: string;
+  position: string;
+  from_team: string;
+  to_team: string;
+  from_delta: number; // Elo change for the team that gave him up
+  to_delta: number; // Elo change for the team that got him
+}
+
+export interface TradeCandidate {
+  id: string;
+  name: string;
+  position: string;
+  headshot: string | null;
+  jersey: number | null;
+  value: number; // estimated Elo value to his team
+  note: string;
+}
+
 export interface WhatIfRequest {
+  trades?: Trade[]; // players moved between teams
   rating_adjustments: Record<string, number>; // team -> Elo points added (negative = subtracted)
   game_overrides: { game_id: string; home_win: boolean }[]; // forced results for unplayed games
   n_sims: number;

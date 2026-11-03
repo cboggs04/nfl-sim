@@ -17,6 +17,7 @@ from .datafiles import file_stamp
 from .leaders import router as leaders_router
 from .rosters import router as rosters_router
 from .sim import router as sim_router
+from .trade import router as trade_router
 from .whatif import router as whatif_router
 from .schemas import BacktestResponse, BracketResponse, SeasonResponse, TeamDetail
 
@@ -32,6 +33,7 @@ app.include_router(sim_router)
 app.include_router(rosters_router)
 app.include_router(leaders_router)
 app.include_router(whatif_router)
+app.include_router(trade_router)
 
 
 @lru_cache

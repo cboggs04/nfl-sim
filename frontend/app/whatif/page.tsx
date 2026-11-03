@@ -23,7 +23,7 @@ export default function WhatIfPage(props: PageProps<"/whatif">) {
               What-if <span className="text-accent-ink">Sandbox</span>
             </>
           }
-          subtitle="Change the world and re-run the season. Boost a team (say they signed a star quarterback), hurt one, or force the result of a game, then see how every team's playoff and Super Bowl odds move."
+          subtitle="Change the world and re-run the season. Boost a team (say they signed a star quarterback), hurt one, trade a star to another team, or force the result of a game, then see how every team's playoff and Super Bowl odds move."
         />
         <Suspense fallback={<LoadingSkeleton />}>
           <Sandbox searchParams={props.searchParams} />
