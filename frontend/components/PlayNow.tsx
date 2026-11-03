@@ -7,7 +7,7 @@ import PlayHelp from "@/components/PlayHelp";
 import TeamLogo from "@/components/TeamLogo";
 import { buildSprites, type Sprites } from "@/lib/pixelSprites";
 import { FootballGame, GOAL_L, GOAL_R, PLAYS, ROUTES, WORLD_W, Y_MAX, Y_MID, Y_MIN, type Difficulty, type PlayDef, type OppDrive, type Phase } from "@/lib/playNow/engine";
-import { logoSrc, teamInfo } from "@/lib/teams";
+import { colorDistance, JERSEYS, jerseyColors, logoSrc, teamInfo, type Jersey } from "@/lib/teams";
 import type { TeamOdds } from "@/lib/types";
 
 const W = 320; // the little pixel world, drawn small and scaled up with sharp edges
@@ -178,6 +178,8 @@ function TeamCarousel({
   value,
   onChange,
   ranks,
+  jersey,
+  onJersey,
   arrowsNearVs = false,
 }: {
   label: string;
@@ -185,6 +187,8 @@ function TeamCarousel({
   value: string;
   onChange: (abbr: string) => void;
   ranks: Record<string, number>;
+  jersey: Jersey;
+  onJersey: (j: Jersey) => void;
   arrowsNearVs?: boolean; // desktop: put the arrows on the left edge, next to the VS badge
 }) {
   const index = Math.max(0, teams.findIndex((t) => t.team === value));
@@ -276,6 +280,27 @@ function TeamCarousel({
           <div className="mx-auto mt-2 h-2 max-w-xs overflow-hidden rounded-full bg-black/35" role="img" aria-label={`Rating ${r100} out of 100, ranked ${ranks[t.team]} of ${teams.length}`}>
             <div className="h-full rounded-full bg-white/90" style={{ width: `${Math.max(4, ((r100 - 50) / (RATING_MAX - 50)) * 100)}%` }} />
           </div>
+          {/* which jersey this team wears: home (team colors), away (white) or alternate */}
+          <div className="mt-3 flex items-center justify-center gap-2" role="radiogroup" aria-label={`${label} jersey`}>
+            {JERSEYS.map((j) => {
+              const c = jerseyColors(t.team, j.id);
+              return (
+                <button
+                  key={j.id}
+                  role="radio"
+                  aria-checked={jersey === j.id}
+                  onClick={() => onJersey(j.id)}
+                  className={`flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold tracking-wide uppercase ring-2 ${jersey === j.id ? "bg-white text-black ring-white" : "bg-black/35 text-white ring-white/25 hover:bg-black/55"}`}
+                >
+                  <span className="flex h-4 w-6 overflow-hidden rounded-sm ring-1 ring-black/40" aria-hidden>
+                    <span className="h-full flex-[3]" style={{ backgroundColor: c.primary }} />
+                    <span className="h-full flex-1" style={{ backgroundColor: c.secondary }} />
+                  </span>
+                  {j.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className={`flex shrink-0 flex-col gap-24 sm:gap-32 ${arrowsNearVs ? "lg:order-first" : ""}`}>
           {arrow(-1)}
@@ -286,13 +311,15 @@ function TeamCarousel({
   );
 }
 
-function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: string, opp: string, level: Difficulty) => void }) {
+function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: string, opp: string, level: Difficulty, userJersey: Jersey, oppJersey: Jersey) => void }) {
   const alphabetical = useMemo(() => [...teams].sort((a, b) => a.name.localeCompare(b.name)), [teams]);
   const byStrength = useMemo(() => [...teams].sort((a, b) => b.elo - a.elo), [teams]);
   const ranks = useMemo(() => Object.fromEntries(byStrength.map((t, i) => [t.team, i + 1])), [byStrength]);
   const [user, setUser] = useState(byStrength[0].team);
   const [opp, setOpp] = useState(byStrength[1].team);
   const [level, setLevel] = useState<Difficulty>("pro");
+  const [userJersey, setUserJersey] = useState<Jersey>("home");
+  const [oppJersey, setOppJersey] = useState<Jersey>("away");
   const u = teams.find((t) => t.team === user)!;
   const o = teams.find((t) => t.team === opp)!;
   const diff = u.elo - o.elo;
@@ -306,6 +333,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
           ? `You're the favorite (+${diff100} rating points)`
           : `You're the underdog (${diff100} rating points)`;
   const winPct = Math.round(100 / (1 + 10 ** (-diff / 400)));
+  const clash = colorDistance(jerseyColors(user, userJersey).primary, jerseyColors(opp, oppJersey).primary) < 90;
 
   return (
     <div>
@@ -316,7 +344,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
       <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">You need a keyboard to play this: open it on a computer.</p>
       <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use the arrow keys).</p>
       <div className="mt-3 grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-5">
-        <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} />
+        <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} jersey={userJersey} onJersey={setUserJersey} />
         <div className="flex items-center justify-center" aria-hidden>
           <span
             className="font-display bg-accent px-6 py-2 text-5xl text-on-accent shadow-lg sm:text-6xl lg:px-5 lg:py-8 lg:text-6xl"
@@ -325,7 +353,7 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
             VS
           </span>
         </div>
-        <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} arrowsNearVs />
+        <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} jersey={oppJersey} onJersey={setOppJersey} arrowsNearVs />
       </div>
       <div className="mt-5">
         <div className="text-xs font-semibold tracking-widest text-muted uppercase">Difficulty</div>
@@ -347,11 +375,12 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         </div>
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-4">
-        <button onClick={() => onStart(user, opp, level)} disabled={user === opp} className="btn btn-primary text-2xl">
+        <button onClick={() => onStart(user, opp, level, userJersey, oppJersey)} disabled={user === opp} className="btn btn-primary text-2xl">
           Kick off
         </button>
         <div>
           <div className="text-sm font-semibold text-strong">{matchup}</div>
+          {user !== opp && clash && <div className="text-xs font-semibold text-bad-ink">The two jerseys look alike. Switch one team to a different jersey.</div>}
           {user !== opp && <div className="text-xs text-muted">The ratings give {u.team} about a {winPct}% chance in a normal game.</div>}
         </div>
       </div>
@@ -419,7 +448,7 @@ function PlayArt({ play }: { play: PlayDef }) {
 }
 
 // ---------- the game ----------
-function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user: TeamOdds; opp: TeamOdds; teams: TeamOdds[]; level: Difficulty; onExit: () => void; paused: boolean; onHelp: () => void }) {
+function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, paused, onHelp }: { user: TeamOdds; opp: TeamOdds; teams: TeamOdds[]; level: Difficulty; userJersey: Jersey; oppJersey: Jersey; onExit: () => void; paused: boolean; onHelp: () => void }) {
   void teams;
   const rootRef = useRef<HTMLDivElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -430,8 +459,8 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
   const [hud, setHud] = useState<Hud>(() => snapshot(game));
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keys = useRef(new Set<string>());
-  const uInfo = teamInfo(user.team);
-  const oInfo = teamInfo(opp.team);
+  const uInfo = jerseyColors(user.team, userJersey); // the colors on the field: jersey and trim
+  const oInfo = jerseyColors(opp.team, oppJersey);
 
   const restart = () => {
     const g = new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo }, Math.random, level);
@@ -955,7 +984,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
 }
 
 export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
-  const [setup, setSetup] = useState<{ user: string; opp: string; level: Difficulty } | null>(null);
+  const [setup, setSetup] = useState<{ user: string; opp: string; level: Difficulty; userJersey: Jersey; oppJersey: Jersey } | null>(null);
   const [help, setHelp] = useState(false);
   const closeHelp = useCallback(() => setHelp(false), []);
   const user = setup ? teams.find((t) => t.team === setup.user) : undefined;
@@ -989,9 +1018,9 @@ export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
         </button>
       </div>
       {setup && user && opp ? (
-        <GameScreen user={user} opp={opp} teams={teams} level={setup.level} onExit={() => setSetup(null)} paused={help} onHelp={() => setHelp(true)} />
+        <GameScreen user={user} opp={opp} teams={teams} level={setup.level} userJersey={setup.userJersey} oppJersey={setup.oppJersey} onExit={() => setSetup(null)} paused={help} onHelp={() => setHelp(true)} />
       ) : (
-        <TeamSelect teams={teams} onStart={(u, o, level) => setSetup({ user: u, opp: o, level })} />
+        <TeamSelect teams={teams} onStart={(u, o, level, userJersey, oppJersey) => setSetup({ user: u, opp: o, level, userJersey, oppJersey })} />
       )}
       {help && <PlayHelp onClose={closeHelp} />}
     </div>
