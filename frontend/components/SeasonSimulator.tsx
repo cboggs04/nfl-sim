@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import SectionNav from "@/components/SectionNav";
 import { PositionSections, type View } from "@/components/PlayerTables";
 import TeamLogo from "@/components/TeamLogo";
 import { simulateTeam } from "@/lib/api";
@@ -92,8 +93,18 @@ export default function SeasonSimulator({
   const simGp = useMemo(() => new Map(sim?.players.map((p) => [p.id, p.gp])), [sim]);
 
   return (
-    <div className="mt-6">
-      <section className="panel p-5 sm:p-6">
+    <div className="mt-4">
+      {result && (
+        <SectionNav
+          className="mb-6"
+          items={[
+            { id: "sim-controls", label: "Simulator" },
+            { id: "sim-results", label: "Results" },
+            { id: "sim-players", label: "Players" },
+          ]}
+        />
+      )}
+      <section id="sim-controls" className="panel scroll-mt-32 p-5 sm:p-6">
         <h2 className="font-display text-4xl text-strong">Season simulator</h2>
         <p className="mt-1 max-w-3xl text-sm text-muted">
           Pick what to simulate, then click the button. Every game is decided by its win probability, and the players&apos; stats
@@ -128,7 +139,7 @@ export default function SeasonSimulator({
       </section>
 
       {sim && result && (
-        <div className="mt-6" aria-live="polite">
+        <div id="sim-results" className="mt-6 scroll-mt-32" aria-live="polite">
           <section className="panel p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
               <h3 className="font-display text-3xl text-strong">{result.mode === "rest" ? "Rest of season" : "Full season"}</h3>
@@ -183,7 +194,7 @@ export default function SeasonSimulator({
       {/* Players appear only once a season has been simulated. */}
       {result && (
         <>
-          <h3 className="font-display mt-8 text-4xl text-strong">Roster &amp; player stats</h3>
+          <h3 id="sim-players" className="font-display mt-8 scroll-mt-32 text-4xl text-strong">Roster &amp; player stats</h3>
           <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Which numbers to show">
             {views.map((v) => (
               <button

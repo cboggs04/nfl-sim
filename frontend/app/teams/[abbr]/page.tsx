@@ -6,6 +6,7 @@ import GameReplay from "@/components/GameReplay";
 import ColumnChart from "@/components/ColumnChart";
 import ProbCell, { pct } from "@/components/ProbCell";
 import ResetOnLeave from "@/components/ResetOnLeave";
+import SectionNav from "@/components/SectionNav";
 import SeasonSimulator from "@/components/SeasonSimulator";
 import TeamTabs from "@/components/TeamTabs";
 import TeamLogo from "@/components/TeamLogo";
@@ -165,7 +166,15 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
           key={odds.team} // a fresh page every time: always opens on Overview
           overview={
             <>
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <SectionNav
+        className="mt-4"
+        items={[
+          { id: "outlook", label: "Outlook" },
+          { id: "schedule", label: "Schedule" },
+          { id: "charts", label: "Charts" },
+        ]}
+      />
+      <div id="outlook" className="mt-6 grid scroll-mt-32 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <Tile label="Expected wins" value={odds.exp_wins.toFixed(1)} ratio={odds.exp_wins / 17} color={info.primary} />
         <Tile label="Win division" value={pct(odds.p_division)} ratio={odds.p_division} color={info.primary} />
         <Tile label="Make playoffs" value={pct(odds.p_playoffs)} ratio={odds.p_playoffs} color={info.primary} />
@@ -174,7 +183,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
         <Tile label="Win it all" value={pct(odds.p_super_bowl)} ratio={odds.p_super_bowl} color="var(--accent)" />
       </div>
 
-      <section className="mt-10">
+      <section id="schedule" className="mt-10 scroll-mt-32">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
           <h2 className="font-display text-4xl text-strong">Schedule &amp; outlook</h2>
           <p className="text-sm text-muted">
@@ -219,7 +228,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
         </div>
       </section>
 
-      <div className="mt-10 grid gap-4 lg:grid-cols-2">
+      <div id="charts" className="mt-10 grid scroll-mt-32 gap-4 lg:grid-cols-2">
         <ColumnChart
           title="Final win total"
           subtitle="Share of simulated seasons ending with each number of wins"

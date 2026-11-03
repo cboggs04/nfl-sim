@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import SectionNav from "@/components/SectionNav";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import CalibrationChart from "@/components/CalibrationChart";
@@ -44,7 +45,17 @@ async function Backtest() {
 
   return (
     <>
-      <p className="max-w-3xl text-sm text-muted">
+      <SectionNav
+        items={[
+          { id: "scorecard", label: "Scorecard" },
+          { id: "calibration", label: "Calibration" },
+          { id: "win-totals", label: "Win totals" },
+          { id: "improvements", label: "Improvements" },
+          { id: "details", label: "Home field & QBs" },
+          { id: "fancier", label: "Fancier model?" },
+        ]}
+      />
+      <p id="scorecard" className="mt-6 max-w-3xl scroll-mt-32 text-sm text-muted">
         We tuned the model on {tr0}–{tr1} games, then graded it on {t0}–{t1}, seasons it never saw while tuning. Each prediction
         uses only information available before kickoff: the home-field edge for a season is chosen from the six seasons before
         it, and each quarterback&apos;s rating counts only the games he had already played.
@@ -68,7 +79,7 @@ async function Backtest() {
         />
       </div>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+      <div id="calibration" className="mt-8 grid scroll-mt-32 gap-4 lg:grid-cols-2">
         <CalibrationChart bins={m.calibration} />
         <div className="flex flex-col gap-4">
           <section className="panel p-5">
@@ -101,7 +112,7 @@ async function Backtest() {
         </div>
       </div>
 
-      <section className="panel-flat mt-8 p-5">
+      <section id="win-totals" className="panel-flat mt-8 scroll-mt-32 p-5">
         <h2 className="font-display text-3xl text-strong">Preseason win totals</h2>
         <p className="text-sm text-muted">
           Before each season, how far off was the model&apos;s expected wins for a typical team, compared with guessing 8.5 for everyone?
@@ -130,7 +141,7 @@ async function Backtest() {
         </div>
       </section>
 
-      <section className="panel-flat mt-8 p-5">
+      <section id="improvements" className="panel-flat mt-8 scroll-mt-32 p-5">
         <h2 className="font-display text-3xl text-strong">How the model got better</h2>
         <p className="text-sm text-muted">
           Each step was added only if it improved the score on the test seasons. Lower Brier is better, and every change here is a
@@ -170,7 +181,7 @@ async function Backtest() {
         </div>
       </section>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+      <div id="details" className="mt-8 grid scroll-mt-32 gap-4 lg:grid-cols-2">
         {hfa.length > 0 && (
           <section className="panel-flat p-5">
             <h2 className="font-display text-3xl text-strong">Home-field edge is shrinking</h2>
@@ -214,7 +225,7 @@ async function Backtest() {
         </section>
       </div>
 
-      <section className="panel-flat mt-8 p-5">
+      <section id="fancier" className="panel-flat mt-8 scroll-mt-32 p-5">
         <h2 className="font-display text-3xl text-strong">Did a fancier model help?</h2>
         <p className="text-sm text-muted">
           Earlier we also built ratings from EPA (expected points added per play) and blended them with Elo, compared with the
