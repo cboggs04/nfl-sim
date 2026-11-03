@@ -501,12 +501,14 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
       if ((e.target as HTMLElement)?.closest?.("select, input, textarea")) return;
       const dir = dirOf(e.code);
       const game_ = game;
-      if (dir || ["Space", "Enter", "Digit1", "Digit2", "Digit3", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE", "KeyF", "KeyP"].includes(e.code)) e.preventDefault();
+      if (dir || ["Space", "Enter", "Digit1", "Digit2", "Digit3", "KeyA", "KeyS", "KeyD", "KeyF", "KeyP"].includes(e.code)) e.preventDefault();
       if (dir) {
         keys.current.add(dir);
         if (game_.phase === "presnap" && !e.repeat) {
-          if (dir === "left") game_.press("prevPlay");
-          if (dir === "right") game_.press("nextPlay");
+          if (dir === "left") game_.press("selectPass");
+          if (dir === "right") game_.press("selectRun");
+          if (dir === "up") game_.press("prevPlay");
+          if (dir === "down") game_.press("nextPlay");
         }
         updateMove();
         return;
@@ -536,12 +538,6 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
           break;
         case "KeyD":
           game_.press("throw3");
-          break;
-        case "KeyQ":
-          game_.press("selectPass");
-          break;
-        case "KeyE":
-          game_.press("selectRun");
           break;
         case "KeyF":
           game_.press("fieldGoal");
@@ -724,8 +720,11 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
       className={fullscreen ? "flex h-screen w-screen flex-col items-center justify-center overflow-auto p-3" : ""}
       style={fullscreen ? { background: "var(--background)" } : undefined}
     >
-      {/* in full screen the game is as wide as the screen's height allows, so everything fits without scrolling */}
-      <div className="mx-auto w-full max-w-4xl" style={fullscreen ? { maxWidth: "min(100%, calc((100vh - 24.5rem) * 16 / 9))" } : undefined}>
+      {/* the game is as wide as the screen's height allows, so the whole field stays on screen (without scrolling) */}
+      <div
+        className="mx-auto w-full"
+        style={{ maxWidth: fullscreen ? "calc((100vh - 11rem) * 16 / 9 + 16rem)" : "min(66rem, max(46rem, calc((100vh - 22rem) * 16 / 9 + 16rem)))" }}
+      >
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="font-pixel text-[10px] text-muted sm:text-xs">
             {hud.half === 1 ? "1ST HALF" : "2ND HALF"} · {LEVELS.find((l) => l.id === level)!.label.toUpperCase()}
@@ -755,6 +754,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             </button>
           </div>
         </div>
+        <div className="grid items-stretch gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]">
         <div className="overflow-hidden rounded-lg border-4 border-white/70 bg-black shadow-2xl shadow-black/40">
           <div className="font-pixel flex items-stretch justify-between bg-[#111827] text-white">
             <div className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2" style={{ borderColor: uInfo.primary }}>
@@ -867,84 +867,87 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
           </div>
 
         </div>
-        {/* controls for the moment you're in */}
-        <div className="mt-3 grid rounded-lg bg-[#111827] px-3 py-3 text-white">
-          {/* the pre-snap controls and the live hints share one spot, so the box never changes size when the play starts */}
-          <div className={`col-start-1 row-start-1 ${hud.phase === "presnap" ? "" : "invisible"}`} aria-hidden={hud.phase !== "presnap"}>
-            <div className="mb-3">
-              <div className="font-pixel mb-1.5 text-center text-[7px] text-white/70 sm:text-[9px]">
-                {hud.down >= 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3 OR ← →), THEN SNAP"}
+        {/* the play picker and snap controls: a column beside the field, so the whole field stays on screen */}
+        <aside className="relative min-h-[26rem] lg:min-h-0">
+          <div className="flex flex-col rounded-lg bg-[#111827] p-2.5 text-white lg:absolute lg:inset-0">
+            {/* the pre-snap controls and the live hints share one spot, so nothing moves when the play starts */}
+            <div className={`flex min-h-0 flex-1 flex-col gap-2 ${hud.phase === "presnap" ? "" : "invisible"}`} aria-hidden={hud.phase !== "presnap"}>
+              <div className="font-pixel text-center text-[7px] leading-snug text-white/70 sm:text-[8px]">
+                {hud.down >= 4 ? "4TH DOWN: GO FOR IT WITH A PLAY, OR KICK" : "PICK A PLAY (1 2 3 OR ↑ ↓), THEN SNAP"}
               </div>
-              <div className="mx-auto flex max-w-3xl justify-center gap-1.5 sm:gap-2">
+              <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 lg:grid-cols-1 lg:grid-rows-3">
                 {hud.plays.map((p, i) => (
                   <button
                     key={p.id}
                     onClick={() => act(`play${i + 1}` as "play1" | "play2" | "play3")}
                     aria-pressed={hud.choice === i}
-                    className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded text-left ring-2 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-white/10 text-white ring-white/15 hover:bg-white/20"}`}
+                    className={`flex min-h-0 min-w-0 flex-col overflow-hidden rounded text-left ring-2 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-white/10 text-white ring-white/15 hover:bg-white/20"}`}
                   >
-                    <span className={`block h-12 w-full px-1 pt-1 sm:h-[4.5rem] ${hud.choice === i ? "text-black" : "text-white"}`}>
+                    <span className="block h-14 min-h-0 w-full px-1 pt-1 lg:h-auto lg:flex-1">
                       <PlayArt play={p} />
                     </span>
-                    <span className="flex items-center gap-1.5 px-1.5 pb-1.5 sm:gap-2 sm:px-2 sm:pb-2">
-                      <span className={`font-pixel flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] sm:h-6 sm:w-6 sm:text-xs ${hud.choice === i ? "bg-black text-yellow-300" : "bg-white/20"}`}>{i + 1}</span>
+                    <span className="flex items-center gap-1.5 px-1.5 pb-1.5">
+                      <span className={`font-pixel flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] ${hud.choice === i ? "bg-black text-yellow-300" : "bg-white/20"}`}>{i + 1}</span>
                       <span className="min-w-0">
-                        <span className="font-pixel block truncate text-[7px] sm:text-[10px]">{p.name.toUpperCase()}</span>
-                        <span className={`hidden h-[1.9rem] overflow-hidden text-[10px] leading-tight sm:block ${hud.choice === i ? "text-black/70" : "text-white/60"}`}>{p.blurb}</span>
+                        <span className="font-pixel block truncate text-[7px] sm:text-[9px]">{p.name.toUpperCase()}</span>
+                        <span className={`hidden h-[1.5rem] overflow-hidden text-[9px] leading-tight lg:block ${hud.choice === i ? "text-black/70" : "text-white/60"}`}>{p.blurb}</span>
                       </span>
                     </span>
                   </button>
                 ))}
               </div>
+              {hud.down < 4 && (
+                <div className="flex flex-col gap-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["pass", "run"] as const).map((k) => (
+                      <button
+                        key={k}
+                        onClick={() => act(k === "pass" ? "selectPass" : "selectRun")}
+                        aria-pressed={hud.selected === k}
+                        className={`font-pixel rounded px-2 py-2 text-[9px] ${hud.selected === k ? "bg-yellow-300 text-black" : "bg-white/15 text-white hover:bg-white/25"}`}
+                      >
+                        {k === "pass" ? "← PASS" : "RUN →"}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-3 py-2 text-[10px] text-black hover:bg-emerald-300">
+                    SNAP (SPACE)
+                  </button>
+                </div>
+              )}
+              {hud.down >= 4 && (
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-2 py-2 text-[9px] text-black hover:bg-emerald-300">
+                    GO FOR IT (SPACE)
+                  </button>
+                  <button
+                    onClick={() => act("fieldGoal")}
+                    disabled={!hud.canKick}
+                    className="font-pixel rounded bg-yellow-300 px-2 py-2 text-[9px] text-black hover:bg-yellow-200 disabled:opacity-40"
+                  >
+                    FIELD GOAL (F) {hud.canKick ? `${hud.fgDistance} YD` : "TOO FAR"}
+                  </button>
+                  <button onClick={() => act("punt")} className="font-pixel rounded bg-white/20 px-2 py-2 text-[9px] text-white hover:bg-white/30">
+                    PUNT (P)
+                  </button>
+                </div>
+              )}
             </div>
-          {hud.down < 4 && (
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {(["pass", "run"] as const).map((k) => (
-                <button
-                  key={k}
-                  onClick={() => act(k === "pass" ? "selectPass" : "selectRun")}
-                  aria-pressed={hud.selected === k}
-                  className={`font-pixel rounded px-3 py-2 text-[10px] ${hud.selected === k ? "bg-yellow-300 text-black" : "bg-white/15 text-white hover:bg-white/25"}`}
-                >
-                  {k === "pass" ? "Q  PASS" : "RUN  E"}
-                </button>
-              ))}
-              <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-4 py-2 text-[10px] text-black hover:bg-emerald-300">
-                SNAP (SPACE)
-              </button>
-            </div>
-          )}
-          {hud.down >= 4 && (
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button onClick={() => act("snap")} className="font-pixel rounded bg-emerald-400 px-3 py-2 text-[10px] text-black hover:bg-emerald-300">
-                GO FOR IT (SPACE)
-              </button>
-              <button
-                onClick={() => act("fieldGoal")}
-                disabled={!hud.canKick}
-                className="font-pixel rounded bg-yellow-300 px-3 py-2 text-[10px] text-black hover:bg-yellow-200 disabled:opacity-40"
-              >
-                FIELD GOAL (F) {hud.canKick ? `${hud.fgDistance} YD` : "TOO FAR"}
-              </button>
-              <button onClick={() => act("punt")} className="font-pixel rounded bg-white/20 px-3 py-2 text-[10px] text-white hover:bg-white/30">
-                PUNT (P)
-              </button>
-            </div>
-          )}
-          </div>
-          <div className={`col-start-1 row-start-1 flex items-center justify-center ${hud.phase === "live" ? "" : "invisible"}`}>
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
-              <span className="font-pixel text-[8px] text-white/80 sm:text-[10px]">ARROWS MOVE · A S D THROW</span>
-              <span className="font-pixel flex items-center gap-2 text-[8px] text-white/80 sm:text-[10px]">
+            <div className={`absolute inset-0 flex flex-col items-center justify-center gap-4 p-3 text-center ${hud.phase === "live" ? "" : "invisible"}`}>
+              <span className="font-pixel text-[8px] leading-relaxed text-white/80 sm:text-[10px]">
+                ARROWS MOVE
+                <br />A S D THROW
+              </span>
+              <span className="font-pixel flex flex-col items-center gap-2 text-[8px] text-white/80 sm:text-[10px]">
                 SPRINT (SPACE)
-                <span className="inline-block h-2 w-16 overflow-hidden rounded bg-white/20">
+                <span className="inline-block h-2 w-24 overflow-hidden rounded bg-white/20">
                   <span className={`block h-full ${hud.boost >= 1 ? "bg-emerald-400" : "bg-white/50"}`} style={{ width: `${hud.boost * 100}%` }} />
                 </span>
               </span>
             </div>
           </div>
+        </aside>
         </div>
-
         <p className="mt-2 text-center text-xs text-muted">The other team&apos;s drives are simulated from the two teams&apos; ratings. You play every snap of yours.</p>
       </div>
     </div>

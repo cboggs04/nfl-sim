@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 const KEYS: [string, string][] = [
-  ["Q  /  E", "Before the snap: choose a pass (Q) or a run (E)"],
-  ["← →", "Before the snap: switch between the three plays on offer (or press 1, 2 or 3)"],
+  ["← →", "Before the snap: choose a pass (←) or a run (→)"],
+  ["↑ ↓", "Before the snap: switch between the three plays on offer (or press 1, 2 or 3)"],
   ["Space", "Snap the ball. While you have the ball in the open, sprint (it recharges)"],
   ["Arrow keys", "Move the quarterback or the ball carrier"],
   ["1  2  3", "Before the snap: pick one of the three plays shown"],
@@ -64,7 +64,7 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
           <h3 className="font-display text-2xl text-accent-ink">Running a play</h3>
           <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-muted">
             <li>
-              <b className="text-strong">Pick pass or run</b> with <b className="text-strong">Q</b> / <b className="text-strong">E</b>, then pick one of the three plays with <b className="text-strong">← →</b> or <b className="text-strong">1, 2, 3</b> (three of five pass plays and three of five run plays are offered each snap). The dotted lines show the routes or where the back is headed.
+              <b className="text-strong">Pick pass or run</b> with <b className="text-strong">← →</b>, then pick one of the three plays with <b className="text-strong">↑ ↓</b> or <b className="text-strong">1, 2, 3</b> (three of five pass plays and three of five run plays are offered each snap). The dotted lines show the routes or where the back is headed.
             </li>
             <li>
               <b className="text-strong">Press Space</b> to snap the ball.
