@@ -1,3 +1,4 @@
+import PageTitle from "@/components/PageTitle";
 import { Suspense } from "react";
 import PlayNow from "@/components/PlayNow";
 import ResetOnLeave from "@/components/ResetOnLeave";
@@ -17,9 +18,9 @@ export default function PlayPage() {
         <Suspense
           fallback={
             <div>
-              <h1 className="font-display text-5xl text-strong sm:text-8xl">
+              <PageTitle>
                 Play <span className="text-accent-ink">Now</span>
-              </h1>
+              </PageTitle>
               <div className="mt-6 h-96 animate-pulse bg-panel-2" aria-busy="true" />
             </div>
           }

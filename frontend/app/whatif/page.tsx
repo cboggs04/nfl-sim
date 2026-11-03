@@ -1,3 +1,4 @@
+import PageTitle from "@/components/PageTitle";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import WhatIfSandbox from "@/components/WhatIfSandbox";
@@ -14,9 +15,9 @@ export default function WhatIfPage() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
       <ResetOnLeave>
-        <h1 className="font-display text-5xl text-strong sm:text-8xl">
+        <PageTitle>
           What-if <span className="text-accent-ink">Sandbox</span>
-        </h1>
+        </PageTitle>
         <p className="mt-3 max-w-2xl text-sm text-muted">
           Change the world and re-run the season. Boost a team (say they signed a star quarterback), hurt one, or force the result
           of a game, then see how every team&apos;s playoff and Super Bowl odds move.

@@ -1,3 +1,4 @@
+import PageTitle from "@/components/PageTitle";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import LeadersView from "@/components/LeadersView";
@@ -17,9 +18,9 @@ export default function LeadersPage() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
       <ResetOnLeave>
-        <h1 className="font-display text-5xl text-strong sm:text-8xl">
+        <PageTitle>
           Stat <span className="text-accent-ink">Leaders</span>
-        </h1>
+        </PageTitle>
         <p className="mt-3 max-w-2xl text-sm text-muted">
           Projected league leaders and award odds for the season, from simulating every remaining game and every player&apos;s stats.
         </p>

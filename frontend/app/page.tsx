@@ -1,6 +1,8 @@
 import ResetOnLeave from "@/components/ResetOnLeave";
 import { Suspense } from "react";
 import ContenderCards from "@/components/ContenderCards";
+import FeatureCards from "@/components/FeatureCards";
+import PageTitle from "@/components/PageTitle";
 import SeasonTable from "@/components/SeasonTable";
 import { getSeason } from "@/lib/api";
 
@@ -17,9 +19,13 @@ async function Dashboard() {
     <>
       <header className="rise">
         <div className="text-sm font-semibold tracking-[0.25em] text-accent-ink uppercase">{season.season} season</div>
-        <h1 className="font-display mt-1 text-5xl text-strong sm:text-8xl">
+        <PageTitle className="mt-1">
           Super Bowl <span className="text-accent-ink">Odds</span>
-        </h1>
+        </PageTitle>
+        <p className="mt-2 max-w-3xl text-base text-muted">
+          Simulates the NFL season {season.n_sims.toLocaleString("en-US")} times to project every team&apos;s record, playoff odds and Super Bowl chances. Explore the
+          what-ifs, check the stat leaders, or play a game.
+        </p>
         <div className="mt-4 flex max-w-xl items-center gap-3 text-sm text-muted">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-line" role="img" aria-label={`${progress}% of the season played`}>
             <div className="h-full rounded-full bg-gradient-to-r from-[#1d4f9e] to-accent" style={{ width: `${progress}%` }} />
@@ -28,16 +34,18 @@ async function Dashboard() {
             {season.games_played} of {season.games_total} games played
           </span>
         </div>
-        <p className="mt-2 text-sm text-muted">
-          Based on {season.n_sims.toLocaleString("en-US")} simulated seasons · updated {updated}
-        </p>
+        <p className="mt-2 text-sm text-muted">Updated {updated}</p>
       </header>
 
-      <section className="mt-8" aria-label="Super Bowl favorites">
+      <section className="mt-6" aria-label="What you can do here">
+        <FeatureCards />
+      </section>
+
+      <section className="mt-6" aria-label="Super Bowl favorites">
         <ContenderCards teams={season.teams} />
       </section>
 
-      <section className="mt-12">
+      <section id="league-board" className="mt-12 scroll-mt-20">
         <h2 className="font-display mb-4 text-4xl text-strong">League board</h2>
         <SeasonTable teams={season.teams} />
       </section>
