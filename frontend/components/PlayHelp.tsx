@@ -100,6 +100,7 @@ export default function PlayHelp({ onClose }: { onClose: () => void }) {
           <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
             <li>On 4th down you choose: go for it, kick a field goal (up to about 62 yards, and longer kicks miss more) or punt.</li>
             <li>Missing the first-down line on 4th down gives the other team the ball where you stopped.</li>
+            <li>Pick a difficulty before kickoff: Rookie (receivers get open, slow pass rush, easy running), Pro, or All-Star (fast defenders and quick pressure).</li>
             <li>Don&apos;t hold the ball too long: if a defender reaches the quarterback it&apos;s a sack.</li>
             <li>Running is safer than passing, but passing gains yards faster.</li>
             <li>The clock stops between plays, and the other team&apos;s drive uses up time, so a half is only a few possessions each.</li>

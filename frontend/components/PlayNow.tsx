@@ -6,7 +6,7 @@ import Headshot from "@/components/Headshot";
 import PlayHelp from "@/components/PlayHelp";
 import TeamLogo from "@/components/TeamLogo";
 import { buildSprites, type Sprites } from "@/lib/pixelSprites";
-import { FootballGame, GOAL_L, GOAL_R, WORLD_W, Y_MID, type OppDrive, type Phase } from "@/lib/playNow/engine";
+import { FootballGame, GOAL_L, GOAL_R, WORLD_W, Y_MID, type Difficulty, type OppDrive, type Phase } from "@/lib/playNow/engine";
 import { logoSrc, teamInfo } from "@/lib/teams";
 import type { TeamOdds } from "@/lib/types";
 
@@ -155,6 +155,12 @@ const RESULT_TEXT: Record<OppDrive["result"], string> = {
   TIME: "TIME RUNS OUT",
 };
 
+const LEVELS: { id: Difficulty; label: string; blurb: string }[] = [
+  { id: "rookie", label: "Rookie", blurb: "Receivers get open, the pass rush is slow and the defense misses tackles. Running is easy." },
+  { id: "pro", label: "Pro", blurb: "A fair fight: tight coverage, a real pass rush and defenders who tackle." },
+  { id: "allstar", label: "All-Star", blurb: "Fast defenders, tight coverage, quick pressure and sure tackles. Good luck." },
+];
+
 // ---------- the team picker: flip through the teams one at a time ----------
 function TeamCarousel({
   label,
@@ -270,12 +276,13 @@ function TeamCarousel({
   );
 }
 
-function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: string, opp: string) => void }) {
+function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: string, opp: string, level: Difficulty) => void }) {
   const alphabetical = useMemo(() => [...teams].sort((a, b) => a.name.localeCompare(b.name)), [teams]);
   const byStrength = useMemo(() => [...teams].sort((a, b) => b.elo - a.elo), [teams]);
   const ranks = useMemo(() => Object.fromEntries(byStrength.map((t, i) => [t.team, i + 1])), [byStrength]);
   const [user, setUser] = useState(byStrength[0].team);
   const [opp, setOpp] = useState(byStrength[1].team);
+  const [level, setLevel] = useState<Difficulty>("pro");
   const u = teams.find((t) => t.team === user)!;
   const o = teams.find((t) => t.team === opp)!;
   const diff = u.elo - o.elo;
@@ -310,8 +317,27 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
         </div>
         <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} arrowsNearVs />
       </div>
+      <div className="mt-5">
+        <div className="text-xs font-semibold tracking-widest text-muted uppercase">Difficulty</div>
+        <div role="radiogroup" aria-label="Difficulty" className="mt-2 flex flex-wrap items-center gap-3">
+          <div className="inline-flex overflow-hidden rounded-md ring-1 ring-line">
+            {LEVELS.map((l) => (
+              <button
+                key={l.id}
+                role="radio"
+                aria-checked={level === l.id}
+                onClick={() => setLevel(l.id)}
+                className={`font-display px-4 py-2 text-xl sm:px-6 sm:text-2xl ${level === l.id ? "bg-accent text-on-accent" : "bg-head text-strong hover:bg-hover"}`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
+          <p className="max-w-md text-sm text-muted">{LEVELS.find((l) => l.id === level)!.blurb}</p>
+        </div>
+      </div>
       <div className="mt-5 flex flex-wrap items-center gap-4">
-        <button onClick={() => onStart(user, opp)} disabled={user === opp} className="btn btn-primary text-2xl">
+        <button onClick={() => onStart(user, opp, level)} disabled={user === opp} className="btn btn-primary text-2xl">
           Kick off
         </button>
         <div>
@@ -327,12 +353,12 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
 }
 
 // ---------- the game ----------
-function GameScreen({ user, opp, teams, onExit, paused, onHelp }: { user: TeamOdds; opp: TeamOdds; teams: TeamOdds[]; onExit: () => void; paused: boolean; onHelp: () => void }) {
+function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user: TeamOdds; opp: TeamOdds; teams: TeamOdds[]; level: Difficulty; onExit: () => void; paused: boolean; onHelp: () => void }) {
   void teams;
   const [manualPause, setManualPause] = useState(false); // the Pause button (or Esc)
   const stopped = paused || manualPause; // paused by the help panel or by the player
   const pausedRef = useRef(stopped);
-  const [game, setGame] = useState(() => new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo }));
+  const [game, setGame] = useState(() => new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo }, Math.random, level));
   const [hud, setHud] = useState<Hud>(() => snapshot(game));
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keys = useRef(new Set<string>());
@@ -340,7 +366,7 @@ function GameScreen({ user, opp, teams, onExit, paused, onHelp }: { user: TeamOd
   const oInfo = teamInfo(opp.team);
 
   const restart = () => {
-    const g = new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo });
+    const g = new FootballGame({ abbr: user.team, name: user.name, rating: user.elo }, { abbr: opp.team, name: opp.name, rating: opp.elo }, Math.random, level);
     setGame(g);
     setHud(snapshot(g));
     setManualPause(false);
@@ -584,7 +610,9 @@ function GameScreen({ user, opp, teams, onExit, paused, onHelp }: { user: TeamOd
     <div data-phase={hud.phase} data-half={hud.half}>
       <div className="mx-auto max-w-4xl">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="font-pixel text-[10px] text-muted sm:text-xs">{hud.half === 1 ? "1ST HALF" : "2ND HALF"}</div>
+          <div className="font-pixel text-[10px] text-muted sm:text-xs">
+            {hud.half === 1 ? "1ST HALF" : "2ND HALF"} · {LEVELS.find((l) => l.id === level)!.label.toUpperCase()}
+          </div>
           <div className="flex gap-2">
             {!final && (
               <button
@@ -777,7 +805,7 @@ function GameScreen({ user, opp, teams, onExit, paused, onHelp }: { user: TeamOd
 }
 
 export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
-  const [setup, setSetup] = useState<{ user: string; opp: string } | null>(null);
+  const [setup, setSetup] = useState<{ user: string; opp: string; level: Difficulty } | null>(null);
   const [help, setHelp] = useState(false);
   const closeHelp = useCallback(() => setHelp(false), []);
   const user = setup ? teams.find((t) => t.team === setup.user) : undefined;
@@ -810,9 +838,9 @@ export default function PlayNow({ teams }: { teams: TeamOdds[] }) {
         </button>
       </div>
       {setup && user && opp ? (
-        <GameScreen user={user} opp={opp} teams={teams} onExit={() => setSetup(null)} paused={help} onHelp={() => setHelp(true)} />
+        <GameScreen user={user} opp={opp} teams={teams} level={setup.level} onExit={() => setSetup(null)} paused={help} onHelp={() => setHelp(true)} />
       ) : (
-        <TeamSelect teams={teams} onStart={(u, o) => setSetup({ user: u, opp: o })} />
+        <TeamSelect teams={teams} onStart={(u, o, level) => setSetup({ user: u, opp: o, level })} />
       )}
       {help && <PlayHelp onClose={closeHelp} />}
     </div>

@@ -27,6 +27,26 @@ export interface TeamRating {
   rating: number; // Elo, quarterback included
 }
 
+export type Difficulty = "rookie" | "pro" | "allstar";
+
+/** How the three levels change the defense. "pro" is the baseline everything else was tuned around. */
+export interface Tuning {
+  defSpeed: number; // defenders' speed
+  offSpeed: number; // your receivers' and running back's speed
+  rushTime: number; // how long the pass rush and run blocks take to break down (bigger = more time for you)
+  runBlockFail: number; // chance a run block fails right away
+  cover: number; // how loosely defenders cover (bigger = more open receivers)
+  tackle: number; // tackle success multiplier
+  catchBonus: number; // added to the catch chance
+  intMult: number; // interception chance multiplier
+  oppEdge: number; // added to your edge when the computer team's drives are simulated
+}
+export const DIFFICULTY: Record<Difficulty, Tuning> = {
+  rookie: { defSpeed: 0.95, offSpeed: 1.03, rushTime: 1.25, runBlockFail: 0.27, cover: 1.4, tackle: 0.93, catchBonus: 0.06, intMult: 0.7, oppEdge: 0.1 },
+  pro: { defSpeed: 1, offSpeed: 1, rushTime: 1, runBlockFail: 0.35, cover: 1, tackle: 1, catchBonus: 0, intMult: 1, oppEdge: 0 },
+  allstar: { defSpeed: 1.03, offSpeed: 1, rushTime: 0.85, runBlockFail: 0.42, cover: 0.7, tackle: 1.06, catchBonus: -0.05, intMult: 1.3, oppEdge: -0.15 },
+};
+
 export interface Ent {
   id: string;
   side: "off" | "def";
@@ -153,6 +173,8 @@ export class FootballGame {
   readonly userTeam: TeamRating;
   readonly oppTeam: TeamRating;
   readonly edge: number; // -1 .. 1, how much stronger you are
+  readonly difficulty: Difficulty;
+  private tune: Tuning;
   private rng: Rng;
 
   half = 1;
@@ -191,7 +213,9 @@ export class FootballGame {
   /** The score as a touchdown celebration needs it: who just scored. */
   scoredTD = false;
 
-  constructor(user: TeamRating, opp: TeamRating, rng: Rng = Math.random) {
+  constructor(user: TeamRating, opp: TeamRating, rng: Rng = Math.random, difficulty: Difficulty = "pro") {
+    this.difficulty = difficulty;
+    this.tune = DIFFICULTY[difficulty];
     this.userTeam = user;
     this.oppTeam = opp;
     this.edge = clamp((user.rating - opp.rating) / 200, -1, 1);
@@ -298,22 +322,23 @@ export class FootballGame {
   private mkEnt(id: string, side: "off" | "def", role: string, x: number, y: number, speed: number): Ent {
     return {
       id, side, role, x, y, vx: 0, vy: 0, speed, moving: false, face: side === "off" ? 1 : -1, breakAt: 0, cooldown: 0, engaged: false,
-      err: [(this.rng() - 0.35) * 14, (this.rng() - 0.5) * 18],
+      err: [(this.rng() - 0.35) * 14 * (side === "def" ? this.tune.cover : 1), (this.rng() - 0.5) * 18 * (side === "def" ? this.tune.cover : 1)],
     };
   }
 
   private buildFormation() {
     const L = this.losX;
-    const dm = 1 - 0.05 * this.edge; // better teams face slower defenders
+    const dm = (1 - 0.05 * this.edge) * this.tune.defSpeed; // better teams face slower defenders; the level changes it too
+    const om = this.tune.offSpeed;
     const ents: Ent[] = [
       this.mkEnt("ol1", "off", "ol", L - 2, Y_MID - 10, 30),
       this.mkEnt("ol2", "off", "ol", L - 2, Y_MID, 30),
       this.mkEnt("ol3", "off", "ol", L - 2, Y_MID + 10, 30),
       this.mkEnt("qb", "off", "qb", L - 24, Y_MID, 50),
-      this.mkEnt("rb", "off", "rb", L - 30, Y_MID + 10, 61),
-      this.mkEnt("wr1", "off", "wr", L - 3, 72, 62),
-      this.mkEnt("wr2", "off", "wr", L - 3, 154, 62),
-      this.mkEnt("wr3", "off", "wr", L - 9, 134, 62),
+      this.mkEnt("rb", "off", "rb", L - 30, Y_MID + 10, 61 * om),
+      this.mkEnt("wr1", "off", "wr", L - 3, 72, 62 * om),
+      this.mkEnt("wr2", "off", "wr", L - 3, 154, 62 * om),
+      this.mkEnt("wr3", "off", "wr", L - 9, 134, 62 * om),
       this.mkEnt("dl1", "def", "dl", L + 3, Y_MID - 10, 58 * dm),
       this.mkEnt("dl2", "def", "dl", L + 3, Y_MID, 58 * dm),
       this.mkEnt("dl3", "def", "dl", L + 3, Y_MID + 10, 58 * dm),
@@ -339,9 +364,9 @@ export class FootballGame {
     // How quickly the rush gets home changes every play: sometimes a quick rush or a blitz, usually normal, sometimes slow.
     const roll = this.rng();
     const base = roll < 0.28 ? 0.6 : roll < 0.72 ? 1.7 : 2.7;
-    for (const e of ents) if (e.role === "dl") e.breakAt = (base + this.rng() * 0.9) * (1 + 0.15 * this.edge);
+    for (const e of ents) if (e.role === "dl") e.breakAt = (base + this.rng() * 0.9) * (1 + 0.15 * this.edge) * this.tune.rushTime;
     const lb1 = ents.find((x) => x.id === "lb1")!;
-    lb1.breakAt = roll < 0.28 ? 0.5 + this.rng() * 0.6 : 2.2 + this.rng() * 0.8; // a blitzing linebacker is the fastest of all
+    lb1.breakAt = (roll < 0.28 ? 0.5 + this.rng() * 0.6 : 2.2 + this.rng() * 0.8) * this.tune.rushTime; // a blitzing linebacker is the fastest of all
     this.ents = ents;
     this.controlled = "qb";
     this.ball = { x: L - 20, y: Y_MID - 6, z: 0, holder: "qb", flight: null };
@@ -366,7 +391,7 @@ export class FootballGame {
         if (d.side !== "def" || !["dl", "cb", "lb"].includes(d.role) || d.id === "lb1") continue;
         const held = d.role === "dl" ? 0.6 + this.rng() * 0.7 : d.role === "cb" ? 0.7 + this.rng() * 0.6 : 0.8 + this.rng() * 0.7;
         // some blocks simply fail: the defender beats his man right away and the run is stuffed
-        d.breakAt = (this.rng() < 0.35 ? 0.15 + this.rng() * 0.25 : held) * (1 + 0.2 * this.edge);
+        d.breakAt = (this.rng() < this.tune.runBlockFail ? 0.15 + this.rng() * 0.25 : held * this.tune.rushTime) * (1 + 0.2 * this.edge);
       }
     } else {
       this.controlled = "qb";
@@ -612,7 +637,7 @@ export class FootballGame {
     const defs = this.ents.filter((e) => e.side === "def");
     const near = Math.min(...defs.map((e) => dist(e.x, e.y, target.x, target.y)));
     const sep = near / PX_PER_YD;
-    const pCatch = clamp(0.38 + 0.12 * sep + 0.1 * this.edge - (f.pressured ? 0.08 : 0), 0.12, 0.95);
+    const pCatch = clamp(0.38 + 0.12 * sep + 0.1 * this.edge + this.tune.catchBonus - (f.pressured ? 0.08 : 0), 0.12, 0.95);
     if (this.rng() < pCatch) {
       this.caught = true;
       this.caughtAt = this.t;
@@ -621,7 +646,7 @@ export class FootballGame {
       this.stats.passComp++;
       return;
     }
-    const pInt = near < 12 ? 0.25 : 0.03;
+    const pInt = (near < 12 ? 0.25 : 0.03) * this.tune.intMult;
     if (this.rng() < pInt) return this.endPlay("interception", target.x);
     this.endPlay("incomplete", target.x);
   }
@@ -641,7 +666,7 @@ export class FootballGame {
       }
       // a blocked defender can still arm-tackle a runner who goes right past him, just much less often
       const p = d.engaged ? (boosting ? 0.28 : 0.55) : boosting ? 0.42 : 0.74;
-      if (this.rng() < p) return this.endPlay("tackle", h.x);
+      if (this.rng() < Math.min(0.95, p * this.tune.tackle)) return this.endPlay("tackle", h.x);
       d.cooldown = 0.7; // he whiffed
     }
   }
@@ -756,7 +781,7 @@ export class FootballGame {
 
   // ---------------------------------------------------------------- the other team's drive
   private startOppDrive(start: number) {
-    this.oppDrive = simulateOppDrive(start, this.edge, this.rng, this.clock);
+    this.oppDrive = simulateOppDrive(start, clamp(this.edge + this.tune.oppEdge, -1.25, 1.25), this.rng, this.clock);
     this.clockBeforeOpp = this.clock;
     this.oppT = 0;
     this.phase = "opp";

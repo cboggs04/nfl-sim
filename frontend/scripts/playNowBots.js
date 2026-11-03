@@ -1,13 +1,14 @@
 /* eslint-disable */
 // Balance and sanity test for the Play now game engine (lib/playNow/engine.ts), played by bots.
 //
+//   (DIFF=rookie|pro|allstar picks the difficulty; default pro)
 //   cd frontend && npx tsc lib/playNow/engine.ts --outDir /tmp/pn --module commonjs --target es2020 --strict \
 //     && cp scripts/playNowBots.js /tmp/pn/ && node /tmp/pn/playNowBots.js
 //
 // Three bots (a good player, an average one, and one that only runs) play 250 games each against an equal team, and the good
 // bot plays a stronger and a weaker team. Rough targets when last tuned: good bot beats an equal team about 75% of the time
 // (about 15-8), the average bot about half the time, run-only is weaker than passing, and stronger teams win clearly more.
-// Games always finish, and a bot game takes 90-110 real seconds.
+// Rough bot results by level (DIFF=): rookie ~28 pts and 93% wins, pro ~19 pts and 75%, allstar ~11 pts and 48% (human players do worse than the bots). Games always finish, and a bot game takes 90-110 real seconds.
 const { FootballGame, PX_PER_YD } = require("./engine.js");
 function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const DIRS=[[1,0],[1,0.6],[1,-0.6],[0.6,1],[0.6,-1],[0,1],[0,-1]];
@@ -27,7 +28,7 @@ function carry(g, skill) {
 }
 function play(seed,userR,oppR,skill){
   const rng=mulberry(seed); Math.random=mulberry(seed+7);
-  const g=new FootballGame({abbr:"U",name:"U",rating:userR},{abbr:"O",name:"O",rating:oppR},rng);
+  const g=new FootballGame({abbr:"U",name:"U",rating:userR},{abbr:"O",name:"O",rating:oppR},rng,process.env.DIFF||"pro");
   let steps=0; const snaps={};
   while(g.phase!=="final"&&steps<400000){ steps++;
     if(g.phase==="presnap"){
