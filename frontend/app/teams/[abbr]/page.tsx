@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import GameReplay from "@/components/GameReplay";
 import ColumnChart from "@/components/ColumnChart";
 import ProbCell, { pct } from "@/components/ProbCell";
 import ResetOnLeave from "@/components/ResetOnLeave";
@@ -33,7 +34,7 @@ function tier(p: number) {
   return { label: "Likely loss", style: "bg-bad/25 text-bad-ink ring-1 ring-bad/50" };
 }
 
-function ResultCell({ g }: { g: GameView }) {
+function ResultCell({ g, team }: { g: GameView; team: string }) {
   if (g.played) {
     return (
       <span className="inline-flex items-center gap-3">
@@ -48,6 +49,15 @@ function ResultCell({ g }: { g: GameView }) {
         <span className="text-base font-semibold tabular-nums">
           {g.team_score}–{g.opp_score}
         </span>
+        {g.team_score != null && g.opp_score != null && g.team_score !== g.opp_score && (
+          <GameReplay
+            home={g.home ? team : g.opponent}
+            away={g.home ? g.opponent : team}
+            homeScore={g.home ? g.team_score : g.opp_score}
+            awayScore={g.home ? g.opp_score : g.team_score}
+            week={g.week}
+          />
+        )}
       </span>
     );
   }
@@ -197,7 +207,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
                     </Link>
                   </td>
                   <td className="px-1.5 py-2 md:px-3">
-                    <ResultCell g={g} />
+                    <ResultCell g={g} team={odds.team} />
                   </td>
                   {g.p_win != null ? <ProbCell p={g.p_win} /> : <td className="px-1.5 py-2 text-right text-muted md:px-3">—</td>}
                 </tr>

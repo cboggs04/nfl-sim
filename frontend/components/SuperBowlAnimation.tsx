@@ -16,6 +16,7 @@ export interface SuperBowlResult {
   winnerSeed?: number | null;
   title?: string; // heading, e.g. "WILD CARD" (defaults to SUPER BOWL)
   isSuperBowl?: boolean; // false: the winner "advances" instead of being crowned champion
+  realGame?: boolean; // a game that really happened (regular season): real final score, the plays are made up
 }
 
 // ---------- the scene ----------
@@ -703,7 +704,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
             )}
             {phase === "final" && (
               <div className="rise absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/60 p-2 text-center sm:gap-2 sm:p-3">
-                <div className="font-pixel hidden text-[8px] text-yellow-300 sm:block sm:text-xs">{champion ? "SUPER BOWL CHAMPIONS" : "WINNER: ADVANCES"}</div>
+                <div className="font-pixel hidden text-[8px] text-yellow-300 sm:block sm:text-xs">{champion ? "SUPER BOWL CHAMPIONS" : result.realGame ? "WINNER" : "WINNER: ADVANCES"}</div>
                 <div className="sm:hidden">
                   <TeamLogo abbr={result.winner} size={48} />
                 </div>
@@ -711,7 +712,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
                   <TeamLogo abbr={result.winner} size={96} />
                 </div>
                 <div className="font-pixel text-[9px] text-white [text-shadow:2px_2px_0_#000] sm:text-2xl">{win.name.toUpperCase()}</div>
-                <div className="font-pixel text-[7px] text-yellow-300 sm:hidden">{champion ? "CHAMPIONS" : "ADVANCES"}</div>
+                <div className="font-pixel text-[7px] text-yellow-300 sm:hidden">{champion ? "CHAMPIONS" : result.realGame ? "WINNER" : "ADVANCES"}</div>
                 {result.winnerRecord && (
                   <div className="font-pixel hidden text-[8px] text-white/80 sm:block sm:text-[10px]">
                     {result.winnerRecord} IN THE REGULAR SEASON{result.winnerSeed ? ` · #${result.winnerSeed} SEED` : ""}
@@ -723,14 +724,14 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
                     REPLAY
                   </button>
                   <button onClick={onClose} className="font-pixel rounded bg-white/20 px-2 py-1.5 text-[8px] text-white hover:bg-white/30 sm:px-3 sm:py-2 sm:text-[10px]">
-                    BACK TO BRACKET
+                    {result.realGame ? "CLOSE" : "BACK TO BRACKET"}
                   </button>
                 </div>
               </div>
             )}
           </div>
         </div>
-        <p className="mt-2 text-center text-xs text-white/70">The model picks the winner; the plays and the score are just for fun.</p>
+        <p className="mt-2 text-center text-xs text-white/70">{result.realGame ? "The final score is real; the plays are made up to match it." : "The model picks the winner; the plays and the score are just for fun."}</p>
       </div>
       <canvas ref={confettiRef} aria-hidden className="pointer-events-none fixed inset-0 h-full w-full" />
     </div>,
