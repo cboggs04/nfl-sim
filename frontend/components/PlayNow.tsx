@@ -868,7 +868,7 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
 
         </div>
         {/* controls for the moment you're in */}
-        <div className={`mt-3 grid rounded-lg px-3 py-3 ${hud.phase === "presnap" ? "bg-[#111827] text-white" : "text-strong"}`}>
+        <div className="mt-3 grid rounded-lg bg-[#111827] px-3 py-3 text-white">
           {/* the pre-snap controls and the live hints share one spot, so the box never changes size when the play starts */}
           <div className={`col-start-1 row-start-1 ${hud.phase === "presnap" ? "" : "invisible"}`} aria-hidden={hud.phase !== "presnap"}>
             <div className="mb-3">
@@ -932,13 +932,13 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
             </div>
           )}
           </div>
-          <div className={`col-start-1 row-start-1 flex items-start justify-center ${hud.phase === "live" ? "" : "invisible"}`}>
+          <div className={`col-start-1 row-start-1 flex items-center justify-center ${hud.phase === "live" ? "" : "invisible"}`}>
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
-              <span className="font-pixel text-[8px] text-muted sm:text-[10px]">ARROWS MOVE · A S D THROW</span>
-              <span className="font-pixel flex items-center gap-2 text-[8px] text-muted sm:text-[10px]">
+              <span className="font-pixel text-[8px] text-white/80 sm:text-[10px]">ARROWS MOVE · A S D THROW</span>
+              <span className="font-pixel flex items-center gap-2 text-[8px] text-white/80 sm:text-[10px]">
                 SPRINT (SPACE)
-                <span className="inline-block h-2 w-16 overflow-hidden rounded bg-gauge">
-                  <span className={`block h-full ${hud.boost >= 1 ? "bg-emerald-500" : "bg-muted/60"}`} style={{ width: `${hud.boost * 100}%` }} />
+                <span className="inline-block h-2 w-16 overflow-hidden rounded bg-white/20">
+                  <span className={`block h-full ${hud.boost >= 1 ? "bg-emerald-400" : "bg-white/50"}`} style={{ width: `${hud.boost * 100}%` }} />
                 </span>
               </span>
             </div>
