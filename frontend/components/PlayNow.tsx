@@ -88,8 +88,16 @@ function buildWorld(userColor: string, oppColor: string): HTMLCanvasElement {
   return c;
 }
 
-/** A team's rating on a 0-100 scale: the weakest team in the league is 0 and the strongest is 100 (rounded down, so only one team is a 100). */
-const rating100 = (elo: number, range: [number, number]) => Math.floor(Math.max(0, Math.min(100, ((elo - range[0]) / (range[1] - range[0])) * 100)) + 1e-9);
+/**
+ * A team's rating like a Madden overall, from its Elo with FIXED anchors so the number only changes when the team's own Elo does:
+ * an average team (1500 Elo) is an 80, and every 100 Elo points is 8 rating points. The best teams land in the mid-90s and the
+ * weakest in the mid-60s. Capped at 99 (and 40 at the bottom).
+ */
+const RATING_AVERAGE = 80;
+const RATING_PER_100_ELO = 8;
+const RATING_MIN = 40;
+const RATING_MAX = 99;
+const rating100 = (elo: number) => Math.round(Math.max(RATING_MIN, Math.min(RATING_MAX, RATING_AVERAGE + ((elo - 1500) / 100) * RATING_PER_100_ELO)));
 
 const clock = (secs: number) => `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`;
 
@@ -152,21 +160,19 @@ function TeamCarousel({
   teams,
   value,
   onChange,
-  range,
   ranks,
 }: {
   label: string;
   teams: TeamOdds[]; // in the order they are browsed
   value: string;
   onChange: (abbr: string) => void;
-  range: [number, number]; // lowest and highest rating in the league
   ranks: Record<string, number>;
 }) {
   const index = Math.max(0, teams.findIndex((t) => t.team === value));
   const t = teams[index];
   const info = teamInfo(t.team);
   const go = (step: number) => onChange(teams[(index + step + teams.length) % teams.length].team);
-  const r100 = rating100(t.elo, range);
+  const r100 = rating100(t.elo);
   const arrow = (dir: -1 | 1) => (
     <button
       onClick={() => go(dir)}
@@ -235,7 +241,7 @@ function TeamCarousel({
             </div>
           </div>
           <div className="mx-auto mt-2 h-2 max-w-xs overflow-hidden rounded-full bg-black/35" role="img" aria-label={`Rating ${r100} out of 100, ranked ${ranks[t.team]} of ${teams.length}`}>
-            <div className="h-full rounded-full bg-white/90" style={{ width: `${Math.max(3, r100)}%` }} />
+            <div className="h-full rounded-full bg-white/90" style={{ width: `${Math.max(4, ((r100 - 50) / (RATING_MAX - 50)) * 100)}%` }} />
           </div>
         </div>
         {arrow(1)}
@@ -248,13 +254,12 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
   const alphabetical = useMemo(() => [...teams].sort((a, b) => a.name.localeCompare(b.name)), [teams]);
   const byStrength = useMemo(() => [...teams].sort((a, b) => b.elo - a.elo), [teams]);
   const ranks = useMemo(() => Object.fromEntries(byStrength.map((t, i) => [t.team, i + 1])), [byStrength]);
-  const range = useMemo<[number, number]>(() => [byStrength[byStrength.length - 1].elo, byStrength[0].elo], [byStrength]);
   const [user, setUser] = useState(byStrength[0].team);
   const [opp, setOpp] = useState(byStrength[1].team);
   const u = teams.find((t) => t.team === user)!;
   const o = teams.find((t) => t.team === opp)!;
   const diff = u.elo - o.elo;
-  const diff100 = rating100(u.elo, range) - rating100(o.elo, range);
+  const diff100 = rating100(u.elo) - rating100(o.elo);
   const matchup =
     user === opp
       ? "Pick two different teams"
@@ -274,8 +279,8 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
       <p className="mt-2 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-ink ring-1 ring-accent/30 md:hidden">You need a keyboard to play this: open it on a computer.</p>
       <p className="mt-4 text-xs text-muted">Flip through the teams with the arrows (or click a card and use ← →).</p>
       <div className="mt-3 grid gap-4 lg:grid-cols-2">
-        <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} range={range} ranks={ranks} />
-        <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} range={range} ranks={ranks} />
+        <TeamCarousel label="Your team (offense)" teams={alphabetical} value={user} onChange={setUser} ranks={ranks} />
+        <TeamCarousel label="Opponent" teams={alphabetical} value={opp} onChange={setOpp} ranks={ranks} />
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-4">
         <button onClick={() => onStart(user, opp)} disabled={user === opp} className="btn btn-primary text-2xl">
