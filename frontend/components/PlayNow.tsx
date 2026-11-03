@@ -178,8 +178,8 @@ function TeamCarousel({
     <button
       onClick={() => go(dir)}
       aria-label={dir === -1 ? `Previous team (${label})` : `Next team (${label})`}
-      className="font-display flex h-14 w-10 shrink-0 items-center justify-center bg-black/35 text-4xl text-white hover:bg-black/55 sm:h-20 sm:w-14"
-      style={{ clipPath: dir === -1 ? "polygon(0 50%, 100% 0, 100% 100%)" : "polygon(0 0, 100% 50%, 0 100%)" }}
+      className="flex h-9 w-14 shrink-0 items-center justify-center bg-black/35 hover:bg-black/55 sm:h-12 sm:w-20"
+      style={{ clipPath: dir === -1 ? "polygon(50% 0, 100% 100%, 0 100%)" : "polygon(0 0, 100% 0, 50% 100%)" }}
     >
       <span className="sr-only">{dir === -1 ? "Previous" : "Next"}</span>
     </button>
@@ -219,7 +219,6 @@ function TeamCarousel({
       </div>
 
       <div className="relative flex items-center gap-1 px-2 pb-4 sm:gap-3 sm:px-4">
-        {arrow(-1)}
         <div key={t.team} className="rise min-w-0 flex-1 text-center text-white">
           <div className="flex items-center justify-center gap-4 sm:gap-6">
             <div className="sm:hidden">
@@ -260,7 +259,10 @@ function TeamCarousel({
             <div className="h-full rounded-full bg-white/90" style={{ width: `${Math.max(4, ((r100 - 50) / (RATING_MAX - 50)) * 100)}%` }} />
           </div>
         </div>
-        {arrow(1)}
+        <div className="flex shrink-0 flex-col gap-24 sm:gap-32">
+          {arrow(-1)}
+          {arrow(1)}
+        </div>
       </div>
     </section>
   );
