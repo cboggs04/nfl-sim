@@ -112,7 +112,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 const dist = (ax: number, ay: number, bx: number, by: number) => Math.hypot(ax - bx, ay - by);
 
 /** Receiver routes as (dx, dy) offsets from the starting spot, in px. Positive dy runs toward the middle of the field. */
-const ROUTES: Record<string, [number, number][]> = {
+export const ROUTES: Record<string, [number, number][]> = {
   go: [[130, 0]],
   post: [[55, 0], [115, 26]],
   corner: [[55, 0], [115, -20]],
@@ -131,6 +131,7 @@ export interface PlayDef {
   edgeHold?: number; // ... and how long the receivers hold the linebackers and cornerbacks
   delay?: number; // ... extra seconds the defense is fooled before it reacts
   rbY?: number; // ... where the running back lines up (default: just behind the line, to the side)
+  path?: [number, number][]; // ... where the back is headed, as (dx from the line, y); shown on the field and on the card
 }
 /** Five plays of each kind; every snap offers three of them. Press 1, 2 or 3 before the snap. */
 export const PLAYS: { pass: PlayDef[]; run: PlayDef[] } = {
@@ -142,11 +143,11 @@ export const PLAYS: { pass: PlayDef[]; run: PlayDef[] } = {
     { id: "corner", name: "Corner Combo", blurb: "Medium-deep: a corner, a post and an out", routes: ["corner", "post", "out"] },
   ],
   run: [
-    { id: "inside", name: "Inside Run", blurb: "Up the middle behind the line: steady gains", dlHold: 1.2, edgeHold: 0.9 },
-    { id: "outside", name: "Outside Sweep", blurb: "Bounce it to the edge: receivers block downfield", dlHold: 0.85, edgeHold: 1.3, rbY: 150 },
-    { id: "draw", name: "Draw", blurb: "Fakes the pass: the defense bites for a moment", dlHold: 0.95, edgeHold: 1, delay: 0.25 },
-    { id: "power", name: "Power Run", blurb: "Smash it up the gut: a big hole, but linebackers close fast", dlHold: 1.4, edgeHold: 0.8 },
-    { id: "counter", name: "Counter", blurb: "Starts one way, cuts back: the defense is slow to react", dlHold: 1.05, edgeHold: 1.15, delay: 0.2, rbY: 84 },
+    { id: "inside", name: "Inside Run", blurb: "Up the middle behind the line: steady gains", dlHold: 1.2, edgeHold: 0.9, path: [[-26, 106], [4, 110], [70, 106]] },
+    { id: "outside", name: "Outside Sweep", blurb: "Bounce it to the edge: receivers block downfield", dlHold: 0.85, edgeHold: 1.3, rbY: 150, path: [[-30, 150], [0, 156], [80, 156]] },
+    { id: "draw", name: "Draw", blurb: "Fakes the pass: the defense bites for a moment", dlHold: 0.95, edgeHold: 1, delay: 0.25, path: [[-26, 116], [10, 106], [70, 100]] },
+    { id: "power", name: "Power Run", blurb: "Smash it up the gut: a big hole, but linebackers close fast", dlHold: 1.4, edgeHold: 0.8, path: [[-26, 116], [4, 112], [70, 110]] },
+    { id: "counter", name: "Counter", blurb: "Starts one way, cuts back: the defense is slow to react", dlHold: 1.05, edgeHold: 1.15, delay: 0.2, rbY: 84, path: [[-30, 84], [-10, 118], [50, 124]] },
   ],
 };
 

@@ -6,7 +6,7 @@ import Headshot from "@/components/Headshot";
 import PlayHelp from "@/components/PlayHelp";
 import TeamLogo from "@/components/TeamLogo";
 import { buildSprites, type Sprites } from "@/lib/pixelSprites";
-import { FootballGame, GOAL_L, GOAL_R, PLAYS, WORLD_W, Y_MID, type Difficulty, type PlayDef, type OppDrive, type Phase } from "@/lib/playNow/engine";
+import { FootballGame, GOAL_L, GOAL_R, PLAYS, ROUTES, WORLD_W, Y_MAX, Y_MID, Y_MIN, type Difficulty, type PlayDef, type OppDrive, type Phase } from "@/lib/playNow/engine";
 import { logoSrc, teamInfo } from "@/lib/teams";
 import type { TeamOdds } from "@/lib/types";
 
@@ -356,6 +356,62 @@ function TeamSelect({ teams, onStart }: { teams: TeamOdds[]; onStart: (user: str
   );
 }
 
+// ---------- a tiny diagram of a play (the routes, or where the back runs) ----------
+const ART_W = 120;
+const ART_H = 66;
+const artX = (dx: number) => 22 + dx * 0.62;
+const artY = (y: number) => 4 + ((y - Y_MIN) / (Y_MAX - Y_MIN)) * (ART_H - 8);
+
+function PlayArt({ play }: { play: PlayDef }) {
+  const lines: [number, number][][] = [];
+  if (play.routes) {
+    // the three receivers start wide left, wide right and in the slot; routes bend toward the middle
+    [72, 154, 134].forEach((sy, i) => {
+      const toMid = sy < Y_MID ? 1 : -1;
+      let x = i === 2 ? -6 : 0;
+      let y = sy;
+      const pts: [number, number][] = [[x, y]];
+      for (const [dx, dy] of ROUTES[play.routes![i]]) {
+        x = (i === 2 ? -6 : 0) + dx;
+        y = Math.min(Y_MAX, Math.max(Y_MIN, sy + dy * toMid));
+        pts.push([x, y]);
+      }
+      lines.push(pts);
+    });
+  } else if (play.path) {
+    lines.push(play.path as [number, number][]);
+  }
+  const markerId = `arr-${play.id}`;
+  return (
+    <svg viewBox={`0 0 ${ART_W} ${ART_H}`} className="h-full w-full" aria-hidden>
+      <defs>
+        <marker id={markerId} viewBox="0 0 6 6" refX="5" refY="3" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0 0 L6 3 L0 6 z" fill="currentColor" />
+        </marker>
+      </defs>
+      <line x1={artX(0)} y1={1} x2={artX(0)} y2={ART_H - 1} stroke="currentColor" strokeOpacity={0.35} strokeDasharray="2 2" />
+      {/* the line and the quarterback */}
+      {[Y_MID - 10, Y_MID, Y_MID + 10].map((y) => (
+        <rect key={y} x={artX(-3)} y={artY(y) - 2} width={4} height={4} fill="currentColor" fillOpacity={0.55} />
+      ))}
+      <circle cx={artX(-24)} cy={artY(Y_MID)} r={2.4} fill="currentColor" fillOpacity={0.55} />
+      {lines.map((pts, i) => (
+        <polyline
+          key={i}
+          points={pts.map(([x, y]) => `${artX(x).toFixed(1)},${artY(y).toFixed(1)}`).join(" ")}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={play.routes ? 1.7 : 2.4}
+          strokeLinejoin="round"
+          markerEnd={`url(#${markerId})`}
+        />
+      ))}
+      {play.routes && [72, 154, 134].map((sy, i) => <circle key={sy} cx={artX(i === 2 ? -6 : 0)} cy={artY(sy)} r={2.2} fill="currentColor" />)}
+      {play.path && <circle cx={artX(play.path[0][0])} cy={artY(play.path[0][1])} r={2.6} fill="currentColor" />}
+    </svg>
+  );
+}
+
 // ---------- the game ----------
 function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user: TeamOdds; opp: TeamOdds; teams: TeamOdds[]; level: Difficulty; onExit: () => void; paused: boolean; onHelp: () => void }) {
   void teams;
@@ -537,18 +593,14 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
       }
 
       // a run play shows where the back is headed
-      if (game.phase === "presnap" && game.selected === "run") {
-        const rb = game.ent("rb");
-        if (rb) {
-          const pts: [number, number][] =
-            game.play.id === "outside" ? [[rb.x, rb.y], [rb.x + 28, Math.min(160, rb.y + 6)], [rb.x + 110, Math.min(160, rb.y + 6)]] : game.play.id === "draw" ? [[rb.x, rb.y], [rb.x + 40, Y_MID], [rb.x + 100, Y_MID - 6]] : [[rb.x, rb.y], [rb.x + 30, Y_MID + 4], [rb.x + 100, Y_MID]];
-          g.fillStyle = "rgba(250,204,21,0.8)";
-          for (let i = 1; i < pts.length; i++) {
-            const [ax, ay] = pts[i - 1];
-            const [bx2, by2] = pts[i];
-            const n = Math.max(1, Math.floor(Math.hypot(bx2 - ax, by2 - ay) / 5));
-            for (let k = 1; k <= n; k += 2) g.fillRect(sx(ax + ((bx2 - ax) * k) / n), Math.round(ay + ((by2 - ay) * k) / n), 1, 1);
-          }
+      if (game.phase === "presnap" && game.selected === "run" && game.play.path) {
+        g.fillStyle = "rgba(250,204,21,0.8)";
+        const pts = game.play.path.map(([dx, y]) => [game.losX + dx, y] as [number, number]);
+        for (let i = 1; i < pts.length; i++) {
+          const [ax, ay] = pts[i - 1];
+          const [bx2, by2] = pts[i];
+          const n = Math.max(1, Math.floor(Math.hypot(bx2 - ax, by2 - ay) / 5));
+          for (let k = 1; k <= n; k += 2) g.fillRect(sx(ax + ((bx2 - ax) * k) / n), Math.round(ay + ((by2 - ay) * k) / n), 1, 1);
         }
       }
 
@@ -684,30 +736,6 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
               </div>
             )}
 
-            {hud.phase === "presnap" && (
-              <div className="absolute inset-x-0 top-1.5 flex flex-col items-center gap-1 px-2 sm:top-2 sm:gap-1.5">
-                <span className="font-pixel pointer-events-none rounded bg-black/60 px-2 py-1 text-[7px] text-white sm:text-[10px]">
-                  {hud.down === 4 ? "4TH DOWN: CHOOSE, OR PICK A PLAY TO GO FOR IT" : "PICK A PLAY (1 2 3), THEN SNAP"}
-                </span>
-                <div className="flex w-full max-w-2xl justify-center gap-1.5 sm:gap-2">
-                  {hud.plays.map((p, i) => (
-                    <button
-                      key={p.id}
-                      onClick={() => act(`play${i + 1}` as "play1" | "play2" | "play3")}
-                      aria-pressed={hud.choice === i}
-                      className={`flex min-w-0 flex-1 items-center gap-1.5 rounded px-1.5 py-1 text-left ring-2 sm:gap-2 sm:px-2 sm:py-1.5 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-black/85 text-white ring-white/20 hover:bg-black"}`}
-                    >
-                      <span className={`font-pixel flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] sm:h-7 sm:w-7 sm:text-sm ${hud.choice === i ? "bg-black text-yellow-300" : "bg-white/20"}`}>{i + 1}</span>
-                      <span className="min-w-0">
-                        <span className="font-pixel block truncate text-[7px] sm:text-[10px]">{p.name.toUpperCase()}</span>
-                        <span className={`hidden truncate text-[10px] leading-tight sm:block ${hud.choice === i ? "text-black/70" : "text-white/70"}`}>{p.blurb}</span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {manualPause && !final && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/75 p-3 text-center" role="status" aria-live="polite">
                 <div className="font-pixel text-lg text-yellow-300 sm:text-4xl">PAUSED</div>
@@ -788,6 +816,34 @@ function GameScreen({ user, opp, teams, level, onExit, paused, onHelp }: { user:
 
           {/* controls for the moment you're in */}
           <div className="bg-[#111827] px-3 py-3 text-white">
+            {hud.phase === "presnap" && (
+              <div className="mb-3">
+                <div className="font-pixel mb-1.5 text-center text-[7px] text-white/70 sm:text-[9px]">
+                  {hud.down === 4 ? "4TH DOWN: GO FOR IT WITH ONE OF THESE, OR KICK" : "PICK A PLAY (1 2 3), THEN SNAP"}
+                </div>
+                <div className="mx-auto flex max-w-3xl justify-center gap-1.5 sm:gap-2">
+                  {hud.plays.map((p, i) => (
+                    <button
+                      key={p.id}
+                      onClick={() => act(`play${i + 1}` as "play1" | "play2" | "play3")}
+                      aria-pressed={hud.choice === i}
+                      className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded text-left ring-2 ${hud.choice === i ? "bg-yellow-300 text-black ring-white" : "bg-white/10 text-white ring-white/15 hover:bg-white/20"}`}
+                    >
+                      <span className={`block h-12 w-full px-1 pt-1 sm:h-[4.5rem] ${hud.choice === i ? "text-black" : "text-white"}`}>
+                        <PlayArt play={p} />
+                      </span>
+                      <span className="flex items-center gap-1.5 px-1.5 pb-1.5 sm:gap-2 sm:px-2 sm:pb-2">
+                        <span className={`font-pixel flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] sm:h-6 sm:w-6 sm:text-xs ${hud.choice === i ? "bg-black text-yellow-300" : "bg-white/20"}`}>{i + 1}</span>
+                        <span className="min-w-0">
+                          <span className="font-pixel block truncate text-[7px] sm:text-[10px]">{p.name.toUpperCase()}</span>
+                          <span className={`hidden text-[10px] leading-tight sm:block ${hud.choice === i ? "text-black/70" : "text-white/60"}`}>{p.blurb}</span>
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {hud.phase === "presnap" && hud.down < 4 && (
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {(["pass", "run"] as const).map((k) => (
