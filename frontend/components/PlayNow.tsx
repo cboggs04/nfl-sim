@@ -202,7 +202,7 @@ function enterTouchMode() {
 function TouchPlayPicker({ hud, open, onOpen, onClose, onAction }: { hud: Hud; open: boolean; onOpen: () => void; onClose: () => void; onAction: (a: Parameters<FootballGame["press"]>[0]) => void }) {
   if (!open) {
     return (
-      <div className="absolute inset-x-0 top-9 flex justify-center">
+      <div className="absolute inset-x-0 flex justify-center" style={{ top: "calc(2.25rem + env(safe-area-inset-top))" }}>
         <button onClick={onOpen} className="font-pixel pointer-events-auto rounded bg-black/70 px-3 py-1.5 text-[8px] text-white ring-1 ring-white/40">
           {hud.selected === "pass" ? "PASS" : "RUN"}: {hud.plays[hud.choice].name.toUpperCase()} ▾
         </button>
@@ -211,7 +211,7 @@ function TouchPlayPicker({ hud, open, onOpen, onClose, onAction }: { hud: Hud; o
   }
   const chip = (active: boolean) => `font-pixel pointer-events-auto rounded px-3 py-1 text-[8px] ring-1 ring-white/30 ${active ? "bg-yellow-300 text-black" : "bg-black/70 text-white"}`;
   return (
-    <div className="pointer-events-none absolute inset-x-1 top-9 flex touch-none flex-col items-center gap-1">
+    <div className="pointer-events-none absolute inset-x-1 flex touch-none flex-col items-center gap-1" style={{ top: "calc(2.25rem + env(safe-area-inset-top))" }}>
       <div className="flex flex-wrap items-center justify-center gap-1.5">
         <button onClick={() => onAction("selectPass")} className={chip(hud.selected === "pass")}>
           ← PASS
@@ -292,7 +292,8 @@ function TouchControls({ hud, onDirs, onAction }: { hud: Hud; onDirs: (dirs: Set
         onPointerMove={(e) => e.currentTarget.hasPointerCapture(e.pointerId) && fromPointer(e)}
         onPointerUp={release}
         onPointerCancel={release}
-        className="pointer-events-auto absolute bottom-2 left-2 h-24 w-24 touch-none rounded-full bg-black/30 ring-2 ring-white/50 sm:h-28 sm:w-28"
+        className="pointer-events-auto absolute h-24 w-24 touch-none rounded-full bg-black/30 ring-2 ring-white/50 sm:h-28 sm:w-28"
+        style={{ left: "max(0.5rem, env(safe-area-inset-left))", bottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
         aria-label="Move"
       >
         <span className="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] text-white/70">▲</span>
@@ -304,7 +305,7 @@ function TouchControls({ hud, onDirs, onAction }: { hud: Hud; onDirs: (dirs: Set
           style={{ transform: `translate(calc(-50% + ${(knob?.x ?? 0) * 34}%), calc(-50% + ${(knob?.y ?? 0) * 34}%))` }}
         />
       </div>
-      <div className="pointer-events-none absolute right-2 bottom-2 flex flex-col items-end gap-2">
+      <div className="pointer-events-none absolute flex flex-col items-end gap-2" style={{ right: "max(0.5rem, env(safe-area-inset-right))", bottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
         {hud.canThrow && (
           <div className="flex gap-2">
             {["A", "S", "D"].map((k, i) => (
@@ -1029,7 +1030,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
       className={touch ? "fixed inset-0 z-[70] flex flex-col items-center justify-center overflow-hidden" : fullscreen ? "flex h-screen w-screen flex-col items-center justify-center overflow-auto p-3" : ""}
       style={
         touch
-          ? { background: "var(--background)", height: "100dvh", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }
+          ? { background: "#0b1220" } // the field fills the whole screen, under the notch too; only the buttons keep clear of it
           : fullscreen
             ? { background: "var(--background)" }
             : undefined
@@ -1088,7 +1089,10 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
         )}
         <div className={`grid items-stretch ${touch ? "h-full" : "gap-3 lg:grid-cols-[minmax(0,1fr)_15rem]"}`} style={touch ? { gridTemplateColumns: "minmax(0, 1fr)", gridTemplateRows: "minmax(0, 1fr)" } : undefined}>
         <div className={touch ? "relative h-full overflow-hidden bg-black" : "overflow-hidden rounded-lg border-4 border-white/70 bg-black shadow-2xl shadow-black/40"}>
-          <div className={`font-pixel flex items-stretch justify-between text-white ${touch ? "absolute inset-x-0 top-0 z-10 bg-[#111827]/85" : "bg-[#111827]"}`}>
+          <div
+            className={`font-pixel flex items-stretch justify-between text-white ${touch ? "absolute inset-x-0 top-0 z-10 bg-[#111827]/85" : "bg-[#111827]"}`}
+            style={touch ? { paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)", paddingTop: "env(safe-area-inset-top)" } : undefined}
+          >
             <div className={`flex flex-1 items-center justify-between gap-2 border-b-4 ${touch ? "px-2 py-0.5" : "px-3 py-2"}`} style={{ borderColor: uInfo.primary }}>
               <span className={touch ? "text-[9px]" : "text-[10px] sm:text-sm"}>{user.team}</span>
               <span className={`text-yellow-300 tabular-nums ${touch ? "text-lg" : "text-lg sm:text-3xl"}`} data-testid="score-user">
@@ -1119,7 +1123,7 @@ function GameScreen({ user, opp, teams, level, userJersey, oppJersey, onExit, pa
               style={touch ? { imageRendering: "pixelated", objectPosition: "50% 80%" } : { imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }}
             />
             {touch && (
-              <div className="absolute top-9 right-1 z-10 flex gap-1">
+              <div className="absolute z-10 flex gap-1" style={{ top: "calc(2.25rem + env(safe-area-inset-top))", right: "max(0.25rem, env(safe-area-inset-right))" }}>
                 {!final && (
                   <button
                     onClick={() => {

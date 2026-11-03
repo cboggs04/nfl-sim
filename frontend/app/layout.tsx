@@ -35,8 +35,9 @@ const pixel = Press_Start_2P({
 export const metadata: Metadata = {
   title: "NFL Season Simulator",
   description: "Monte Carlo projections of every team's record, playoff odds, and Super Bowl odds.",
-  // "Add to Home Screen" on an iPhone opens the site with no Safari address bar (a web page can't hide it any other way)
-  appleWebApp: { capable: true, title: "NFL Sim", statusBarStyle: "black-translucent" },
+  // "Add to Home Screen" on an iPhone opens the site with no Safari address bar (a web page can't hide it any other way).
+  // "default" keeps the page below the status bar (the clock and battery), so nothing is drawn or blurred behind it.
+  appleWebApp: { capable: true, title: "NFL Sim", statusBarStyle: "default" },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
 
