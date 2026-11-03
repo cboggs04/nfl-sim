@@ -495,6 +495,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
   const [points, setPoints] = useState({ W: 0, L: 0 });
   const [shown, setShown] = useState<GameEvent | null>(null); // the drive whose result graphic is showing
   const [shownLabel, setShownLabel] = useState<string | null>(null); // special headline for the score on screen (e.g. PICK SIX!)
+  const [otBanner, setOtBanner] = useState(false); // the "OVERTIME" pop-up when the game goes to overtime
   const [quarter, setQuarter] = useState<number | null>(null); // real games: which quarter the drive on screen is in
   const [punting, setPunting] = useState<GameEvent | null>(null); // set while a punt is in the air, so "PUNT" can be shown
   const sceneRef = useRef<HTMLCanvasElement>(null);
@@ -536,6 +537,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
     let phaseNow: "play" | "result" | "final" = "play";
     let lastIdx = -1;
     let quarterNow: number | null = null;
+    let otStart = 0;
     let puntShown = false;
     let pW = 0;
     let pL = 0;
@@ -583,6 +585,14 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
       if ((ev.q ?? null) !== quarterNow) {
         quarterNow = ev.q ?? null;
         setQuarter(quarterNow);
+        if (quarterNow !== null && quarterNow > 4) {
+          otStart = now;
+          setOtBanner(true);
+        }
+      }
+      if (otStart && now - otStart > 2200) {
+        otStart = 0;
+        setOtBanner(false);
       }
       const play = plays[idx];
       const tl = done ? play + celebs[idx] : t - starts[idx];
@@ -724,6 +734,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
     setShown(null);
     setShownLabel(null);
     setPunting(null);
+    setOtBanner(false);
     setPoints({ W: 0, L: 0 });
     setRun((r) => r + 1);
   };
@@ -738,7 +749,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
     <div role="dialog" aria-modal="true" aria-label={`${result.title ?? "Super Bowl"} animation`} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6">
       <div className="relative w-full max-w-4xl">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="font-pixel text-[10px] leading-relaxed text-white sm:text-xs">{result.title ?? "SUPER BOWL"}{quarter ? ` · ${quarter > 4 ? "OVERTIME" : `Q${quarter}`}` : ""}</div>
+          <div className="font-pixel text-[10px] leading-relaxed text-white sm:text-xs">{result.title ?? "SUPER BOWL"}</div>
           <div className="flex gap-2">
             {phase !== "final" && (
               <button onClick={skip} className="font-pixel rounded bg-white/15 px-3 py-2 text-[10px] text-white hover:bg-white/25">
@@ -754,7 +765,20 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
         <div className="overflow-hidden rounded-lg border-4 border-white/80 bg-black shadow-2xl shadow-black">
           {/* scoreboard: updates with every score */}
           <div className="font-pixel flex items-stretch justify-between bg-[#111827] text-white">
-            {[result.away, result.home].map((team) => (
+            {[result.away].map((team) => (
+              <div key={team} className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2" style={{ borderColor: teamInfo(team).primary }}>
+                <span className="text-[10px] sm:text-sm">{team}</span>
+                <span className={`text-lg tabular-nums sm:text-3xl ${phase === "result" && shown && shown.pts > 0 && shownTeam === team ? "animate-pulse text-white" : "text-yellow-300"}`}>
+                  {String(pointsOf(team)).padStart(2, "0")}
+                </span>
+              </div>
+            ))}
+            {quarter && phase !== "final" && (
+              <div className={`flex shrink-0 items-center justify-center border-b-4 border-white/70 px-2 text-xs sm:px-5 sm:text-xl ${quarter > 4 ? "text-red-400" : "text-white"}`}>
+                {quarter > 4 ? "OT" : `Q${quarter}`}
+              </div>
+            )}
+            {[result.home].map((team) => (
               <div key={team} className="flex flex-1 items-center justify-between gap-2 border-b-4 px-3 py-2" style={{ borderColor: teamInfo(team).primary }}>
                 <span className="text-[10px] sm:text-sm">{team}</span>
                 <span className={`text-lg tabular-nums sm:text-3xl ${phase === "result" && shown && shown.pts > 0 && shownTeam === team ? "animate-pulse text-white" : "text-yellow-300"}`}>
@@ -765,7 +789,7 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
           </div>
           <div className="relative">
             <canvas ref={sceneRef} width={W} height={H} className="block w-full" style={{ imageRendering: "pixelated", aspectRatio: `${W} / ${H}` }} />
-            {phase === "result" && shown && shownTeam && shown.kind !== "PUNT" && !punting && (
+            {phase === "result" && shown && shownTeam && shown.kind !== "PUNT" && !punting && !otBanner && (
               <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 sm:gap-2">
                 <span className={`animate-pulse text-2xl [text-shadow:3px_3px_0_#000] sm:text-5xl ${shown.pts > 0 ? "text-yellow-300" : "text-red-400"}`}>
                   {shownLabel ?? NO_SCORE_LABEL[shown.kind] ?? (shown.kind === "TD" ? "TOUCHDOWN!" : "FIELD GOAL!")}
@@ -780,6 +804,11 @@ export default function SuperBowlAnimation({ result, onClose }: { result: SuperB
                 {shown.kind === "TD" && shown.pts === 8 && (
                   <span className="rounded bg-emerald-600 px-2 py-0.5 text-[8px] text-white [text-shadow:1px_1px_0_#000] sm:text-xs">TWO-POINT CONVERSION GOOD</span>
                 )}
+              </div>
+            )}
+            {otBanner && phase !== "final" && (
+              <div className="font-pixel pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/65">
+                <span className="rise animate-pulse text-3xl text-red-400 [text-shadow:4px_4px_0_#000] sm:text-6xl">OVERTIME</span>
               </div>
             )}
             {punting && phase !== "final" && (
