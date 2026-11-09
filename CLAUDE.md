@@ -22,7 +22,7 @@ Not built yet: Claude API chat layer (feature 6).
 - Backend: Python 3.11 + FastAPI (numpy, polars, pydantic). Hosted on Render (`render.yaml`, `backend/requirements-api.txt`).
 - Data: nflverse via `nflreadpy` (the maintained successor of nfl_data_py). Free, no API key.
 - Frontend: Next.js 16 (TypeScript, `cacheComponents` on) + Tailwind 4 + Recharts. Hosted on Vercel (root directory `frontend`, env `NEXT_PUBLIC_API_URL`).
-- Data refresh: `.github/workflows/refresh-data.yml` (after the Sunday 1 pm, 4 pm and night games, after Monday night, a Tuesday catch-up, or by hand) re-runs precompute and commits `backend/data/*.json`.
+- Data refresh: `.github/workflows/refresh-data.yml` (after Thursday night, the Sunday 1 pm, 4 pm and night games, after Monday night, a Tuesday catch-up, or by hand) re-runs precompute and commits `backend/data/*.json`.
 
 ## Architecture rules
 - `backend/engine/` is pure Python. It must never import FastAPI or any web code.

@@ -80,7 +80,7 @@ A pixel-art football game. You run the offense; the other team's possessions are
 | Data | nflverse via `nflreadpy` (schedules, results, play-by-play, rosters) |
 | Website | Next.js 16 (TypeScript, App Router), Tailwind CSS 4, Recharts |
 | Hosting | Render (API) and Vercel (site) |
-| Data refresh | A GitHub Actions workflow, after the Sunday 1 pm, 4 pm and night games and after Monday night |
+| Data refresh | A GitHub Actions workflow, after Thursday night, the Sunday 1 pm, 4 pm and night games and after Monday night |
 
 ## Project layout
 

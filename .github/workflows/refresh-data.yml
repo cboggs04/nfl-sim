@@ -1,4 +1,4 @@
-# Refreshes the precomputed data after each Sunday slate and after Monday Night Football, and commits it. The commit
+# Refreshes the precomputed data after Thursday night, each Sunday slate and Monday Night Football, and commits it. The commit
 # triggers a redeploy on Render, so the live site stays current. Run it by hand any time from the Actions tab.
 # Times are UTC. Eastern time is UTC-5 in winter (UTC-4 until early November), so each run lands 1-2 hours after the
 # games end. GitHub can start scheduled runs a few minutes late, and the site is only as fresh as nflverse's own data.
@@ -6,6 +6,7 @@ name: Refresh data
 
 on:
   schedule:
+    - cron: "0 6 * * 5"    # Friday 1:00 am ET: after Thursday Night Football
     - cron: "0 22 * * 0"   # Sunday 5:00 pm ET: after the 1:00 pm games
     - cron: "30 1 * * 1"   # Sunday 8:30 pm ET: after the 4:05 / 4:25 pm games
     - cron: "0 6 * * 1"    # Monday 1:00 am ET: after Sunday Night Football
