@@ -33,7 +33,7 @@ In Render > your service > **Environment**, set `CORS_ORIGINS` to your Vercel UR
 
 ## 4. Keep the data fresh
 
-`.github/workflows/refresh-data.yml` re-runs the simulations every Tuesday and commits the new data, which redeploys the API.
+`.github/workflows/refresh-data.yml` re-runs the simulations after each Sunday slate (1 pm, 4 pm, Sunday night) and after Monday night, and commits the new data, which redeploys the API.
 Run it by hand any time: GitHub > **Actions > Refresh data > Run workflow**. (The first run downloads several seasons of
 play-by-play and can take 10-20 minutes; later runs only fetch the current season.)
 
