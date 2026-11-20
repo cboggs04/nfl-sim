@@ -10,23 +10,23 @@
      "teams": [
       {
        "team": "BUF",
-       "prob": 0.5165
+       "prob": 0.5184
       },
       {
        "team": "DEN",
-       "prob": 0.20875
+       "prob": 0.20865
       },
       {
        "team": "JAX",
-       "prob": 0.11285
+       "prob": 0.10995
       },
       {
        "team": "CIN",
-       "prob": 0.1081
+       "prob": 0.1094
       },
       {
        "team": "KC",
-       "prob": 0.0481
+       "prob": 0.048
       }
      ]
     },
@@ -35,27 +35,27 @@
      "teams": [
       {
        "team": "JAX",
-       "prob": 0.27055
+       "prob": 0.26715
       },
       {
        "team": "BUF",
-       "prob": 0.2249
+       "prob": 0.2252
       },
       {
        "team": "CIN",
-       "prob": 0.20725
+       "prob": 0.2105
       },
       {
        "team": "DEN",
-       "prob": 0.20645
+       "prob": 0.2071
       },
       {
        "team": "KC",
-       "prob": 0.0684
+       "prob": 0.06855
       },
       {
        "team": "PIT",
-       "prob": 0.02105
+       "prob": 0.0201
       }
      ]
     },
@@ -64,27 +64,27 @@
      "teams": [
       {
        "team": "JAX",
-       "prob": 0.2857
+       "prob": 0.28915
       },
       {
        "team": "CIN",
-       "prob": 0.2513
+       "prob": 0.2521
       },
       {
        "team": "DEN",
-       "prob": 0.1876
+       "prob": 0.1868
       },
       {
        "team": "BUF",
-       "prob": 0.15525
+       "prob": 0.15345
       },
       {
        "team": "KC",
-       "prob": 0.07615
+       "prob": 0.07585
       },
       {
        "team": "PIT",
-       "prob": 0.0347
+       "prob": 0.03335
       }
      ]
     },
@@ -93,31 +93,35 @@
      "teams": [
       {
        "team": "JAX",
-       "prob": 0.32335
+       "prob": 0.323
       },
       {
        "team": "CIN",
-       "prob": 0.2828
+       "prob": 0.28175
       },
       {
        "team": "DEN",
-       "prob": 0.11975
+       "prob": 0.1201
       },
       {
        "team": "BUF",
-       "prob": 0.09805
+       "prob": 0.09765
       },
       {
        "team": "KC",
-       "prob": 0.0846
+       "prob": 0.08475
       },
       {
        "team": "PIT",
-       "prob": 0.04415
+       "prob": 0.0416
       },
       {
        "team": "CLE",
-       "prob": 0.03555
+       "prob": 0.0361
+      },
+      {
+       "team": "HOU",
+       "prob": 0.0107
       }
      ]
     },
@@ -126,27 +130,27 @@
      "teams": [
       {
        "team": "KC",
-       "prob": 0.46275
+       "prob": 0.46325
       },
       {
        "team": "PIT",
-       "prob": 0.20905
+       "prob": 0.20715
       },
       {
        "team": "DEN",
-       "prob": 0.1862
+       "prob": 0.18635
       },
       {
        "team": "CIN",
-       "prob": 0.05745
+       "prob": 0.0554
       },
       {
        "team": "NE",
-       "prob": 0.0468
+       "prob": 0.04675
       },
       {
        "team": "CLE",
-       "prob": 0.0325
+       "prob": 0.0334
       }
      ]
     },
@@ -155,31 +159,31 @@
      "teams": [
       {
        "team": "PIT",
-       "prob": 0.37025
+       "prob": 0.35905
       },
       {
        "team": "KC",
-       "prob": 0.17
+       "prob": 0.1687
       },
       {
        "team": "CLE",
-       "prob": 0.1643
+       "prob": 0.16715
       },
       {
        "team": "NE",
-       "prob": 0.128
+       "prob": 0.1264
       },
       {
        "team": "DEN",
-       "prob": 0.0709
+       "prob": 0.0697
       },
       {
        "team": "CIN",
-       "prob": 0.06
+       "prob": 0.0582
       },
       {
        "team": "HOU",
-       "prob": 0.02475
+       "prob": 0.0385
       }
      ]
     },
@@ -188,39 +192,39 @@
      "teams": [
       {
        "team": "CLE",
-       "prob": 0.32825
+       "prob": 0.32045
       },
       {
        "team": "NE",
-       "prob": 0.28665
+       "prob": 0.27175
       },
       {
        "team": "PIT",
-       "prob": 0.1796
-      },
-      {
-       "team": "KC",
-       "prob": 0.06425
+       "prob": 0.18125
       },
       {
        "team": "HOU",
-       "prob": 0.0637
+       "prob": 0.09085
+      },
+      {
+       "team": "KC",
+       "prob": 0.06285
       },
       {
        "team": "CIN",
-       "prob": 0.0268
-      },
-      {
-       "team": "BAL",
-       "prob": 0.0166
+       "prob": 0.0264
       },
       {
        "team": "DEN",
-       "prob": 0.01495
+       "prob": 0.01525
+      },
+      {
+       "team": "BAL",
+       "prob": 0.0148
       },
       {
        "team": "LV",
-       "prob": 0.0125
+       "prob": 0.01105
       }
      ]
     }
@@ -234,19 +238,19 @@
      "teams": [
       {
        "team": "SF",
-       "prob": 0.51865
+       "prob": 0.5187
       },
       {
        "team": "MIN",
-       "prob": 0.23795
+       "prob": 0.2379
       },
       {
        "team": "DET",
-       "prob": 0.1561
+       "prob": 0.15605
       },
       {
        "team": "CHI",
-       "prob": 0.0754
+       "prob": 0.07545
       }
      ]
     },
@@ -255,11 +259,11 @@
      "teams": [
       {
        "team": "SF",
-       "prob": 0.4087
+       "prob": 0.4084
       },
       {
        "team": "MIN",
-       "prob": 0.2381
+       "prob": 0.238
       },
       {
        "team": "DET",
@@ -267,11 +271,11 @@
       },
       {
        "team": "CHI",
-       "prob": 0.09735
+       "prob": 0.09755
       },
       {
        "team": "SEA",
-       "prob": 0.0414
+       "prob": 0.04135
       },
       {
        "team": "LA",
@@ -284,31 +288,31 @@
      "teams": [
       {
        "team": "NYG",
-       "prob": 0.37505
+       "prob": 0.3808
       },
       {
        "team": "TB",
-       "prob": 0.19975
+       "prob": 0.198
       },
       {
        "team": "CAR",
-       "prob": 0.15715
+       "prob": 0.15665
       },
       {
        "team": "DAL",
-       "prob": 0.10975
+       "prob": 0.10905
       },
       {
        "team": "WAS",
-       "prob": 0.1013
+       "prob": 0.09845
       },
       {
        "team": "NO",
-       "prob": 0.0338
+       "prob": 0.0336
       },
       {
        "team": "ATL",
-       "prob": 0.0145
+       "prob": 0.0143
       }
      ]
     },
@@ -317,31 +321,31 @@
      "teams": [
       {
        "team": "TB",
-       "prob": 0.2823
+       "prob": 0.28405
       },
       {
        "team": "CAR",
-       "prob": 0.2044
+       "prob": 0.20485
       },
       {
        "team": "NYG",
-       "prob": 0.1914
+       "prob": 0.19175
       },
       {
        "team": "DAL",
-       "prob": 0.13755
+       "prob": 0.1364
       },
       {
        "team": "WAS",
-       "prob": 0.07545
+       "prob": 0.0735
       },
       {
        "team": "NO",
-       "prob": 0.06705
+       "prob": 0.0673
       },
       {
        "team": "ATL",
-       "prob": 0.04045
+       "prob": 0.04065
       }
      ]
     },
@@ -350,27 +354,27 @@
      "teams": [
       {
        "team": "MIN",
-       "prob": 0.2996
+       "prob": 0.2997
       },
       {
        "team": "DET",
-       "prob": 0.2477
+       "prob": 0.24815
       },
       {
        "team": "CHI",
-       "prob": 0.2466
+       "prob": 0.24665
       },
       {
        "team": "SEA",
-       "prob": 0.08595
+       "prob": 0.086
       },
       {
        "team": "LA",
-       "prob": 0.0695
+       "prob": 0.0698
       },
       {
        "team": "GB",
-       "prob": 0.03415
+       "prob": 0.0332
       },
       {
        "team": "SF",
@@ -383,27 +387,27 @@
      "teams": [
       {
        "team": "CHI",
-       "prob": 0.25595
+       "prob": 0.2567
       },
       {
        "team": "SEA",
-       "prob": 0.1942
+       "prob": 0.19445
       },
       {
        "team": "DET",
-       "prob": 0.1797
+       "prob": 0.17955
       },
       {
        "team": "MIN",
-       "prob": 0.1317
+       "prob": 0.13195
       },
       {
        "team": "LA",
-       "prob": 0.12255
+       "prob": 0.1226
       },
       {
        "team": "GB",
-       "prob": 0.0918
+       "prob": 0.09065
       },
       {
        "team": "SF",
@@ -416,19 +420,19 @@
      "teams": [
       {
        "team": "SEA",
-       "prob": 0.264
+       "prob": 0.265
       },
       {
        "team": "CHI",
-       "prob": 0.1788
+       "prob": 0.1791
       },
       {
        "team": "GB",
-       "prob": 0.1685
+       "prob": 0.16585
       },
       {
        "team": "LA",
-       "prob": 0.16195
+       "prob": 0.1631
       },
       {
        "team": "DET",
@@ -436,11 +440,11 @@
       },
       {
        "team": "MIN",
-       "prob": 0.06625
+       "prob": 0.06635
       },
       {
        "team": "SF",
-       "prob": 0.02155
+       "prob": 0.0216
       }
      ]
     }
@@ -451,218 +455,209 @@
   {
    "team": "BUF",
    "conference": "AFC",
-   "p_playoffs": 0.9997999999999999,
-   "p_divisional_round": 0.8764,
-   "p_conference_round": 0.58045,
-   "p_super_bowl_round": 0.3634,
-   "p_champion": 0.2126
+   "p_playoffs": 0.9998,
+   "p_divisional_round": 0.87325,
+   "p_conference_round": 0.57835,
+   "p_super_bowl_round": 0.3662,
+   "p_champion": 0.21095
   },
   {
    "team": "SF",
    "conference": "NFC",
-   "p_playoffs": 0.9936,
-   "p_divisional_round": 0.8115,
-   "p_conference_round": 0.50755,
-   "p_super_bowl_round": 0.2963,
-   "p_champion": 0.1522
+   "p_playoffs": 0.9936499999999999,
+   "p_divisional_round": 0.81515,
+   "p_conference_round": 0.51155,
+   "p_super_bowl_round": 0.2967,
+   "p_champion": 0.1575
   },
   {
    "team": "MIN",
    "conference": "NFC",
-   "p_playoffs": 0.9741,
-   "p_divisional_round": 0.7359,
-   "p_conference_round": 0.4181,
-   "p_super_bowl_round": 0.22055,
-   "p_champion": 0.10905
+   "p_playoffs": 0.9744,
+   "p_divisional_round": 0.73515,
+   "p_conference_round": 0.42095,
+   "p_super_bowl_round": 0.22185,
+   "p_champion": 0.1125
   },
   {
    "team": "JAX",
    "conference": "AFC",
-   "p_playoffs": 0.99785,
-   "p_divisional_round": 0.70045,
-   "p_conference_round": 0.36995,
-   "p_super_bowl_round": 0.1845,
-   "p_champion": 0.0959
+   "p_playoffs": 0.997,
+   "p_divisional_round": 0.6987,
+   "p_conference_round": 0.3686,
+   "p_super_bowl_round": 0.18125,
+   "p_champion": 0.093
   },
   {
    "team": "DEN",
    "conference": "AFC",
-   "p_playoffs": 0.9946,
-   "p_divisional_round": 0.67845,
-   "p_conference_round": 0.34955,
-   "p_super_bowl_round": 0.1629,
-   "p_champion": 0.07965
+   "p_playoffs": 0.99395,
+   "p_divisional_round": 0.67995,
+   "p_conference_round": 0.35005,
+   "p_super_bowl_round": 0.1605,
+   "p_champion": 0.0771
   },
   {
    "team": "CHI",
    "conference": "NFC",
-   "p_playoffs": 0.8542,
-   "p_divisional_round": 0.5776,
-   "p_conference_round": 0.29675,
-   "p_super_bowl_round": 0.14915,
-   "p_champion": 0.07495
+   "p_playoffs": 0.85555,
+   "p_divisional_round": 0.57535,
+   "p_conference_round": 0.2961,
+   "p_super_bowl_round": 0.1468,
+   "p_champion": 0.07185
   },
   {
    "team": "CIN",
    "conference": "AFC",
-   "p_playoffs": 0.9937000000000001,
-   "p_divisional_round": 0.66075,
-   "p_conference_round": 0.3219,
-   "p_super_bowl_round": 0.1505,
-   "p_champion": 0.0735
+   "p_playoffs": 0.99375,
+   "p_divisional_round": 0.65965,
+   "p_conference_round": 0.31805,
+   "p_super_bowl_round": 0.14965,
+   "p_champion": 0.0718
   },
   {
    "team": "DET",
    "conference": "NFC",
-   "p_playoffs": 0.9054,
-   "p_divisional_round": 0.6208,
-   "p_conference_round": 0.3115,
-   "p_super_bowl_round": 0.15005,
-   "p_champion": 0.0689
+   "p_playoffs": 0.90575,
+   "p_divisional_round": 0.6142,
+   "p_conference_round": 0.308,
+   "p_super_bowl_round": 0.14905,
+   "p_champion": 0.0687
   },
   {
    "team": "SEA",
    "conference": "NFC",
-   "p_playoffs": 0.5931500000000001,
-   "p_divisional_round": 0.35315,
-   "p_conference_round": 0.1719,
-   "p_super_bowl_round": 0.0853,
-   "p_champion": 0.04265
+   "p_playoffs": 0.59445,
+   "p_divisional_round": 0.35145,
+   "p_conference_round": 0.1681,
+   "p_super_bowl_round": 0.0837,
+   "p_champion": 0.0416
   },
   {
    "team": "KC",
    "conference": "AFC",
-   "p_playoffs": 0.9742500000000001,
-   "p_divisional_round": 0.47055,
-   "p_conference_round": 0.1995,
-   "p_super_bowl_round": 0.0834,
-   "p_champion": 0.03605
+   "p_playoffs": 0.9719499999999999,
+   "p_divisional_round": 0.4713,
+   "p_conference_round": 0.20295,
+   "p_super_bowl_round": 0.085,
+   "p_champion": 0.03715
   },
   {
    "team": "LA",
    "conference": "NFC",
-   "p_playoffs": 0.37285,
-   "p_divisional_round": 0.21435,
-   "p_conference_round": 0.09515,
-   "p_super_bowl_round": 0.0429,
-   "p_champion": 0.02015
+   "p_playoffs": 0.37434999999999996,
+   "p_divisional_round": 0.2136,
+   "p_conference_round": 0.0953,
+   "p_super_bowl_round": 0.04445,
+   "p_champion": 0.02205
   },
   {
    "team": "PIT",
    "conference": "AFC",
-   "p_playoffs": 0.8643000000000001,
-   "p_divisional_round": 0.28955,
-   "p_conference_round": 0.09255,
-   "p_super_bowl_round": 0.0299,
-   "p_champion": 0.0106
+   "p_playoffs": 0.8479,
+   "p_divisional_round": 0.27965,
+   "p_conference_round": 0.0904,
+   "p_super_bowl_round": 0.03035,
+   "p_champion": 0.01055
   },
   {
    "team": "GB",
    "conference": "NFC",
-   "p_playoffs": 0.3005,
-   "p_divisional_round": 0.13935,
-   "p_conference_round": 0.0526,
-   "p_super_bowl_round": 0.02005,
-   "p_champion": 0.0073
+   "p_playoffs": 0.2956,
+   "p_divisional_round": 0.1403,
+   "p_conference_round": 0.05165,
+   "p_super_bowl_round": 0.01925,
+   "p_champion": 0.0067
   },
   {
    "team": "NE",
    "conference": "AFC",
-   "p_playoffs": 0.46675,
-   "p_divisional_round": 0.15795,
-   "p_conference_round": 0.04945,
-   "p_super_bowl_round": 0.0168,
-   "p_champion": 0.0062
+   "p_playoffs": 0.4502,
+   "p_divisional_round": 0.1508,
+   "p_conference_round": 0.04605,
+   "p_super_bowl_round": 0.01605,
+   "p_champion": 0.00575
   },
   {
    "team": "TB",
    "conference": "NFC",
-   "p_playoffs": 0.4829,
-   "p_divisional_round": 0.14985,
-   "p_conference_round": 0.0448,
-   "p_super_bowl_round": 0.0122,
-   "p_champion": 0.00305
+   "p_playoffs": 0.48290000000000005,
+   "p_divisional_round": 0.15025,
+   "p_conference_round": 0.0464,
+   "p_super_bowl_round": 0.01425,
+   "p_champion": 0.00375
   },
   {
    "team": "NYG",
    "conference": "NFC",
-   "p_playoffs": 0.576,
-   "p_divisional_round": 0.1468,
-   "p_conference_round": 0.03865,
-   "p_super_bowl_round": 0.00875,
-   "p_champion": 0.00175
-  },
-  {
-   "team": "CAR",
-   "conference": "NFC",
-   "p_playoffs": 0.3623,
-   "p_divisional_round": 0.09945,
-   "p_conference_round": 0.02575,
-   "p_super_bowl_round": 0.0058,
-   "p_champion": 0.00135
+   "p_playoffs": 0.5826,
+   "p_divisional_round": 0.14985,
+   "p_conference_round": 0.0374,
+   "p_super_bowl_round": 0.0082,
+   "p_champion": 0.00205
   },
   {
    "team": "CLE",
    "conference": "AFC",
-   "p_playoffs": 0.5699,
-   "p_divisional_round": 0.1319,
-   "p_conference_round": 0.0286,
-   "p_super_bowl_round": 0.0061,
-   "p_champion": 0.00135
-  },
-  {
-   "team": "DAL",
-   "conference": "NFC",
-   "p_playoffs": 0.24850000000000003,
-   "p_divisional_round": 0.0687,
-   "p_conference_round": 0.01735,
-   "p_super_bowl_round": 0.0043,
-   "p_champion": 0.00095
+   "p_playoffs": 0.5665,
+   "p_divisional_round": 0.1356,
+   "p_conference_round": 0.03105,
+   "p_super_bowl_round": 0.0063,
+   "p_champion": 0.002
   },
   {
    "team": "HOU",
    "conference": "AFC",
-   "p_playoffs": 0.09835,
-   "p_divisional_round": 0.02755,
-   "p_conference_round": 0.0071,
-   "p_super_bowl_round": 0.00225,
-   "p_champion": 0.0008
+   "p_playoffs": 0.1447,
+   "p_divisional_round": 0.0457,
+   "p_conference_round": 0.0137,
+   "p_super_bowl_round": 0.00465,
+   "p_champion": 0.0018
+  },
+  {
+   "team": "CAR",
+   "conference": "NFC",
+   "p_playoffs": 0.36225,
+   "p_divisional_round": 0.09965,
+   "p_conference_round": 0.02505,
+   "p_super_bowl_round": 0.0063,
+   "p_champion": 0.0012
+  },
+  {
+   "team": "DAL",
+   "conference": "NFC",
+   "p_playoffs": 0.24665,
+   "p_divisional_round": 0.0732,
+   "p_conference_round": 0.02045,
+   "p_super_bowl_round": 0.00525,
+   "p_champion": 0.00115
   },
   {
    "team": "WAS",
    "conference": "NFC",
-   "p_playoffs": 0.17875,
-   "p_divisional_round": 0.04625,
-   "p_conference_round": 0.012,
-   "p_super_bowl_round": 0.00325,
-   "p_champion": 0.0008
+   "p_playoffs": 0.17389999999999997,
+   "p_divisional_round": 0.0449,
+   "p_conference_round": 0.0108,
+   "p_super_bowl_round": 0.00265,
+   "p_champion": 0.0006
+  },
+  {
+   "team": "NO",
+   "conference": "NFC",
+   "p_playoffs": 0.10099999999999999,
+   "p_divisional_round": 0.02445,
+   "p_conference_round": 0.0059,
+   "p_super_bowl_round": 0.00125,
+   "p_champion": 0.00015
   },
   {
    "team": "ATL",
    "conference": "NFC",
    "p_playoffs": 0.055,
-   "p_divisional_round": 0.012,
-   "p_conference_round": 0.0022,
-   "p_super_bowl_round": 0.0003,
+   "p_divisional_round": 0.01205,
+   "p_conference_round": 0.00225,
+   "p_super_bowl_round": 0.00025,
    "p_champion": 0.0001
-  },
-  {
-   "team": "NO",
-   "conference": "NFC",
-   "p_playoffs": 0.10095,
-   "p_divisional_round": 0.024,
-   "p_conference_round": 0.00565,
-   "p_super_bowl_round": 0.0011,
-   "p_champion": 0.0001
-  },
-  {
-   "team": "LV",
-   "conference": "AFC",
-   "p_playoffs": 0.015550000000000001,
-   "p_divisional_round": 0.00255,
-   "p_conference_round": 0.0004,
-   "p_super_bowl_round": 0.0001,
-   "p_champion": 0.00005
   },
   {
    "team": "ARI",
@@ -676,19 +671,19 @@
   {
    "team": "BAL",
    "conference": "AFC",
-   "p_playoffs": 0.0221,
-   "p_divisional_round": 0.00355,
-   "p_conference_round": 0.0005,
-   "p_super_bowl_round": 0.0001,
+   "p_playoffs": 0.01985,
+   "p_divisional_round": 0.0036,
+   "p_conference_round": 0.0004,
+   "p_super_bowl_round": 0.0,
    "p_champion": 0.0
   },
   {
    "team": "IND",
    "conference": "AFC",
-   "p_playoffs": 0.00275,
-   "p_divisional_round": 0.00035,
-   "p_conference_round": 0.00005,
-   "p_super_bowl_round": 0.00005,
+   "p_playoffs": 0.00025,
+   "p_divisional_round": 0.00005,
+   "p_conference_round": 0.0,
+   "p_super_bowl_round": 0.0,
    "p_champion": 0.0
   },
   {
@@ -701,9 +696,18 @@
    "p_champion": 0.0
   },
   {
+   "team": "LV",
+   "conference": "AFC",
+   "p_playoffs": 0.014000000000000002,
+   "p_divisional_round": 0.00175,
+   "p_conference_round": 0.0004,
+   "p_super_bowl_round": 0.00005,
+   "p_champion": 0.0
+  },
+  {
    "team": "MIA",
    "conference": "AFC",
-   "p_playoffs": 0.0,
+   "p_playoffs": 0.00005,
    "p_divisional_round": 0.0,
    "p_conference_round": 0.0,
    "p_super_bowl_round": 0.0,
@@ -721,10 +725,10 @@
   {
    "team": "PHI",
    "conference": "NFC",
-   "p_playoffs": 0.0018,
-   "p_divisional_round": 0.0003,
-   "p_conference_round": 0.00005,
-   "p_super_bowl_round": 0.0,
+   "p_playoffs": 0.00195,
+   "p_divisional_round": 0.00045,
+   "p_conference_round": 0.0001,
+   "p_super_bowl_round": 0.00005,
    "p_champion": 0.0
   },
   {
