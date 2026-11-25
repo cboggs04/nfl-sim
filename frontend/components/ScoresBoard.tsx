@@ -1,36 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import GameDetailPanel from "@/components/GameDetailPanel";
 import { LiveDot } from "@/components/LiveSchedule";
 import { pct } from "@/components/ProbCell";
 import TeamLogo from "@/components/TeamLogo";
 import { teamInfo } from "@/lib/teams";
 import { kickoffDay, kickoffDayKey, kickoffTime } from "@/lib/time";
-import type { GameLeader, GamesResponse, LiveGame, ScoreGame, TeamOdds } from "@/lib/types";
-import { liveStatus, useLive } from "@/lib/useLive";
-
-type Status = "upcoming" | "live" | "final";
-
-/** A game with the scoreboard feed folded in: the feed's score wins until nflverse records the result. */
-interface Shown {
-  g: ScoreGame;
-  feed: LiveGame | null; // ESPN scoreboard entry (records, TV, leaders; score and clock while live)
-  status: Status;
-  homeScore: number | null;
-  awayScore: number | null;
-  pHome: number; // live in-game probability while on, else the model's pregame one
-}
-
-function combine(g: ScoreGame, feed: LiveGame | undefined): Shown {
-  const f = feed ?? null;
-  if (g.played || !f || f.state === "pre") {
-    return { g, feed: f, status: g.played ? "final" : "upcoming", homeScore: g.home_score, awayScore: g.away_score, pHome: g.p_home };
-  }
-  return { g, feed: f, status: f.state === "post" ? "final" : "live", homeScore: f.home_score, awayScore: f.away_score, pHome: f.p_home_live ?? g.p_home };
-}
-
-const recordOf = (o: TeamOdds | undefined) => (o ? `${o.record.wins}-${o.record.losses}${o.record.ties ? `-${o.record.ties}` : ""}` : null);
+import type { GameLeader, GamesResponse, ScoreGame, TeamOdds } from "@/lib/types";
+import { combine, OddsBar, recordOf, type Shown } from "@/components/scoreParts";
+import { liveStatus, useDemo, useLive } from "@/lib/useLive";
 
 function TeamRow({ abbr, record, score, state, hasBall }: { abbr: string; record: string | null; score: number | null; state: "won" | "lost" | "none"; hasBall: boolean }) {
   return (
@@ -54,26 +33,6 @@ function TeamRow({ abbr, record, score, state, hasBall }: { abbr: string; record
   );
 }
 
-function OddsBar({ away, home, pHome, label }: { away: string; home: string; pHome: number; label: string }) {
-  return (
-    <div>
-      <div className="flex justify-between text-xs text-muted">
-        <span>
-          {away} <span className="font-semibold text-strong tabular-nums">{pct(1 - pHome)}</span>
-        </span>
-        <span>{label}</span>
-        <span>
-          <span className="font-semibold text-strong tabular-nums">{pct(pHome)}</span> {home}
-        </span>
-      </div>
-      <div className="mt-1 flex h-1.5 gap-0.5 overflow-hidden rounded-full" role="img" aria-label={`${label}: ${away} ${pct(1 - pHome)}, ${home} ${pct(pHome)}`}>
-        <div className="h-full rounded-l-full transition-[width] duration-700" style={{ width: `${(1 - pHome) * 100}%`, backgroundColor: teamInfo(away).primary }} />
-        <div className="h-full flex-1 rounded-r-full" style={{ backgroundColor: teamInfo(home).primary }} />
-      </div>
-    </div>
-  );
-}
-
 function LeaderLines({ leaders }: { leaders: GameLeader[] }) {
   return (
     <ul className="flex flex-col gap-1 text-xs">
@@ -90,7 +49,7 @@ function LeaderLines({ leaders }: { leaders: GameLeader[] }) {
   );
 }
 
-function GameRow({ s, odds, open, onToggle }: { s: Shown; odds: Record<string, TeamOdds>; open: boolean; onToggle: () => void }) {
+function GameRow({ s, odds, href }: { s: Shown; odds: Record<string, TeamOdds>; href: string }) {
   const { g, feed, status, homeScore, awayScore, pHome } = s;
   const done = status === "final";
   const winner = done && homeScore != null && awayScore != null && homeScore !== awayScore ? (homeScore > awayScore ? g.home : g.away) : null;
@@ -98,7 +57,6 @@ function GameRow({ s, odds, open, onToggle }: { s: Shown; odds: Record<string, T
   const ot = (feed && feed.period > 4) || g.overtime;
   const leaders = feed?.leaders ?? [];
   const rowState = (t: string) => (!winner ? "none" : winner === t ? "won" : "lost");
-  const panelId = `game-${g.game_id}`;
 
   const info =
     status === "live" ? (
@@ -125,11 +83,10 @@ function GameRow({ s, odds, open, onToggle }: { s: Shown; odds: Record<string, T
     );
 
   return (
-    <article className={`panel overflow-hidden transition-shadow ${status === "live" ? "ring-1 ring-bad/40" : ""} ${open ? "ring-1 ring-accent/50" : ""}`}>
-      <button
-        onClick={onToggle}
-        aria-expanded={open}
-        aria-controls={panelId}
+    <article className={`panel overflow-hidden transition-shadow hover:ring-1 hover:ring-accent/40 ${status === "live" ? "ring-1 ring-bad/40" : ""}`}>
+      <Link
+        href={href}
+        aria-label={`${teamInfo(g.away).name} at ${teamInfo(g.home).name}: game details`}
         className="grid w-full grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 p-4 text-left hover:bg-hover md:grid-cols-[minmax(0,22rem)_8rem_minmax(0,1fr)_auto]"
       >
         <div className="flex flex-col gap-2">
@@ -162,15 +119,10 @@ function GameRow({ s, odds, open, onToggle }: { s: Shown; odds: Record<string, T
 
         <div className="col-span-2 min-w-0 md:col-span-1">{info}</div>
 
-        <svg className={`hidden h-4 w-4 text-muted transition-transform md:block ${open ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-          <path d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4z" />
+        <svg className="hidden h-4 w-4 text-muted md:block" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+          <path d="M7.3 5.3a1 1 0 0 1 1.4 0l4 4a1 1 0 0 1 0 1.4l-4 4a1 1 0 1 1-1.4-1.4L10.6 10 7.3 6.7a1 1 0 0 1 0-1.4z" />
         </svg>
-      </button>
-      {open && (
-        <div id={panelId} className="border-t border-line/70 bg-background/40">
-          <GameDetailPanel game={g} live={status === "live"} leaders={leaders} odds={odds} pHome={pHome} />
-        </div>
-      )}
+      </Link>
     </article>
   );
 }
@@ -187,29 +139,18 @@ function weekDates(games: ScoreGame[]) {
 }
 
 /** This week's games and scores (live while they're on), ESPN-style, with a week strip and click-to-expand game details. */
-export default function ScoresBoard({ data, teams, initialWeek, initialGame }: { data: GamesResponse; teams: TeamOdds[]; initialWeek: number; initialGame?: string }) {
+export default function ScoresBoard({ data, teams, initialWeek }: { data: GamesResponse; teams: TeamOdds[]; initialWeek: number }) {
   const weeks = [...new Set(data.games.map((g) => g.week))].sort((a, b) => a - b);
   const [week, setWeekState] = useState(weeks.includes(initialWeek) ? initialWeek : data.current_week);
-  const [openId, setOpenId] = useState<string | null>(initialGame ?? null);
+  const demo = useDemo(); // keep ?demo=1 on links, so the demo carries on across pages
   const odds = Object.fromEntries(teams.map((t) => [t.team, t]));
   const stripRef = useRef<HTMLDivElement>(null);
 
-  const syncUrl = (w: number, game: string | null) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("week", String(w));
-    if (game) url.searchParams.set("game", game);
-    else url.searchParams.delete("game");
-    window.history.replaceState(null, "", url); // shareable link; Next keeps its router in sync
-  };
   const setWeek = (w: number) => {
     setWeekState(w);
-    setOpenId(null);
-    syncUrl(w, null);
-  };
-  const toggle = (id: string) => {
-    const next = openId === id ? null : id;
-    setOpenId(next);
-    syncUrl(week, next);
+    const url = new URL(window.location.href);
+    url.searchParams.set("week", String(w));
+    window.history.replaceState(null, "", url); // shareable link (and Back from a game returns to this week)
   };
 
   // Keep the selected week in view in the strip.
@@ -291,7 +232,7 @@ export default function ScoresBoard({ data, teams, initialWeek, initialGame }: {
             Back to this week
           </button>
         ) : (
-          <span className="hidden sm:inline">Click a game for details</span>
+          <span className="hidden sm:inline">Click a game for the full game page</span>
         )}
       </div>
 
@@ -300,7 +241,7 @@ export default function ScoresBoard({ data, teams, initialWeek, initialGame }: {
           <h2 className="mb-2 border-b border-line pb-1.5 text-xs font-semibold tracking-widest text-muted uppercase">{d.label}</h2>
           <div className="flex flex-col gap-3">
             {d.games.map((s) => (
-              <GameRow key={s.g.game_id} s={s} odds={odds} open={openId === s.g.game_id} onToggle={() => toggle(s.g.game_id)} />
+              <GameRow key={s.g.game_id} s={s} odds={odds} href={`/scores/${s.g.game_id}${demo ? "?demo=1" : ""}`} />
             ))}
           </div>
         </section>

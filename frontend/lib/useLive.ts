@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { getLive } from "./api";
 import type { LiveGame, LiveResponse } from "./types";
 
@@ -23,6 +23,13 @@ export function inLiveWindow(kickoffs: (string | null | undefined)[], now = Date
 export function demoRequested(): boolean {
   if (typeof window === "undefined") return false;
   return new URLSearchParams(window.location.search).get("demo") === "1";
+}
+
+const noSubscribe = () => () => {};
+
+/** demoRequested() as a hook: false while rendering on the server, then the real value in the browser. */
+export function useDemo(): boolean {
+  return useSyncExternalStore(noSubscribe, demoRequested, () => false);
 }
 
 export interface LiveState {

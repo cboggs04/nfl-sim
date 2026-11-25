@@ -2,6 +2,7 @@ import LoadingSkeleton from "@/components/LoadingSkeleton";
 import PageHeader from "@/components/PageHeader";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import ScoresBoard from "@/components/ScoresBoard";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getGames, getSeason } from "@/lib/api";
 
@@ -14,8 +15,9 @@ async function Board({ searchParams }: { searchParams: PageProps<"/scores">["sea
   }
   const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
   const week = Number(first(params.week)) || data.current_week; // ?week=7 opens that week
-  const game = first(params.game); // ?game=<id> opens that game
-  return <ScoresBoard key={week} data={data} teams={season?.teams ?? []} initialWeek={week} initialGame={game} />;
+  const game = first(params.game);
+  if (game && /^[\w-]+$/.test(game)) redirect(`/scores/${game}`); // older ?game=<id> links: each game has its own page now
+  return <ScoresBoard key={week} data={data} teams={season?.teams ?? []} initialWeek={week} />;
 }
 
 export default function ScoresPage(props: PageProps<"/scores">) {
