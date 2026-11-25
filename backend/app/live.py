@@ -8,13 +8,18 @@ from functools import lru_cache
 from fastapi import APIRouter, HTTPException
 
 from engine.data import DATA_DIR
-from engine.live import LiveCache, demo_games, parse_scoreboard
+from engine.gamedetail import parse_summary
+from engine.live import LiveCache, demo_games, fetch_scoreboard, parse_scoreboard, scoreboard_url, summary_states
 
 from .datafiles import file_stamp
-from .schemas import GamesResponse, LiveResponse, ScoreGame, TeamDetail
+from .schemas import GameDetail, GamesResponse, LiveResponse, ScoreGame, TeamDetail
+
+SUMMARY_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event={}"
 
 router = APIRouter(prefix="/api")
 _cache = LiveCache()
+_week_caches: dict[int, LiveCache] = {}     # other weeks' scoreboards (finished weeks change rarely: 6 h)
+_detail_caches: dict[str, LiveCache] = {}   # game summaries, by ESPN id (final: 6 h; live: 20 s; not started: 10 min)
 
 
 @lru_cache
@@ -64,14 +69,23 @@ def get_games():
 
 
 @router.get("/live", response_model=LiveResponse)
-def get_live(demo: bool = False):
-    """Games on ESPN's current scoreboard, matched to ours, with live in-game win probability.
-    `?demo=1` returns a made-up, sped-up live version of the current week instead (for presenting when no game is on)."""
-    if demo:
-        week = load_games_response().current_week
+def get_live(demo: bool = False, week: int | None = None):
+    """Games on ESPN's scoreboard (this week's, or `?week=N`), matched to ours, with live in-game win probability,
+    records, TV and game leaders. `?demo=1` returns a made-up, sped-up live version of the current week instead
+    (for presenting when no game is on)."""
+    games_resp = load_games_response()
+    if demo and (week is None or week == games_resp.current_week):
+        week = games_resp.current_week
         games = demo_games(_schedule(), week)
         return LiveResponse(source="demo", fetched_at=_iso(time.time()), week=week, games=[g.to_dict() for g in games])
-    data, fetched_at, _error = _cache.get()
+    if week is not None and not 1 <= week <= 22:
+        raise HTTPException(404, "No such week")
+    if week is None or week == games_resp.current_week:
+        cache = _cache
+    else:
+        url = scoreboard_url(week, games_resp.season)
+        cache = _week_caches.setdefault(week, LiveCache(fetch=lambda: fetch_scoreboard(url), ttl_done=6 * 3600))
+    data, fetched_at, _error = cache.get()
     if data is None:
         return LiveResponse(source="unavailable", fetched_at=None, week=None, games=[])
     games = parse_scoreboard(data, _schedule())
@@ -81,3 +95,26 @@ def get_live(demo: bool = False):
 
 def _iso(t: float) -> str:
     return datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+@router.get("/games/{game_id}/detail", response_model=GameDetail)
+def get_game_detail(game_id: str):
+    """Line score, team stats, player box score, scoring plays and the model's win probability through the game."""
+    game = next((g for g in load_games_response().games if g.game_id == game_id), None)
+    if game is None:
+        raise HTTPException(404, f"Unknown game '{game_id}'")
+    if not game.espn_id:
+        return GameDetail(game_id=game_id, home=game.home, away=game.away, available=False)
+    cache = _detail_caches.get(game.espn_id)
+    if cache is None:
+        url = SUMMARY_URL.format(game.espn_id)
+        cache = _detail_caches[game.espn_id] = LiveCache(fetch=lambda: fetch_scoreboard(url), ttl_idle=600, ttl_done=6 * 3600,
+                                                           states=summary_states)
+    data, _, _ = cache.get()
+    if not data:
+        return GameDetail(game_id=game_id, home=game.home, away=game.away, available=False)
+    try:
+        parsed = parse_summary(data, game.home, game.away, game.p_home)
+    except Exception:  # an unexpected shape from the unofficial feed: show "not available" rather than an error
+        return GameDetail(game_id=game_id, home=game.home, away=game.away, available=False)
+    return GameDetail(game_id=game_id, home=game.home, away=game.away, available=True, **parsed)

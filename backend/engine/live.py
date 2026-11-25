@@ -23,7 +23,7 @@ import math
 import random
 import time
 import urllib.request
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from statistics import NormalDist
 
 SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
@@ -59,6 +59,13 @@ class LiveGame:
     red_zone: bool
     p_home_pre: float | None      # model's pregame P(home wins)
     p_home_live: float | None     # in-game P(home wins); None before kickoff
+    home_record: str | None = None    # "8-2" (as of now, from ESPN)
+    away_record: str | None = None
+    broadcast: str | None = None      # "NBC"
+    venue: str | None = None          # "Highmark Stadium, Orchard Park, NY"
+    home_lines: list[int] = field(default_factory=list)   # points by quarter (5th = overtime)
+    away_lines: list[int] = field(default_factory=list)
+    leaders: list[dict] = field(default_factory=list)     # [{category: "PASS", name, team, line, headshot}]
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -168,6 +175,7 @@ def parse_scoreboard(data: dict, schedule: list[dict]) -> list[LiveGame]:
         ytg = _yards_to_goal(sit.get("possessionText"), poss)
         dd = sit.get("downDistanceText") if state == "in" else None
 
+        extras = _extras(comp, teams, ids)
         p_pre = ours["p_home"] if ours else None
         p_live = None
         if state != "pre":
@@ -178,8 +186,50 @@ def parse_scoreboard(data: dict, schedule: list[dict]) -> list[LiveGame]:
             home_score=hs, away_score=as_, period=period, clock=clock,
             detail=stype.get("shortDetail") or stype.get("detail") or "", possession=poss, down_distance=dd,
             red_zone=bool(sit.get("isRedZone")) and state == "in", p_home_pre=p_pre,
-            p_home_live=None if p_live is None else round(p_live, 4)))
+            p_home_live=None if p_live is None else round(p_live, 4), **extras))
     return out
+
+
+LEADER_CATEGORIES = {"passingYards": "PASS", "rushingYards": "RUSH", "receivingYards": "REC"}
+
+
+def _record(c: dict) -> str | None:
+    for r in c.get("records") or c.get("record") or []:
+        if r.get("type") == "total" or r.get("name") == "overall":
+            return r.get("summary") or r.get("displayValue")
+    return None
+
+
+def _lines(c: dict) -> list[int]:
+    return [_int(x.get("value", x.get("displayValue"))) for x in c.get("linescores") or []]
+
+
+def _venue(v: dict | None) -> str | None:
+    if not v or not v.get("fullName"):
+        return None
+    a = v.get("address") or {}
+    place = ", ".join(x for x in (a.get("city"), a.get("state")) if x)
+    return f"{v['fullName']}, {place}" if place else v["fullName"]
+
+
+def _extras(comp: dict, teams: dict, ids: dict) -> dict:
+    """Records, TV, venue, line scores and game leaders from a scoreboard competition (all optional)."""
+    leaders = []
+    for cat in comp.get("leaders") or []:
+        short = LEADER_CATEGORIES.get(cat.get("name"))
+        top = (cat.get("leaders") or [None])[0]
+        if not short or not top:
+            continue
+        ath = top.get("athlete") or {}
+        head = ath.get("headshot")
+        leaders.append({"category": short, "name": ath.get("shortName") or ath.get("displayName") or "",
+                        "team": ids.get(str((top.get("team") or ath.get("team") or {}).get("id"))),
+                        "line": top.get("displayValue") or "",
+                        "headshot": head.get("href") if isinstance(head, dict) else head})
+    names = [n for b in comp.get("broadcasts") or [] for n in b.get("names") or []]
+    return {"home_record": _record(teams["home"]), "away_record": _record(teams["away"]),
+            "broadcast": " / ".join(names) or None, "venue": _venue(comp.get("venue")),
+            "home_lines": _lines(teams["home"]), "away_lines": _lines(teams["away"]), "leaders": leaders}
 
 
 def _int(v) -> int:
@@ -189,27 +239,47 @@ def _int(v) -> int:
         return 0
 
 
+def scoreboard_url(week: int | None = None, season: int | None = None) -> str:
+    """The current scoreboard, or a given regular-season week's."""
+    if week is None:
+        return SCOREBOARD_URL
+    return f"{SCOREBOARD_URL}?seasontype=2&week={int(week)}" + (f"&dates={int(season)}" if season else "")
+
+
 def fetch_scoreboard(url: str = SCOREBOARD_URL, timeout: float = 6.0) -> dict:
     req = urllib.request.Request(url, headers={"User-Agent": "nfl-season-simulator/1.0", "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode("utf-8"))
 
 
+def scoreboard_states(data: dict) -> list:
+    return [((ev.get("status") or {}).get("type") or {}).get("state") for ev in data.get("events") or []]
+
+
+def summary_states(data: dict) -> list:
+    """A game summary's state, as a one-item list (for LiveCache)."""
+    comp = ((data.get("header") or {}).get("competitions") or [{}])[0]
+    return [((comp.get("status") or {}).get("type") or {}).get("state")]
+
+
 class LiveCache:
     """Keeps the last scoreboard so every visitor shares one ESPN request: refreshed at most every `ttl_live`
     seconds while a game is on, every `ttl_idle` seconds otherwise. If ESPN fails, the last good copy is kept."""
 
-    def __init__(self, fetch=fetch_scoreboard, ttl_live: float = 20.0, ttl_idle: float = 120.0, clock=time.time):
+    def __init__(self, fetch=fetch_scoreboard, ttl_live: float = 20.0, ttl_idle: float = 120.0, clock=time.time,
+                 ttl_done: float | None = None, states=None):
         self.fetch, self.ttl_live, self.ttl_idle, self.clock = fetch, ttl_live, ttl_idle, clock
+        self.ttl_done = ttl_idle if ttl_done is None else ttl_done   # when every game is final
+        self.states = states or scoreboard_states                     # data -> list of game states
         self.data: dict | None = None
         self.fetched_at = 0.0
         self.error: str | None = None
 
     def get(self) -> tuple[dict | None, float, str | None]:
         now = self.clock()
-        live = self.data is not None and any(
-            ((ev.get("status") or {}).get("type") or {}).get("state") == "in" for ev in self.data.get("events") or [])
-        if self.data is None or now - self.fetched_at >= (self.ttl_live if live else self.ttl_idle):
+        states = self.states(self.data) if self.data else []
+        ttl = self.ttl_live if "in" in states else self.ttl_done if states and all(x == "post" for x in states) else self.ttl_idle
+        if self.data is None or now - self.fetched_at >= ttl:
             try:
                 self.data, self.error = self.fetch(), None
             except Exception as e:  # network error, timeout, bad JSON: keep serving the last good copy

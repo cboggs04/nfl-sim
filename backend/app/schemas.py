@@ -420,6 +420,21 @@ class LiveGame(BaseModel):
     red_zone: bool
     p_home_pre: float | None        # model's pregame P(home wins)
     p_home_live: float | None       # in-game P(home wins), from engine/live.py
+    home_record: str | None = None  # "8-2", as of now
+    away_record: str | None = None
+    broadcast: str | None = None
+    venue: str | None = None
+    home_lines: list[int] = []      # points by quarter (5th = overtime)
+    away_lines: list[int] = []
+    leaders: list["GameLeader"] = []
+
+
+class GameLeader(BaseModel):
+    category: Literal["PASS", "RUSH", "REC"]
+    name: str
+    team: str | None
+    line: str                       # "21/27, 194 YDS, 3 TD, 1 INT"
+    headshot: str | None = None
 
 
 class LiveResponse(BaseModel):
@@ -428,3 +443,67 @@ class LiveResponse(BaseModel):
     fetched_at: str | None          # when the scoreboard was last fetched (UTC ISO)
     week: int | None
     games: list[LiveGame]
+
+
+class TeamStatRow(BaseModel):
+    label: str
+    home: str | None
+    away: str | None
+
+
+class BoxRow(BaseModel):
+    name: str
+    id: str
+    headshot: str | None
+    stats: list[str]
+
+
+class BoxCategory(BaseModel):
+    key: str                        # "passing", "rushing", ...
+    title: str
+    labels: list[str]
+    rows: list[BoxRow]
+    totals: list[str] | None
+
+
+class ScoringPlay(BaseModel):
+    period: int
+    clock: str
+    clock_seconds: float
+    team: str
+    type: str                       # "TD", "FG", "SF", ...
+    text: str
+    home_score: int
+    away_score: int
+
+
+class WinProbPoint(BaseModel):
+    t: float                        # game minutes elapsed (60 = end of regulation)
+    p: float                        # model P(home wins)
+    home: int
+    away: int
+
+
+class GameDetail(BaseModel):
+    """GET /api/games/{game_id}/detail: the expanded game on the scores page (engine/gamedetail.py)."""
+    game_id: str
+    home: str
+    away: str
+    available: bool                 # False if the detail feed couldn't be reached (the rest is then empty)
+    state: Literal["pre", "in", "post"] = "pre"
+    period: int = 0
+    clock: str = ""
+    detail: str = ""
+    home_lines: list[int] = []
+    away_lines: list[int] = []
+    home_score: int = 0
+    away_score: int = 0
+    team_stats: list[TeamStatRow] = []
+    home_box: list[BoxCategory] = []
+    away_box: list[BoxCategory] = []
+    scoring: list[ScoringPlay] = []
+    win_prob: list[WinProbPoint] = []
+    venue: str | None = None
+    attendance: int | None = None
+    weather: str | None = None
+    broadcast: str | None = None
