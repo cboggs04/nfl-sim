@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import GameReplay from "@/components/GameReplay";
+import { LiveBanner, LiveProbCell, LiveProvider, LiveResultCell } from "@/components/LiveSchedule";
 import ColumnChart from "@/components/ColumnChart";
 import ProbCell, { pct } from "@/components/ProbCell";
 import ResetOnLeave from "@/components/ResetOnLeave";
@@ -13,6 +14,7 @@ import TeamTabs from "@/components/TeamTabs";
 import TeamLogo from "@/components/TeamLogo";
 import { getRoster, getTeam, getTeamDrives } from "@/lib/api";
 import { logoSrc, teamInfo } from "@/lib/teams";
+import { kickoffShort } from "@/lib/time";
 import type { DriveEvent, GameView, TeamDrives } from "@/lib/types";
 
 function Tile({ label, value, ratio, color }: { label: string; value: string; ratio: number; color: string }) {
@@ -65,7 +67,12 @@ function ResultCell({ g, team, drives }: { g: GameView; team: string; drives?: D
     );
   }
   const t = tier(g.p_win ?? 0.5);
-  return <span className={`inline-block rounded px-2 py-1 text-xs font-semibold md:px-3 md:py-1.5 md:text-sm ${t.style}`}>{t.label}</span>;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className={`inline-block rounded px-2 py-1 text-xs font-semibold md:px-3 md:py-1.5 md:text-sm ${t.style}`}>{t.label}</span>
+      {g.kickoff && <span className="text-xs text-muted">{kickoffShort(g.kickoff)}</span>}
+    </span>
+  );
 }
 
 /** Smallest win total at which the cumulative probability reaches q. */
@@ -174,7 +181,8 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
         <TeamTabs
           key={odds.team} // a fresh page every time: always opens on Overview
           overview={
-            <>
+            <LiveProvider games={games}>
+      <LiveBanner games={games} team={odds.team} />
       <SectionNav
         className="mt-4"
         items={[
@@ -227,9 +235,13 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
                     </Link>
                   </td>
                   <td className="px-1.5 py-2 md:px-3">
-                    <ResultCell g={g} team={odds.team} drives={drivesByGame[g.game_id]} />
+                    <LiveResultCell g={g}>
+                      <ResultCell g={g} team={odds.team} drives={drivesByGame[g.game_id]} />
+                    </LiveResultCell>
                   </td>
-                  {g.p_win != null ? <ProbCell p={g.p_win} /> : <td className="px-1.5 py-2 text-right text-muted md:px-3">—</td>}
+                  <LiveProbCell g={g}>
+                    {g.p_win != null ? <ProbCell p={g.p_win} /> : <td className="px-1.5 py-2 text-right text-muted md:px-3">—</td>}
+                  </LiveProbCell>
                 </tr>
               ))}
             </tbody>
@@ -251,7 +263,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
           xLabel="Seed"
         />
       </div>
-            </>
+            </LiveProvider>
           }
           simulator={
             roster ? (

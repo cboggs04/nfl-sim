@@ -7,12 +7,14 @@ updates after games end, so this is used only to show games while they are being
 In-game win probability (`live_win_prob`) starts from the model's pregame probability and updates with the
 score, the time left and who has the ball:
   - the pregame probability is turned into an expected final margin, assuming final margins are roughly normal
-    with a 13.5-point standard deviation (the usual NFL figure);
+    with a 15-point standard deviation (13.5 is the usual figure for final margins; 15 scored better in-game);
   - the part of that expected margin still to come shrinks with the time left, and so does the uncertainty
     (standard deviation scales with the square root of the time left);
   - the team with the ball gets the expected points of its field position (about 0.4 at its own 20, 2.5 at
     midfield, 4.6 at the opponent's 20), a simple straight-line fit to the usual expected-points curve.
-It is a simple, stated model, not fitted on play-by-play like nflverse's own win probability.
+It is a simple, stated model, not fitted on play-by-play like nflverse's own win probability. Checked on every
+7th play of 2024-25 (scripts/check_live_wp.py, pregame odds from the closing spread): Brier 0.152 and well
+calibrated, against 0.145 for nflverse's fitted, spread-aware vegas_home_wp.
 """
 from __future__ import annotations
 
@@ -26,7 +28,7 @@ from statistics import NormalDist
 
 SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 
-MARGIN_SD = 13.5            # standard deviation of an NFL final margin, in points
+MARGIN_SD = 15.0            # spread of outcomes, in points (scripts/check_live_wp.py)
 GAME_SECONDS = 3600
 OT_SECONDS = 600            # regular-season overtime is one 10-minute period
 _N = NormalDist()

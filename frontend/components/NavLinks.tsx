@@ -6,6 +6,7 @@ import { useState } from "react";
 
 const LINKS = [
   { href: "/", label: "Home" },
+  { href: "/scores", label: "Scores" },
   { href: "/bracket", label: "Playoff simulator" },
   { href: "/leaders", label: "Stat leaders" },
   { href: "/play", label: "Play now" },

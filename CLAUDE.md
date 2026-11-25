@@ -14,6 +14,8 @@ Live on Vercel (site) + Render (API); code at github.com/cboggs04/nfl-sim. Built
 - Team pages: every played regular-season game has a pixel-art Replay (ties and overtime included) built from the real drives (`engine/drives.py` reads nflverse play-by-play into `backend/data/drives.json`: TD, FG, missed FG, punt, interception, fumble, downs, safety, pick sixes). Final score is real; the play drawings are for show. Games whose drives don't add up to the real score fall back to made-up drives.
 - Playoff games: model-simulated scores (engine/scores.py) shown on the cards; every played game has a pixel-art Replay (the Super Bowl opens by itself). Plays/drives are for show; the model only picks the winner and the score.
 - Play now (/play): a keyboard pixel-art football game (you play offense vs the computer defense; the other team's drives are simulated from team ratings). Engine in `frontend/lib/playNow/engine.ts` (pure TS, bot-tested via `frontend/scripts/playNowBots.js`), screen in `components/PlayNow.tsx`. Touch: on phones (pointer: coarse) the game takes the whole viewport in landscape with an on-screen pad and buttons (`TouchControls`), and asks you to rotate in portrait. Play picker: after choosing pass or run, press 1/2/3 for one of three plays offered each snap (`PLAYS` in the engine: 5 pass and 5 run plays, a random 3 of each offered). Difficulty levels (Rookie/Pro/All-Star, `DIFFICULTY` in the engine; Pro is the baseline; bots win ~97%/85%/50%). Four quarters of 5:00 game clock (20:00 total, halftime after the 2nd; 5x speed while the ball is live, about 45-60 s real time each).
+- Live scores: `engine/live.py` reads ESPN's public scoreboard (unofficial, no key; cached 20 s while games are on, shared by all visitors) and adds an in-game win probability (pregame model odds + score, time left, possession; 15-pt spread, checked by `scripts/check_live_wp.py`: Brier 0.152 vs nflverse's 0.145). `GET /api/live` (`?demo=1` = a made-up, sped-up current week for presenting). Team pages show a live banner and live rows (`components/LiveSchedule.tsx`, polling via `lib/useLive.ts` only near kickoff); a game finished but not yet in nflverse shows as a provisional final.
+- Scores page (/scores, `components/ScoresBoard.tsx`): a week's games by day with live scores, model odds and whether the model's pick was right; week picker (`?week=N`, defaults to the current week). Data: `games.json` from precompute (kickoff times in UTC, pregame model probability for played games, ESPN ids) via `GET /api/games`. Add `?demo=1` to /scores or a team page to show the demo.
 Not built yet: Claude API chat layer (feature 6).
 
 - Page template: every page uses `components/PageHeader.tsx` (title, subtitle, action slot). In-page view switchers use the pill `TabButtons`; long pages get a sticky `SectionNav`. Team pages link to `/play?team=ABBR` and `/whatif?team=ABBR`.
@@ -38,7 +40,7 @@ Not built yet: Claude API chat layer (feature 6).
 - Backtest (2018-25, tuned only on 2012-17): Brier 0.2191, 64.8% winners picked.
 
 ## API endpoints
-- GET /api/health, /api/season, /api/teams/{abbr}, /api/teams/{abbr}/roster, /api/teams/{abbr}/drives, /api/bracket, /api/backtest, /api/leaders
+- GET /api/health, /api/season, /api/teams/{abbr}, /api/teams/{abbr}/roster, /api/teams/{abbr}/drives, /api/bracket, /api/backtest, /api/leaders, /api/games, /api/live
 - POST /api/whatif
 - POST /api/sim/season, /api/sim/game, /api/sim/team (interactive single simulations)
 

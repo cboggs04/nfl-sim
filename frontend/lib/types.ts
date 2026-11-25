@@ -49,6 +49,7 @@ export interface GameView {
   result: "W" | "L" | "T" | null;
   team_score: number | null;
   opp_score: number | null;
+  kickoff?: string | null; // UTC ISO time
 }
 
 export interface TeamDetail {
@@ -281,4 +282,52 @@ export interface DriveEvent {
 
 export interface TeamDrives {
   games: Record<string, DriveEvent[]>;
+}
+
+/** One game on the scores page (GET /api/games). */
+export interface ScoreGame {
+  game_id: string;
+  week: number;
+  kickoff: string | null; // UTC ISO time
+  home: string;
+  away: string;
+  neutral: boolean;
+  played: boolean;
+  home_score: number | null;
+  away_score: number | null;
+  overtime: boolean;
+  p_home: number; // model P(home wins): pregame for played games, current for the rest
+  espn_id?: string | null;
+}
+
+export interface GamesResponse {
+  season: number;
+  current_week: number;
+  games: ScoreGame[];
+}
+
+/** A game from the live scoreboard (GET /api/live). */
+export interface LiveGame {
+  game_id: string | null;
+  espn_id: string;
+  home: string;
+  away: string;
+  state: "pre" | "in" | "post";
+  home_score: number;
+  away_score: number;
+  period: number; // 5 = overtime
+  clock: string;
+  detail: string; // "Q3 4:12", "Halftime", "Final/OT"
+  possession: string | null;
+  down_distance: string | null;
+  red_zone: boolean;
+  p_home_pre: number | null;
+  p_home_live: number | null;
+}
+
+export interface LiveResponse {
+  source: "espn" | "demo" | "unavailable";
+  fetched_at: string | null;
+  week: number | null;
+  games: LiveGame[];
 }

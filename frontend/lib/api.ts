@@ -1,5 +1,5 @@
 // The ONLY place the frontend talks to the backend. Components import from here.
-import type { BacktestResponse, BracketResponse, LeadersResponse, SimTeamResult, TeamRoster, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, TeamDrives, TradeCandidate, WhatIfRequest } from "./types";
+import type { BacktestResponse, GamesResponse, LiveResponse, BracketResponse, LeadersResponse, SimTeamResult, TeamRoster, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, TeamDrives, TradeCandidate, WhatIfRequest } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Set NEXT_PUBLIC_USE_MOCK=1 to build the UI without the API running.
@@ -93,3 +93,15 @@ export const runWhatIf = (req: WhatIfRequest) => post<SeasonResponse>("/api/what
 
 /** Simulate one team's season: its game results and every player's resulting stats. "rest" plays out the remaining games; "full" replays all of them, ignoring results so far. */
 export const simulateTeam = (team: string, mode: "rest" | "full" = "rest") => post<SimTeamResult>("/api/sim/team", { team, mode });
+
+/** Every regular-season game: results, kickoff times and the model's win probability (the scores page). */
+export async function getGames(): Promise<GamesResponse> {
+  if (USE_MOCK) throw new Error("The scores page needs the API running (turn off NEXT_PUBLIC_USE_MOCK).");
+  return get<GamesResponse>("/api/games");
+}
+
+/** Games on the live scoreboard right now, with in-game win probability. demo=true: a made-up, sped-up week for presenting. Called from the browser. */
+export async function getLive(demo = false): Promise<LiveResponse> {
+  if (USE_MOCK) return { source: "unavailable", fetched_at: null, week: null, games: [] };
+  return get<LiveResponse>(`/api/live${demo ? "?demo=1" : ""}`);
+}
