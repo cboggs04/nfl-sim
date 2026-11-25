@@ -4,6 +4,17 @@ const ICON_PROPS = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", 
 
 const FEATURES = [
   {
+    href: "/scores",
+    title: "Scores",
+    blurb: "Live scores, box scores and the model's live win odds for every game.",
+    icon: (
+      <svg {...ICON_PROPS}>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="M12 5v14M7 10v4M15.5 10h2v4h-2z" />
+      </svg>
+    ),
+  },
+  {
     href: "/bracket",
     title: "Playoff simulator",
     blurb: "Simulate the rest of the season, then play the bracket round by round.",
@@ -62,12 +73,12 @@ const FEATURES = [
 /** A row of cards that says what the site can do and links to each part. */
 export default function FeatureCards() {
   return (
-    <nav aria-label="What you can do here" className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5">
+    <nav aria-label="What you can do here" className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
       {FEATURES.map((f) => (
         <Link
           key={f.title}
           href={f.href}
-          className="group panel-flat flex items-center gap-3 p-3 sm:items-start transition-colors last:col-span-2 lg:last:col-span-1 hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent"
+          className="group panel-flat flex items-center gap-3 p-3 sm:items-start transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent"
         >
           <span className="flex h-9 w-9 shrink-0 sm:mt-0.5 items-center justify-center rounded-md bg-accent/12 text-accent-ink ring-1 ring-accent/25">{f.icon}</span>
           <span className="min-w-0">
