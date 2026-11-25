@@ -3,7 +3,7 @@
 Interactive web app that simulates the NFL season with Monte Carlo methods and projects every team's record, playoff odds, and Super Bowl odds. Class project, ~4 week timeline. Final deliverable: a polished, live demo presented in class.
 
 ## Status (update this when things change)
-Live on Vercel (site) + Render (API); code at github.com/cboggs04/nfl-sim. Built and working:
+Live on Vercel (site: https://nfl-sim-ten.vercel.app) + Render (API: https://nfl-sim-api.onrender.com); code at github.com/cboggs04/nfl-sim. (`nfl-sim.vercel.app` in DEPLOY.md is only an example and belongs to someone else.) Built and working:
 - Home: Super Bowl odds cards + sortable league table.
 - Team pages (Overview / Season simulator tabs): schedule with per-game win odds; simulate the rest of the season or replay the full season; player tables (stats so far, projected, simulated).
 - Playoff simulator page (Standings / Bracket tabs): one simulated season shared by both; bracket is playable round by round.
