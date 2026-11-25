@@ -214,7 +214,7 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
           <table className="w-full text-sm md:min-w-[680px]">
             <thead className="border-b border-line bg-head text-xs tracking-widest text-muted uppercase">
               <tr>
-                <th className="px-1.5 py-3 text-left font-semibold md:px-4">Wk</th>
+                <th className="px-1 py-3 text-left font-semibold min-[360px]:px-1.5 md:px-4">Wk</th>
                 <th className="px-1.5 py-3 text-left font-semibold md:px-3">
                   <span className="min-[360px]:hidden">Opp</span>
                   <span className="hidden min-[360px]:inline">Opponent</span>
@@ -226,9 +226,11 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
             <tbody className="divide-y divide-line/60">
               {games.map((g) => (
                 <tr key={g.game_id} className={`transition-colors hover:bg-hover ${g.played ? "" : "bg-rowtint"}`}>
-                  <td className="font-display px-1.5 py-2 text-xl text-muted tabular-nums md:px-4 md:text-2xl">{g.week}</td>
+                  <td className="font-display px-1 py-2 text-xl text-muted tabular-nums min-[360px]:px-1.5 md:px-4 md:text-2xl">{g.week}</td>
                   <td className="px-1.5 py-2 md:px-3">
-                    <Link href={`/teams/${g.opponent}`} className="group flex items-center gap-2 md:gap-4">
+                    <Link href={`/teams/${g.opponent}`} className="group flex items-center gap-1 min-[360px]:gap-1.5 md:gap-3">
+                      {/* "vs"/"@" first, then the logo and name: reads "vs [logo] MIA", not "[logo] vs MIA" (which looks like a team playing itself) */}
+                      <span className="shrink-0 text-xs text-muted min-[360px]:w-4 min-[360px]:text-center md:w-6 md:text-sm">{g.neutral || g.home ? "vs" : "@"}</span>
                       <span className="hidden min-[360px]:inline-flex sm:hidden">
                         <TeamLogo abbr={g.opponent} size={28} />
                       </span>
@@ -236,7 +238,6 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
                         <TeamLogo abbr={g.opponent} size={36} />
                       </span>
                       <span className="text-sm font-semibold text-strong group-hover:text-accent-ink md:text-base">
-                        <span className="mr-1 text-xs font-normal text-muted md:mr-2 md:text-sm">{g.neutral || g.home ? "vs" : "@"}</span>
                         <span className="sm:hidden">{g.opponent}</span>
                         <span className="hidden sm:inline md:hidden">{teamInfo(g.opponent).name.split(" ").pop()}</span>
                         <span className="hidden md:inline">{teamInfo(g.opponent).name}</span>
