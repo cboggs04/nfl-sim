@@ -83,7 +83,7 @@ function Played({ game, detail, leaders, pHome }: { game: ScoreGame; detail: Gam
   ];
   const id = (k: string) => `${game.game_id}-${k}`;
   return (
-    <div className="p-4 sm:p-5">
+    <div className="p-3 sm:p-5">
       <TabButtons tabs={tabs} active={tab} onSelect={(k) => setTab(k as typeof tab)} label="Game details" idFor={(k) => `tab-${id(k)}`} panelIdFor={(k) => `panel-${id(k)}`} />
       <div role="tabpanel" id={`panel-${id(tab)}`} aria-labelledby={`tab-${id(tab)}`} className="mt-4">
         {tab === "summary" && <Summary game={game} detail={detail} leaders={leaders} pHome={pHome} />}
@@ -321,7 +321,7 @@ function BoxScore({ game, detail }: { game: ScoreGame; detail: GameDetail }) {
   const cats = team === "home" ? detail.home_box : detail.away_box;
   return (
     <div>
-      <div className="inline-flex gap-1 rounded-lg bg-head p-1 ring-1 ring-line" role="group" aria-label="Team">
+      <div className="flex w-full gap-1 rounded-lg bg-head p-1 ring-1 ring-line sm:inline-flex sm:w-auto" role="group" aria-label="Team">
         {(["away", "home"] as const).map((t) => {
           const a = t === "home" ? game.home : game.away;
           return (
@@ -329,9 +329,11 @@ function BoxScore({ game, detail }: { game: ScoreGame; detail: GameDetail }) {
               key={t}
               onClick={() => setTeam(t)}
               aria-pressed={team === t}
-              className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold ${team === t ? "bg-panel text-strong shadow-sm ring-1 ring-line" : "text-muted hover:text-strong"}`}
+              className={`flex min-w-0 flex-1 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold whitespace-nowrap sm:flex-none ${team === t ? "bg-panel text-strong shadow-sm ring-1 ring-line" : "text-muted hover:text-strong"}`}
             >
-              <TeamLogo abbr={a} size={20} /> {teamInfo(a).name}
+              <TeamLogo abbr={a} size={20} />
+              <span className="sm:hidden">{teamInfo(a).name.split(" ").pop()}</span>
+              <span className="hidden sm:inline">{teamInfo(a).name}</span>
             </button>
           );
         })}

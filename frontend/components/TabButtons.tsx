@@ -2,7 +2,7 @@
 
 /**
  * The view switcher used inside pages (Overview / Season simulator, Standings / Bracket). It's a small filled pill group, so it
- * doesn't look like the underlined links in the top bar.
+ * doesn't look like the underlined links in the top bar. On phones the tabs share the full width equally, so they all fit.
  */
 export default function TabButtons({
   tabs,
@@ -20,7 +20,7 @@ export default function TabButtons({
   panelIdFor: (key: string) => string;
 }) {
   return (
-    <div role="tablist" aria-label={label} className="inline-flex max-w-full gap-1 overflow-x-auto rounded-lg bg-head p-1 ring-1 ring-line">
+    <div role="tablist" aria-label={label} className="flex w-full max-w-full gap-1 overflow-x-auto rounded-lg bg-head p-1 ring-1 ring-line sm:inline-flex sm:w-auto">
       {tabs.map((t) => (
         <button
           key={t.key}
@@ -29,7 +29,7 @@ export default function TabButtons({
           aria-selected={active === t.key}
           aria-controls={panelIdFor(t.key)}
           onClick={() => onSelect(t.key)}
-          className={`font-display shrink-0 rounded-md px-4 py-1 text-xl whitespace-nowrap transition-colors ${
+          className={`font-display min-w-0 flex-1 shrink-0 rounded-md px-1.5 py-1 text-base whitespace-nowrap min-[360px]:px-2 min-[360px]:text-lg transition-colors sm:flex-none sm:px-4 sm:text-xl ${
             active === t.key ? "bg-accent text-on-accent shadow-sm" : "text-muted hover:bg-hover hover:text-strong"
           }`}
         >
