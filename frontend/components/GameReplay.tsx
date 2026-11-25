@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import SuperBowlAnimation from "@/components/SuperBowlAnimation";
+import PlayIcon from "@/components/PlayIcon";
 import type { DriveEvent } from "@/lib/types";
 import { eventsFromDrives, gameFromScore } from "@/lib/superBowlGame";
 
@@ -48,10 +49,12 @@ export default function GameReplay({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="font-display bg-head px-2.5 py-1 text-base text-strong ring-1 ring-line hover:bg-hover"
+        className="font-display inline-flex h-7 shrink-0 items-center gap-1.5 bg-head px-2 text-base whitespace-nowrap text-strong ring-1 ring-line hover:bg-hover sm:h-auto sm:px-2.5 sm:py-1"
         aria-label={`Watch the replay of week ${week}: ${away} at ${home}`}
+        title="Replay"
       >
-        ▶ Replay
+        <PlayIcon />
+        <span className="hidden sm:inline">Replay</span>
       </button>
       {open && <SuperBowlAnimation result={result} onClose={close} />}
     </>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import SuperBowlAnimation, { type SuperBowlResult } from "@/components/SuperBowlAnimation";
+import PlayIcon from "@/components/PlayIcon";
 import { gameFromScore, makeGame } from "@/lib/superBowlGame";
 import TeamLogo from "@/components/TeamLogo";
 import { pct } from "@/components/ProbCell";
@@ -108,10 +109,10 @@ function MatchupCard({ m, ctx, label }: { m: Matchup; ctx: Ctx; label?: string }
       {m.home && m.away && ctx.winners[m.id] && (
         <button
           onClick={() => ctx.onReplay(m)}
-          className="font-display w-full border-t border-line bg-head py-1 text-base text-strong hover:bg-hover"
+          className="font-display flex w-full items-center justify-center gap-1.5 border-t border-line bg-head py-1 text-base whitespace-nowrap text-strong hover:bg-hover"
           aria-label={`Watch the replay of ${m.home} vs ${m.away}`}
         >
-          ▶ Replay
+          <PlayIcon /> Replay
         </button>
       )}
     </div>

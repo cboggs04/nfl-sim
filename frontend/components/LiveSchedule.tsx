@@ -53,7 +53,7 @@ export function LiveResultCell({ g, children }: { g: GameView; children: React.R
           <LiveDot /> Live
         </span>
       )}
-      <span className="text-base font-semibold tabular-nums">
+      <span className="text-base font-semibold whitespace-nowrap tabular-nums">
         {us}–{them}
       </span>
       <span className="text-xs text-muted">
@@ -69,7 +69,7 @@ export function LiveProbCell({ g, children }: { g: GameView; children: React.Rea
   const live = useGame(g);
   const p = live ? teamP(g, live) : null;
   if (p == null) return <>{children}</>;
-  return <ProbCell p={p} />;
+  return <ProbCell p={p} narrow />;
 }
 
 /** A card above the schedule while one of the team's games is on. */
