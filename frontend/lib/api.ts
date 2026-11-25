@@ -1,5 +1,5 @@
 // The ONLY place the frontend talks to the backend. Components import from here.
-import type { BacktestResponse, GamesResponse, LiveResponse, BracketResponse, LeadersResponse, SimTeamResult, TeamRoster, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, TeamDrives, TradeCandidate, WhatIfRequest } from "./types";
+import type { BacktestResponse, GameDetail, GamesResponse, LiveResponse, BracketResponse, LeadersResponse, SimTeamResult, TeamRoster, PlayoffGameResponse, SeasonResponse, SimulatedSeason, TeamDetail, TeamDrives, TradeCandidate, WhatIfRequest } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // Set NEXT_PUBLIC_USE_MOCK=1 to build the UI without the API running.
@@ -101,7 +101,16 @@ export async function getGames(): Promise<GamesResponse> {
 }
 
 /** Games on the live scoreboard right now, with in-game win probability. demo=true: a made-up, sped-up week for presenting. Called from the browser. */
-export async function getLive(demo = false): Promise<LiveResponse> {
+export async function getLive(demo = false, week?: number): Promise<LiveResponse> {
   if (USE_MOCK) return { source: "unavailable", fetched_at: null, week: null, games: [] };
-  return get<LiveResponse>(`/api/live${demo ? "?demo=1" : ""}`);
+  const q = new URLSearchParams();
+  if (demo) q.set("demo", "1");
+  if (week != null) q.set("week", String(week));
+  return get<LiveResponse>(`/api/live${q.size ? `?${q}` : ""}`);
+}
+
+/** One game's line score, team stats, player box score, scoring plays and model win probability. Called from the browser. */
+export async function getGameDetail(gameId: string): Promise<GameDetail> {
+  if (USE_MOCK) throw new Error("Game details need the API running (turn off NEXT_PUBLIC_USE_MOCK).");
+  return get<GameDetail>(`/api/games/${encodeURIComponent(gameId)}/detail`);
 }

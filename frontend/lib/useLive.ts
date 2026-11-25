@@ -36,11 +36,13 @@ const EMPTY: LiveState = { games: {}, source: null, week: null, updatedAt: null 
 
 /**
  * Polls /api/live while any of `kickoffs` is near now (or always in demo mode): every 30 s while a game is on,
- * every 2 minutes otherwise, and never while the tab is hidden. Outside the window it makes no requests at all.
+ * every 2 minutes otherwise, and never while the tab is hidden. Outside the window it makes no requests at all,
+ * except one when `once` is set (a finished week, for its records and game leaders). `week` picks a week's scoreboard.
  */
-export function useLive(kickoffs: (string | null | undefined)[], enabled = true): LiveState {
+export function useLive(kickoffs: (string | null | undefined)[], enabled = true, opts: { week?: number; once?: boolean } = {}): LiveState {
   const [state, setState] = useState<LiveState>(EMPTY);
   const key = kickoffs.join(",");
+  const { week, once = false } = opts;
 
   useEffect(() => {
     if (!enabled) return;
@@ -48,6 +50,7 @@ export function useLive(kickoffs: (string | null | undefined)[], enabled = true)
     const list = key ? key.split(",") : [];
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopped = false;
+    let fetched = false;
 
     const schedule = (ms: number) => {
       clearTimeout(timer);
@@ -56,13 +59,14 @@ export function useLive(kickoffs: (string | null | undefined)[], enabled = true)
 
     async function tick() {
       if (document.hidden) return; // resumes on visibilitychange
-      if (!demo && !inLiveWindow(list.map((k) => k || null))) {
+      if (!demo && !(once && !fetched) && !inLiveWindow(list.map((k) => k || null))) {
         schedule(60_000); // check the clock again in a minute; no request
         return;
       }
       try {
-        const res = await getLive(demo);
+        const res = await getLive(demo, week);
         if (stopped) return;
+        fetched = true;
         const games: Record<string, LiveGame> = {};
         for (const g of res.games) if (g.game_id) games[g.game_id] = g;
         setState({ games, source: res.source, week: res.week, updatedAt: Date.now() });
@@ -82,7 +86,7 @@ export function useLive(kickoffs: (string | null | undefined)[], enabled = true)
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [key, enabled]);
+  }, [key, enabled, week, once]);
 
   return state;
 }

@@ -3,18 +3,19 @@ import PageHeader from "@/components/PageHeader";
 import ResetOnLeave from "@/components/ResetOnLeave";
 import ScoresBoard from "@/components/ScoresBoard";
 import { Suspense } from "react";
-import { getGames } from "@/lib/api";
+import { getGames, getSeason } from "@/lib/api";
 
 export const metadata = { title: "Scores · NFL Season Simulator" };
 
 async function Board({ searchParams }: { searchParams: PageProps<"/scores">["searchParams"] }) {
-  const [data, params] = await Promise.all([getGames().catch(() => null), searchParams]);
+  const [data, season, params] = await Promise.all([getGames().catch(() => null), getSeason().catch(() => null), searchParams]);
   if (!data) {
     return <p className="mt-8 text-muted">Scores aren&apos;t available right now. The server may still be waking up: wait a few seconds and reload.</p>;
   }
-  const raw = Array.isArray(params.week) ? params.week[0] : params.week; // ?week=7 opens that week
-  const week = Number(raw) || data.current_week;
-  return <ScoresBoard key={week} data={data} initialWeek={week} />;
+  const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+  const week = Number(first(params.week)) || data.current_week; // ?week=7 opens that week
+  const game = first(params.game); // ?game=<id> opens that game
+  return <ScoresBoard key={week} data={data} teams={season?.teams ?? []} initialWeek={week} initialGame={game} />;
 }
 
 export default function ScoresPage(props: PageProps<"/scores">) {
@@ -27,7 +28,7 @@ export default function ScoresPage(props: PageProps<"/scores">) {
               Scores &amp; <span className="text-accent-ink">Schedule</span>
             </>
           }
-          subtitle="This week's games with live scores and live win probability while they're on. Pick another week to see past results (and whether the model called them) or what's coming up."
+          subtitle="Every game with live scores and the model's win probability. Click a game for the box score, scoring summary and team stats."
         />
         <Suspense fallback={<LoadingSkeleton />}>
           <Board searchParams={props.searchParams} />

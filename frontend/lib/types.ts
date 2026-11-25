@@ -323,6 +323,21 @@ export interface LiveGame {
   red_zone: boolean;
   p_home_pre: number | null;
   p_home_live: number | null;
+  home_record?: string | null; // "8-2", as of now
+  away_record?: string | null;
+  broadcast?: string | null;
+  venue?: string | null;
+  home_lines?: number[]; // points by quarter (5th = overtime)
+  away_lines?: number[];
+  leaders?: GameLeader[];
+}
+
+export interface GameLeader {
+  category: "PASS" | "RUSH" | "REC";
+  name: string;
+  team: string | null;
+  line: string; // "21/27, 194 YDS, 3 TD, 1 INT"
+  headshot: string | null;
 }
 
 export interface LiveResponse {
@@ -330,4 +345,48 @@ export interface LiveResponse {
   fetched_at: string | null;
   week: number | null;
   games: LiveGame[];
+}
+
+export interface BoxCategory {
+  key: string;
+  title: string;
+  labels: string[];
+  rows: { name: string; id: string; headshot: string | null; stats: string[] }[];
+  totals: string[] | null;
+}
+
+export interface ScoringPlay {
+  period: number;
+  clock: string;
+  clock_seconds: number;
+  team: string;
+  type: string; // "TD", "FG", ...
+  text: string;
+  home_score: number;
+  away_score: number;
+}
+
+/** GET /api/games/{game_id}/detail: the expanded game on the scores page. */
+export interface GameDetail {
+  game_id: string;
+  home: string;
+  away: string;
+  available: boolean; // false if the detail feed couldn't be reached
+  state: "pre" | "in" | "post";
+  period: number;
+  clock: string;
+  detail: string;
+  home_lines: number[];
+  away_lines: number[];
+  home_score: number;
+  away_score: number;
+  team_stats: { label: string; home: string | null; away: string | null }[];
+  home_box: BoxCategory[];
+  away_box: BoxCategory[];
+  scoring: ScoringPlay[];
+  win_prob: { t: number; p: number; home: number; away: number }[]; // t = game minutes, p = model P(home wins)
+  venue: string | null;
+  attendance: number | null;
+  weather: string | null;
+  broadcast: string | null;
 }
