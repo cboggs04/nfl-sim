@@ -41,7 +41,7 @@ function tier(p: number) {
 function ResultCell({ g, team, drives }: { g: GameView; team: string; drives?: DriveEvent[] }) {
   if (g.played) {
     return (
-      <span className="inline-flex items-center gap-1.5 md:gap-3">
+      <span className="inline-flex items-center gap-1 min-[360px]:gap-1.5 md:gap-3">
         <span
           className={`font-display inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-lg md:h-9 md:w-9 md:text-xl ${
             g.result === "W" ? "bg-good text-white" : g.result === "L" ? "bg-bad text-white" : "bg-zinc-500 text-white"
@@ -50,7 +50,8 @@ function ResultCell({ g, team, drives }: { g: GameView; team: string; drives?: D
         >
           {g.result}
         </span>
-        <span className="text-sm font-semibold whitespace-nowrap tabular-nums md:text-base">
+        {/* fixed width, so the Replay buttons line up down the column whatever the score */}
+        <span className="inline-block w-12 text-sm font-semibold whitespace-nowrap tabular-nums md:w-16 md:text-base">
           {g.team_score}–{g.opp_score}
         </span>
         {g.team_score != null && g.opp_score != null && (
@@ -239,7 +240,11 @@ async function TeamContent({ params }: { params: Promise<{ abbr: string }> }) {
                         <span className="sm:hidden">{g.opponent}</span>
                         <span className="hidden sm:inline md:hidden">{teamInfo(g.opponent).name.split(" ").pop()}</span>
                         <span className="hidden md:inline">{teamInfo(g.opponent).name}</span>
-                        {g.neutral && <span className="ml-2 text-xs font-normal text-muted">neutral site</span>}
+                        {g.neutral && (
+                          <span className="block text-[11px] font-normal text-muted sm:ml-2 sm:inline sm:text-xs">
+                            neutral<span className="hidden sm:inline"> site</span>
+                          </span>
+                        )}
                       </span>
                     </Link>
                   </td>
