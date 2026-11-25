@@ -15,10 +15,11 @@ from datetime import datetime, timezone
 
 import polars as pl
 
-from app.schemas import (BacktestResponse, BracketConference, BracketResponse, GameView,
-                         Record, SeasonResponse, SeedProb, SeedSlot, SimState, StateGame,
+from app.schemas import (BacktestResponse, BracketConference, BracketResponse, GameView, GamesResponse,
+                         Record, ScoreGame, SeasonResponse, SeedProb, SeedSlot, SimState, StateGame,
                          TeamAdvancement, TeamDetail, TeamOdds)
 from datetime import date
+from zoneinfo import ZoneInfo
 
 from app.schemas import AwardRow, LeaderRow, LeadersResponse, RosterPlayer, TeamRoster
 from engine.drives import drives_by_game
@@ -26,7 +27,7 @@ from engine.data import DATA_DIR, load_games, load_player_totals, load_qb_game_e
 from engine.awards import AWARDS, LEADER_CATEGORIES, simulate_awards
 from engine.trade import BACKUP_QB_ADJ, player_values, skill_values
 from engine.players import POSITION_STATS, apply_depth_chart, build_player
-from engine.elo import EloConfig, game_probability, walk_games
+from engine.elo import EloConfig, expected_home_win, game_probability, walk_games
 from engine.qb import QbConfig, QbTracker, projected_starters, stats_by_game
 from engine.simulate import simulate_league
 from engine.teams import CONFERENCE_OF, DIVISION_OF, TEAM_NAMES, TEAMS
@@ -56,8 +57,10 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False, a
     # each team's projected starting QB. Everything downstream (sims, what-if) just sees one rating per team.
     tracker = QbTracker(stats_by_game(load_qb_game_epa(seasons, refresh=refresh).to_dicts()), qb_cfg) if qb_cfg else None
     team_elo: dict[str, float] = {}
-    for _ in walk_games(df.filter(pl.col("result").is_not_null()).to_dicts(), cfg, team_elo, qb=tracker):
-        pass
+    pregame: dict[str, float] = {}   # this season's played games: the model's P(home wins) before kickoff
+    for g, eh, ea in walk_games(df.filter(pl.col("result").is_not_null()).to_dicts(), cfg, team_elo, qb=tracker):
+        if g["season"] == season:
+            pregame[g["game_id"]] = expected_home_win(eh, ea, 0.0 if g["neutral"] else cfg.home_field)
     starters = projected_starters(schedule) if tracker else {}
     qb_adj = {t: tracker.adjustment(t, starters[t][0]) if t in starters else 0.0 for t in TEAMS} if tracker else dict.fromkeys(TEAMS, 0.0)
     ratings = {t: team_elo[t] + qb_adj[t] for t in TEAMS}
@@ -104,7 +107,8 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False, a
                 home=home, neutral=g["neutral"], played=is_played, p_win=p_win,
                 result=None if margin is None else "W" if margin > 0 else "L" if margin < 0 else "T",
                 team_score=int(g["home_score"] if home else g["away_score"]) if is_played else None,
-                opp_score=int(g["away_score"] if home else g["home_score"]) if is_played else None))
+                opp_score=int(g["away_score"] if home else g["home_score"]) if is_played else None,
+                kickoff=kickoff_utc(g)))
         r = league[t]
         teams[t] = TeamDetail(season=season, odds=odds[t], seed_dist=r["seed_dist"],
                               p_divisional_round=r["p_divisional_round"],
@@ -132,8 +136,42 @@ def build_all(season: int, n_sims: int, seed: int = 42, refresh: bool = False, a
                          away_team=g["away_team"], neutral=g["neutral"],
                          result=None if g["result"] is None else int(g["result"])) for g in schedule])
     rosters = build_rosters(season, schedule, refresh, tracker)
-    return {"season": season_resp, "teams": teams, "bracket": bracket, "state": state, "rosters": rosters,
+    games_resp = build_games(season, schedule, ratings, pregame, cfg)
+    return {"season": season_resp, "teams": teams, "bracket": bracket, "state": state, "rosters": rosters, "games": games_resp,
             "leaders": build_leaders(rosters, schedule, ratings, cfg, award_sims)}
+
+
+ET = ZoneInfo("America/New_York")
+
+
+def kickoff_utc(g: dict) -> str | None:
+    """nflverse gives kickoff as an Eastern date + time ("2026-11-29", "13:00"); return it as UTC ISO."""
+    if not g.get("gameday") or not g.get("gametime"):
+        return None
+    try:
+        local = datetime.fromisoformat(f"{g['gameday']}T{g['gametime']}").replace(tzinfo=ET)
+    except ValueError:
+        return None
+    return local.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def build_games(season: int, schedule: list[dict], ratings: dict, pregame: dict[str, float], cfg: EloConfig) -> GamesResponse:
+    """games.json: every regular-season game for the scores page. Played games carry the model's pregame
+    probability (from the Elo walk, so it's what the model said before kickoff); the rest the current one."""
+    games = []
+    for g in sorted(schedule, key=lambda g: (g["week"], g.get("gameday") or "", g.get("gametime") or "", g["game_id"])):
+        played = g["result"] is not None
+        p = pregame.get(g["game_id"]) if played else None
+        games.append(ScoreGame(
+            game_id=g["game_id"], week=g["week"], kickoff=kickoff_utc(g), home=g["home_team"], away=g["away_team"],
+            neutral=g["neutral"], played=played,
+            home_score=int(g["home_score"]) if played else None, away_score=int(g["away_score"]) if played else None,
+            overtime=bool(g.get("overtime")) if played else False,
+            p_home=round(p if p is not None else game_probability(g, ratings, cfg), 4),
+            espn_id=str(g["espn"]) if g.get("espn") else None))
+    open_weeks = [g.week for g in games if not g.played]
+    return GamesResponse(season=season, current_week=min(open_weeks) if open_weeks else max((g.week for g in games), default=1),
+                         games=games)
 
 
 def build_rosters(season: int, schedule: list[dict], refresh: bool = False, tracker: QbTracker | None = None) -> dict[str, TeamRoster]:
@@ -254,6 +292,7 @@ def main():
     (DATA_DIR / "bracket.json").write_text(out["bracket"].model_dump_json(indent=1))
     (DATA_DIR / "sim_state.json").write_text(out["state"].model_dump_json())
     (DATA_DIR / "leaders.json").write_text(out["leaders"].model_dump_json(indent=1))
+    (DATA_DIR / "games.json").write_text(out["games"].model_dump_json())
     (DATA_DIR / "rosters.json").write_text(json.dumps({t: json.loads(r.model_dump_json()) for t, r in out["rosters"].items()}))
 
     print(f"Wrote drives.json ({write_drives(args.season, args.refresh)} games)")
@@ -262,7 +301,7 @@ def main():
     if bt.exists():
         BacktestResponse.model_validate_json(bt.read_text())  # fail loudly if the shape drifts
     s = out["season"]
-    print(f"Wrote season.json, teams.json, bracket.json, sim_state.json, rosters.json, leaders.json to {DATA_DIR}")
+    print(f"Wrote season.json, teams.json, bracket.json, sim_state.json, games.json, rosters.json, leaders.json to {DATA_DIR}")
     print(f"{s.season}: {s.games_played}/{s.games_total} games played, {s.n_sims:,} sims")
     for o in s.teams[:5]:
         print(f"  {o.team:<4}{o.name:<24}Super Bowl {o.p_super_bowl:.1%}")

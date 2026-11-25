@@ -15,6 +15,7 @@ from engine.data import DATA_DIR
 
 from .datafiles import file_stamp
 from .leaders import router as leaders_router
+from .live import router as live_router
 from .rosters import router as rosters_router
 from .sim import router as sim_router
 from .trade import router as trade_router
@@ -34,6 +35,7 @@ app.include_router(rosters_router)
 app.include_router(leaders_router)
 app.include_router(whatif_router)
 app.include_router(trade_router)
+app.include_router(live_router)
 
 
 @lru_cache

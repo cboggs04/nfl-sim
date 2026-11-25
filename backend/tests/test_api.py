@@ -184,3 +184,26 @@ def test_season_teams_include_the_starting_qb_photo():
     teams = client.get("/api/season").json()["teams"]
     with_photo = [t for t in teams if t["qb_headshot"]]
     assert len(with_photo) >= 28 and all(t["qb_headshot"].startswith("http") and t["qb"] for t in with_photo)
+
+
+@needs_data
+def test_games_endpoint_covers_the_season():
+    r = client.get("/api/games")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["games"]) == 272 and 1 <= body["current_week"] <= 18
+    assert all(0 < g["p_home"] < 1 for g in body["games"])
+
+
+@needs_data
+def test_live_demo_mode_returns_current_week_in_progress():
+    body = client.get("/api/live?demo=1").json()
+    assert body["source"] == "demo" and body["games"]
+    assert all(g["game_id"] and g["p_home_live"] is not None for g in body["games"])
+
+
+@needs_data
+def test_live_endpoint_without_the_feed(monkeypatch):
+    from app import live
+    monkeypatch.setattr(live._cache, "get", lambda: (None, 0.0, "URLError"))
+    assert client.get("/api/live").json() == {"source": "unavailable", "fetched_at": None, "week": None, "games": []}

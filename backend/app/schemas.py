@@ -54,6 +54,7 @@ class GameView(BaseModel):
     result: Literal["W", "L", "T"] | None
     team_score: int | None
     opp_score: int | None
+    kickoff: str | None = None      # UTC ISO time, e.g. "2026-11-29T18:00:00Z" (None in files written before it existed)
 
 
 class TeamDetail(BaseModel):
@@ -377,3 +378,53 @@ class GameDrives(BaseModel):
 class TeamDrives(BaseModel):
     """GET /api/teams/{abbr}/drives: real drives for each of the team's played games that have them (others are left out)."""
     games: dict[str, list[DriveEvent]]
+
+
+class ScoreGame(BaseModel):
+    """One game on the scores page (GET /api/games)."""
+    game_id: str
+    week: int
+    kickoff: str | None             # UTC ISO time
+    home: str
+    away: str
+    neutral: bool
+    played: bool
+    home_score: int | None
+    away_score: int | None
+    overtime: bool
+    p_home: float                   # model P(home wins): before kickoff for played games, current for the rest
+    espn_id: str | None = None      # for matching live scores
+
+
+class GamesResponse(BaseModel):
+    """GET /api/games: the whole regular season, for the scores page."""
+    season: int
+    current_week: int               # first week that still has an unplayed game (the last week once all are played)
+    games: list[ScoreGame]
+
+
+class LiveGame(BaseModel):
+    """A game in progress (or just finished / about to start) from the live scoreboard feed."""
+    game_id: str | None             # our game id; None if it couldn't be matched
+    espn_id: str
+    home: str
+    away: str
+    state: Literal["pre", "in", "post"]
+    home_score: int
+    away_score: int
+    period: int                     # 1-4, 5 = overtime
+    clock: str
+    detail: str                     # "Q3 4:12", "Halftime", "Final/OT"
+    possession: str | None
+    down_distance: str | None
+    red_zone: bool
+    p_home_pre: float | None        # model's pregame P(home wins)
+    p_home_live: float | None       # in-game P(home wins), from engine/live.py
+
+
+class LiveResponse(BaseModel):
+    """GET /api/live."""
+    source: Literal["espn", "demo", "unavailable"]
+    fetched_at: str | None          # when the scoreboard was last fetched (UTC ISO)
+    week: int | None
+    games: list[LiveGame]
